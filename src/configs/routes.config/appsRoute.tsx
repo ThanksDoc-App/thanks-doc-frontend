@@ -62,26 +62,26 @@ const appsRoute: Routes = [
             headerContainer: true,
         },
     },
-    {
-        key: 'appsCrm.mail',
-        path: `${APP_PREFIX_PATH}/crm/mail`,
-        component: lazy(() => import('@/views/crm/Mail')),
-        authority: [ADMIN, USER],
-        meta: {
-            pageContainerType: 'gutterless',
-            footer: false,
-        },
-    },
-    {
-        key: 'appsCrm.mail',
-        path: `${APP_PREFIX_PATH}/crm/mail/:category`,
-        component: lazy(() => import('@/views/crm/Mail')),
-        authority: [ADMIN, USER],
-        meta: {
-            pageContainerType: 'gutterless',
-            footer: false,
-        },
-    },
+    // {
+    //     key: 'appsCrm.mail',
+    //     path: `${APP_PREFIX_PATH}/crm/mail`,
+    //     component: lazy(() => import('@/views/crm/Mail')),
+    //     authority: [ADMIN, USER],
+    //     meta: {
+    //         pageContainerType: 'gutterless',
+    //         footer: false,
+    //     },
+    // },
+    // {
+    //     key: 'appsCrm.mail',
+    //     path: `${APP_PREFIX_PATH}/crm/mail/:category`,
+    //     component: lazy(() => import('@/views/crm/Mail')),
+    //     authority: [ADMIN, USER],
+    //     meta: {
+    //         pageContainerType: 'gutterless',
+    //         footer: false,
+    //     },
+    // },
     {
         key: 'appsSales.dashboard',
         path: `${APP_PREFIX_PATH}/sales/dashboard`,
