@@ -1,4 +1,5 @@
-import { apiSignIn, apiSignOut, apiSignUp } from '@/services/AuthService'
+import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     setUser,
     signInSuccess,
@@ -6,106 +7,118 @@ import {
     useAppSelector,
     useAppDispatch,
 } from '@/store'
+import { apiSignIn, apiSignOut, apiSignUp } from '@/services/AuthService'
 import appConfig, { ROLE_BASED_PATHS } from '@/configs/app.config'
-import { useNavigate } from 'react-router-dom'
 import useQuery from './useQuery'
 import type { SignInCredential, SignUpCredential } from '@/@types/auth'
 
 type Status = true | false
 
 function getAuthenticatedEntryPath(apiResponse: any): string {
-    const role = apiResponse?.data?.data?.role || apiResponse?.data?.role;
-    
-    return ROLE_BASED_PATHS[role as keyof typeof ROLE_BASED_PATHS] 
+    const role = apiResponse?.data?.data?.role || apiResponse?.data?.role
+    return ROLE_BASED_PATHS[role as keyof typeof ROLE_BASED_PATHS]
 }
 
 function useAuth() {
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
     const query = useQuery()
-
     const { token, signedIn } = useAppSelector((state) => state.auth.session)
 
-    console.log('Current auth state:', { token, signedIn, authenticated: token && signedIn })
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    // 🔐 Auto logout after 30 minutes of inactivity
+    useEffect(() => {
+        if (token && signedIn) {
+            const EVENTS = ['mousemove', 'keydown', 'scroll', 'click']
+
+            const resetTimer = () => {
+                if (timeoutRef.current) clearTimeout(timeoutRef.current)
+                timeoutRef.current = setTimeout(() => {
+                    console.log('User inactive for 30 minutes. Logging out...')
+                    handleSignOut()
+                }, 30 * 60 * 1000) // 30 mins
+            }
+
+            EVENTS.forEach((event) => window.addEventListener(event, resetTimer))
+            resetTimer()
+
+            return () => {
+                EVENTS.forEach((event) =>
+                    window.removeEventListener(event, resetTimer)
+                )
+                if (timeoutRef.current) clearTimeout(timeoutRef.current)
+            }
+        }
+    }, [token, signedIn])
 
     const signIn = async (
-    values: SignInCredential,
-): Promise<
-    | {
-          status: Status
-          message: string
-          data: any
-      }
-    | undefined
-> => {
-    try {
-        console.log('Starting sign in process...')
-        const resp = await apiSignIn(values)
-        console.log('API Response:', resp)
+        values: SignInCredential
+    ): Promise<{
+        status: Status
+        message: string
+        data: any
+    } | undefined> => {
+        try {
+            const resp = await apiSignIn(values)
 
-        if (resp.data) {
-            // ✅ Save entire response to localStorage
-            localStorage.setItem('userdetails', JSON.stringify(resp.data))
+            if (resp.data) {
+                localStorage.setItem('userdetails', JSON.stringify(resp.data))
 
-            const token = resp.data.data?.token || resp.data.data?.accessToken || resp.data.token
-            console.log('Token received:', token)
+                const token =
+                    resp.data.data?.token ||
+                    resp.data.data?.accessToken ||
+                    resp.data.token
 
-            dispatch(signInSuccess(token))
-            console.log('signInSuccess dispatched')
+                dispatch(signInSuccess(token))
 
-            const userData = resp.data.data?.user || resp.data.user
-            if (userData) {
-                dispatch(
-                    setUser(
-                        userData || {
-                            avatar: '',
-                            userName: 'Anonymous',
-                            authority: ['DOCTOR'],
-                            email: '',
-                        },
-                    ),
-                )
-                console.log('User set:', userData)
-            }
+                const userData = resp.data.data?.user || resp.data.user
+                if (userData) {
+                    dispatch(
+                        setUser(
+                            userData || {
+                                avatar: '',
+                                userName: 'Anonymous',
+                                authority: ['DOCTOR'],
+                                email: '',
+                            }
+                        )
+                    )
+                }
 
-            if (token) {
-                await new Promise(resolve => setTimeout(resolve, 100))
+                if (token) {
+                    await new Promise((resolve) => setTimeout(resolve, 100))
 
-                const authenticatedEntryPath = getAuthenticatedEntryPath(resp.data)
-                console.log('About to navigate to:', authenticatedEntryPath)
-                navigate(authenticatedEntryPath)
+                    const authenticatedEntryPath = getAuthenticatedEntryPath(resp.data)
+                    navigate(authenticatedEntryPath)
 
-                return {
-                    status: true,
-                    message: 'Sign in successful',
-                    data: resp.data
+                    return {
+                        status: true,
+                        message: 'Sign in successful',
+                        data: resp.data,
+                    }
+                } else {
+                    return {
+                        status: false,
+                        message: 'Authentication failed - no token received',
+                        data: {},
+                    }
                 }
             } else {
-                console.error('No token found in response')
                 return {
                     status: false,
-                    message: 'Authentication failed - no token received',
-                    data: {}
+                    message: 'Invalid response from server',
+                    data: {},
                 }
             }
-        } else {
-            console.log('No data in response')
+        } catch (errors: any) {
             return {
                 status: false,
-                message: 'Invalid response from server',
-                data: {}
+                message: errors?.response?.data?.message || errors.toString(),
+                data: {},
             }
         }
-    } catch (errors: any) {
-        console.error('Sign in error:', errors)
-        return {
-            status: false,
-            message: errors?.response?.data?.message || errors.toString(),
-            data: {}
-        }
     }
-}
-
 
     const signUp = async (values: SignUpCredential) => {
         try {
@@ -113,7 +126,7 @@ function useAuth() {
             if (resp.data) {
                 const { token } = resp.data
                 dispatch(signInSuccess(token))
-                
+
                 if (resp.data.user) {
                     dispatch(
                         setUser(
@@ -122,16 +135,15 @@ function useAuth() {
                                 userName: 'Anonymous',
                                 authority: ['Doctor'],
                                 email: '',
-                            },
-                        ),
+                            }
+                        )
                     )
                 }
-                
-                await new Promise(resolve => setTimeout(resolve, 100))
-                
+
+                await new Promise((resolve) => setTimeout(resolve, 100))
                 const authenticatedEntryPath = getAuthenticatedEntryPath(resp)
                 navigate(authenticatedEntryPath)
-                
+
                 return {
                     status: true,
                     message: 'Sign up successful',
@@ -143,7 +155,6 @@ function useAuth() {
                 }
             }
         } catch (errors: any) {
-            console.error('Sign up error:', errors)
             return {
                 status: false,
                 message: errors?.response?.data?.message || errors.toString(),
@@ -159,8 +170,9 @@ function useAuth() {
                 userName: '',
                 email: '',
                 authority: [],
-            }),
+            })
         )
+        localStorage.removeItem('userdetails')
         navigate(appConfig.unAuthenticatedEntryPath)
     }
 
