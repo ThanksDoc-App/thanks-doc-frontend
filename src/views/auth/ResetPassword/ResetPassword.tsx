@@ -1,7 +1,12 @@
+import Simple from '@/components/layouts/AuthLayout/Simple'
 import ResetPasswordForm from './ResetPasswordForm'
 
 const ResetPassword = () => {
-    return <ResetPasswordForm disableSubmit={false} />
+    return (
+        <Simple>
+            <ResetPasswordForm disableSubmit={false} />
+        </Simple>
+    )
 }
 
 export default ResetPassword

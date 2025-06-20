@@ -4,10 +4,11 @@ import {
     NAV_ITEM_TYPE_COLLAPSE,
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
-import { ADMIN, USER } from '@/constants/roles.constant'
+import { DOCTOR, BUSINESS } from '@/constants/roles.constant'
+// import { DOCTOR, BUSINESS, ADMIN, USER } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
-const appsNavigationConfig: NavigationTree[] = [
+const baseConfig: NavigationTree[] = [
     {
         key: 'apps',
         path: '',
@@ -15,7 +16,7 @@ const appsNavigationConfig: NavigationTree[] = [
         translateKey: 'nav.apps',
         icon: 'apps',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: [ADMIN, USER],
+        authority: [DOCTOR, BUSINESS],
         subMenu: [
             {
                 key: 'apps.project',
@@ -24,7 +25,7 @@ const appsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.appsProject.project',
                 icon: 'project',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
+                authority: [DOCTOR],
                 subMenu: [
                     {
                         key: 'appsProject.dashboard',
@@ -33,7 +34,7 @@ const appsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.appsProject.dashboard',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
+                        authority: [DOCTOR],
                         subMenu: [],
                     },
                     // {
@@ -43,7 +44,7 @@ const appsNavigationConfig: NavigationTree[] = [
                     //     translateKey: 'nav.appsProject.projectList',
                     //     icon: '',
                     //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [ADMIN, USER],
+                    //     authority: [DOCTOR],
                     //     subMenu: [],
                     // },
                     // {
@@ -53,7 +54,7 @@ const appsNavigationConfig: NavigationTree[] = [
                     //     translateKey: 'nav.appsProject.scrumBoard',
                     //     icon: '',
                     //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [ADMIN, USER],
+                    //     authority: [DOCTOR],
                     //     subMenu: [],
                     // },
                     {
@@ -63,12 +64,12 @@ const appsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.appsProject.issue',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
+                        authority: [DOCTOR],
                         subMenu: [],
                     },
                 ],
             },
-            
+
             {
                 key: 'apps.sales',
                 path: '',
@@ -76,7 +77,7 @@ const appsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.appsSales.sales',
                 icon: 'sales',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
+                authority: [BUSINESS],
                 subMenu: [
                     {
                         key: 'appsSales.dashboard',
@@ -85,7 +86,7 @@ const appsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.appsSales.dashboard',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
+                        authority: [BUSINESS],
                         subMenu: [],
                     },
                     {
@@ -95,7 +96,7 @@ const appsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.appsSales.productList',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
+                        authority: [BUSINESS],
                         subMenu: [],
                     },
                     {
@@ -105,19 +106,19 @@ const appsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.appsSales.productEdit',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
+                        authority: [BUSINESS],
                         subMenu: [],
                     },
-                    {
-                        key: 'appsSales.productNew',
-                        path: `${APP_PREFIX_PATH}/sales/product-new`,
-                        title: 'New Product',
-                        translateKey: 'nav.appsSales.productNew',
-                        icon: '',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        subMenu: [],
-                    },
+                    // {
+                    //     key: 'appsSales.productNew',
+                    //     path: `${APP_PREFIX_PATH}/sales/product-new`,
+                    //     title: 'New Product',
+                    //     translateKey: 'nav.appsSales.productNew',
+                    //     icon: '',
+                    //     type: NAV_ITEM_TYPE_ITEM,
+                    //     authority: [BUSINESS],
+                    //     subMenu: [],
+                    // },
                     // {
                     //     key: 'appsSales.orderList',
                     //     path: `${APP_PREFIX_PATH}/sales/order-list`,
@@ -125,7 +126,7 @@ const appsNavigationConfig: NavigationTree[] = [
                     //     translateKey: 'nav.appsSales.orderList',
                     //     icon: '',
                     //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [ADMIN, USER],
+                    //     authority: [BUSINESS],
                     //     subMenu: [],
                     // },
                     // {
@@ -135,174 +136,12 @@ const appsNavigationConfig: NavigationTree[] = [
                     //     translateKey: 'nav.appsSales.orderDetails',
                     //     icon: '',
                     //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [ADMIN, USER],
+                    //     authority: [BUSINESS],
                     //     subMenu: [],
                     // },
                 ],
             },
-            // {
-            //     key: 'apps.crm',
-            //     path: '',
-            //     title: 'CRM',
-            //     translateKey: 'nav.appsCrm.crm',
-            //     icon: 'crm',
-            //     type: NAV_ITEM_TYPE_COLLAPSE,
-            //     authority: [ADMIN, USER],
-            //     subMenu: [
-            //         {
-            //             key: 'appsCrm.dashboard',
-            //             path: `${APP_PREFIX_PATH}/crm/dashboard`,
-            //             title: 'Dashboard',
-            //             translateKey: 'nav.appsCrm.dashboard',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //         {
-            //             key: 'appsCrm.calendar',
-            //             path: `${APP_PREFIX_PATH}/crm/calendar`,
-            //             title: 'Calendar',
-            //             translateKey: 'nav.appsCrm.calendar',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //         {
-            //             key: 'appsCrm.customers',
-            //             path: `${APP_PREFIX_PATH}/crm/customers`,
-            //             title: 'Customers',
-            //             translateKey: 'nav.appsCrm.customers',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //         {
-            //             key: 'appsCrm.customerDetails',
-            //             path: `${APP_PREFIX_PATH}/crm/customer-details?id=8`,
-            //             title: 'Customer Details',
-            //             translateKey: 'nav.appsCrm.customerDetails',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //         {
-            //             key: 'appsCrm.mail',
-            //             path: `${APP_PREFIX_PATH}/crm/mail`,
-            //             title: 'Mail',
-            //             translateKey: 'nav.appsCrm.mail',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //     ],
-            // },
-            // {
-            //     key: 'apps.crypto',
-            //     path: '',
-            //     title: 'Crypto',
-            //     translateKey: 'nav.appsCrypto.crypto',
-            //     icon: 'crypto',
-            //     type: NAV_ITEM_TYPE_COLLAPSE,
-            //     authority: [ADMIN, USER],
-            //     subMenu: [
-            //         {
-            //             key: 'appsCrypto.dashboard',
-            //             path: `${APP_PREFIX_PATH}/crypto/dashboard`,
-            //             title: 'Dashboard',
-            //             translateKey: 'nav.appsCrypto.dashboard',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //         {
-            //             key: 'appsCrypto.portfolio',
-            //             path: `${APP_PREFIX_PATH}/crypto/portfolio`,
-            //             title: 'Portfolio',
-            //             translateKey: 'nav.appsCrypto.portfolio',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //         {
-            //             key: 'appsCrypto.market',
-            //             path: `${APP_PREFIX_PATH}/crypto/market`,
-            //             title: 'Market',
-            //             translateKey: 'nav.appsCrypto.market',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //         {
-            //             key: 'appsCrypto.wallets',
-            //             path: `${APP_PREFIX_PATH}/crypto/wallets`,
-            //             title: 'Wallets',
-            //             translateKey: 'nav.appsCrypto.wallets',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //     ],
-            // },
-            // {
-            //     key: 'apps.knowledgeBase',
-            //     path: '',
-            //     title: 'Knowledge Base',
-            //     translateKey: 'nav.appsknowledgeBase.knowledgeBase',
-            //     icon: 'knowledgeBase',
-            //     type: NAV_ITEM_TYPE_COLLAPSE,
-            //     authority: [ADMIN, USER],
-            //     subMenu: [
-            //         {
-            //             key: 'appsknowledgeBase.helpCenter',
-            //             path: `${APP_PREFIX_PATH}/knowledge-base/help-center`,
-            //             title: 'Help Center',
-            //             translateKey: 'nav.appsknowledgeBase.helpCenter',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //         {
-            //             key: 'appsknowledgeBase.article',
-            //             path: `${APP_PREFIX_PATH}/knowledge-base/article?id=rZjCbSyae5`,
-            //             title: 'Article',
-            //             translateKey: 'nav.appsknowledgeBase.article',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //         {
-            //             key: 'appsknowledgeBase.manageArticles',
-            //             path: `${APP_PREFIX_PATH}/knowledge-base/manage-articles`,
-            //             title: 'Manage Articles',
-            //             translateKey: 'nav.appsknowledgeBase.manageArticles',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //         {
-            //             key: 'appsknowledgeBase.editArticle',
-            //             path: `${APP_PREFIX_PATH}/knowledge-base/edit-article?id=rZjCbSyae5&categoryLabel=Survey&categoryValue=survey`,
-            //             title: 'Edit Article',
-            //             translateKey: 'nav.appsknowledgeBase.editArticle',
-            //             icon: '',
-            //             type: NAV_ITEM_TYPE_ITEM,
-            //             authority: [ADMIN, USER],
-            //             subMenu: [],
-            //         },
-            //     ],
-            // },
+
             {
                 key: 'apps.account',
                 path: '',
@@ -310,7 +149,7 @@ const appsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.appsAccount.account',
                 icon: 'account',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
+                authority: [DOCTOR, BUSINESS],
                 subMenu: [
                     {
                         key: 'appsAccount.settings',
@@ -319,7 +158,7 @@ const appsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.appsAccount.settings',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
+                        authority: [DOCTOR, BUSINESS],
                         subMenu: [],
                     },
                     // {
@@ -329,7 +168,7 @@ const appsNavigationConfig: NavigationTree[] = [
                     //     translateKey: 'nav.appsAccount.invoice',
                     //     icon: '',
                     //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [ADMIN, USER],
+                    //     authority: [DOCTOR, BUSINESS],
                     //     subMenu: [],
                     // },
                     // {
@@ -339,7 +178,7 @@ const appsNavigationConfig: NavigationTree[] = [
                     //     translateKey: 'nav.appsAccount.activityLog',
                     //     icon: '',
                     //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [ADMIN, USER],
+                    //     authority: [DOCTOR, BUSINESS],
                     //     subMenu: [],
                     // },
                     {
@@ -349,7 +188,7 @@ const appsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.appsAccount.kycForm',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
+                        authority: [DOCTOR, BUSINESS],
                         subMenu: [],
                     },
                 ],
@@ -358,4 +197,66 @@ const appsNavigationConfig: NavigationTree[] = [
     },
 ]
 
-export default appsNavigationConfig
+export const getAppsNavigationConfig = (pathname: string): NavigationTree[] => {
+    const configCopy = structuredClone(baseConfig)
+
+    const appsSection = configCopy.find(section => section.key === 'apps')
+
+    if (appsSection) {
+        appsSection.subMenu = appsSection.subMenu.filter(item => {
+            if (pathname.includes('/project') && item.key === 'apps.sales') {
+                return false // Hide Sales when in /project path
+            }
+            if (pathname.includes('/sales') && item.key === 'apps.project') {
+                return false // Hide Doctor Dashboard when in /sales path
+            }
+            return true
+        })
+    }
+
+    return configCopy
+}
+
+// export const getAppsNavigationConfig = (pathname: string): NavigationTree[] => {
+//     const configCopy = structuredClone(baseConfig)
+
+//     let signedUpAs = null
+//     try {
+//         const userData = JSON.parse(localStorage.getItem('userdetails') || '{}')
+//         signedUpAs = userData?.signedUpAs?.toLowerCase()
+//     } catch (error) {
+//         console.error('Invalid userdetails format in localStorage')
+//     }
+
+//     const appsSection = configCopy.find(section => section.key === 'apps')
+
+//     if (appsSection) {
+//         appsSection.subMenu = appsSection.subMenu.filter(item => {
+//             if (pathname.includes('/project') && item.key === 'apps.sales') {
+//                 return false
+//             }
+//             if (pathname.includes('/sales') && item.key === 'apps.project') {
+//                 return false
+//             }
+
+//             // Filter KYC Form inside the account submenu based on signedUpAs
+//             if (item.key === 'apps.account') {
+//                 item.subMenu = item.subMenu.filter(subItem => {
+//                     // Hide KYC Form if signedUpAs is 'business'
+//                     if (subItem.key === 'appsAccount.kycForm') {
+//                         return signedUpAs !== 'business'
+//                     }
+//                     return true
+//                 })
+//             }
+
+//             return true
+//         })
+//     }
+
+//     return configCopy
+// }
+
+
+// Optional default export for fallback cases
+export default getAppsNavigationConfig(window.location.pathname)

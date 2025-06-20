@@ -565,6 +565,13 @@ export const searchQueryPoolData = [
         categoryTitle: 'Auth',
     },
     {
+        title: 'Sign Up As',
+        url: '/sign-up-as',
+        icon: 'authentication',
+        category: 'Authentication',
+        categoryTitle: 'Auth',
+    },
+    {
         title: 'Sign Up Side',
         url: '/auth/sign-up-side',
         icon: 'authentication',

@@ -1,4 +1,6 @@
+import SignUpAs from './SignUpAs'
 import SignUpForm from './SignUpForm'
+import SignUpFormBusiness from './SignUpFormBusiness'
 
 const SignUp = () => {
     return (
@@ -8,6 +10,7 @@ const SignUp = () => {
                 <p>And lets get started with your free trial</p>
             </div>
             <SignUpForm disableSubmit={false} />
+            <SignUpFormBusiness disableSubmit={false} />
         </>
     )
 }

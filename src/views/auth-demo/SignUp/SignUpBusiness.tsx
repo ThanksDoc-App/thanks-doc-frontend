@@ -1,10 +1,10 @@
 import Simple from '@/components/layouts/AuthLayout/Simple'
-import ForgotPasswordForm from './ForgotPasswordForm'
 import { Button } from '@/components/ui'
-import { useNavigate } from 'react-router-dom'
+import SignUpFormBusiness from '@/views/auth/SignUp/SignUpFormBusiness'
 import { ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
-const ForgotPassword = () => {
+const SignUpBusiness = () => {
     const navigate = useNavigate()
 
     const handleBack = () => {
@@ -12,9 +12,9 @@ const ForgotPassword = () => {
     }
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center bg-white">
+        <div className="relative min-h-screen">
             {/* Back button */}
-            <div className="absolute top-10 left-4 z-10">
+            <div className="absolute top-10  z-10">
                 <Button
                     variant="plain"
                     onClick={handleBack}
@@ -26,11 +26,18 @@ const ForgotPassword = () => {
             </div>
 
             {/* Main Layout */}
-            <Simple>
-                <ForgotPasswordForm />
+            <Simple
+                content={
+                    <div className="mb-4">
+                        <h3 className="mb-1">Sign Up</h3>
+                        <p>Start posting jobs!</p>
+                    </div>
+                }
+            >
+                <SignUpFormBusiness signInUrl="/auth/sign-in-business" />
             </Simple>
         </div>
     )
 }
 
-export default ForgotPassword
+export default SignUpBusiness

@@ -1,9 +1,9 @@
 import Avatar from '@/components/ui/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
-import useAuth from '@/utils/hooks/useAuth'
-import { useAppSelector } from '@/store'
-import { Link } from 'react-router-dom'
+import { useAppDispatch, signOutSuccess, setUser } from '@/store'
+import { useNavigate, Link } from 'react-router-dom'
+import appConfig from '@/configs/app.config'
 import classNames from 'classnames'
 import { HiOutlineUser, HiOutlineCog, HiOutlineLogout } from 'react-icons/hi'
 import { FiActivity } from 'react-icons/fi'
@@ -35,11 +35,32 @@ const dropdownItemList: DropdownList[] = [
 ]
 
 const _UserDropdown = ({ className }: CommonProps) => {
-    const { avatar, userName, authority, email } = useAppSelector(
-        (state) => state.auth.user,
-    )
+    const dispatch = useAppDispatch()
+    const navigate = useNavigate()
 
-    const { signOut } = useAuth()
+    // ✅ Get user from localStorage
+    const localUser =
+        JSON.parse(localStorage.getItem('userdetails') || '{}')?.data || {}
+
+    const avatar = localUser.profileImage || ''
+    const userName = localUser.name || 'Anonymous'
+    const email = localUser.email || ''
+    const authority = [localUser.role]
+
+    const handleSignOut = () => {
+        localStorage.clear()
+        window.location.reload()
+
+        dispatch(signOutSuccess())
+        dispatch(
+            setUser({
+                avatar: '',
+                userName: '',
+                email: '',
+                authority: [],
+            }),
+        )
+    }
 
     const UserAvatar = (
         <div className={classNames(className, 'flex items-center gap-2')}>
@@ -95,7 +116,7 @@ const _UserDropdown = ({ className }: CommonProps) => {
                 <Dropdown.Item
                     eventKey="Sign Out"
                     className="gap-2"
-                    onClick={signOut}
+                    onClick={handleSignOut}
                 >
                     <span className="text-xl opacity-50">
                         <HiOutlineLogout />

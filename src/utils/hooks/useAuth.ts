@@ -6,68 +6,106 @@ import {
     useAppSelector,
     useAppDispatch,
 } from '@/store'
-import appConfig from '@/configs/app.config'
-import { REDIRECT_URL_KEY } from '@/constants/app.constant'
+import appConfig, { ROLE_BASED_PATHS } from '@/configs/app.config'
 import { useNavigate } from 'react-router-dom'
 import useQuery from './useQuery'
 import type { SignInCredential, SignUpCredential } from '@/@types/auth'
 
-type Status = 'success' | 'failed'
+type Status = true | false
+
+function getAuthenticatedEntryPath(apiResponse: any): string {
+    const role = apiResponse?.data?.data?.role || apiResponse?.data?.role;
+    
+    return ROLE_BASED_PATHS[role as keyof typeof ROLE_BASED_PATHS] 
+}
 
 function useAuth() {
     const dispatch = useAppDispatch()
-
     const navigate = useNavigate()
-
     const query = useQuery()
 
     const { token, signedIn } = useAppSelector((state) => state.auth.session)
 
+    console.log('Current auth state:', { token, signedIn, authenticated: token && signedIn })
+
     const signIn = async (
-        values: SignInCredential,
-    ): Promise<
-        | {
-              status: Status
-              message: string
-          }
-        | undefined
-    > => {
-        try {
-            const resp = await apiSignIn(values)
-            if (resp.data) {
-                const { token } = resp.data
-                dispatch(signInSuccess(token))
-                if (resp.data.user) {
-                    dispatch(
-                        setUser(
-                            resp.data.user || {
-                                avatar: '',
-                                userName: 'Anonymous',
-                                authority: ['USER'],
-                                email: '',
-                            },
-                        ),
-                    )
-                }
-                const redirectUrl = query.get(REDIRECT_URL_KEY)
-                navigate(
-                    redirectUrl
-                        ? redirectUrl
-                        : appConfig.authenticatedEntryPath,
+    values: SignInCredential,
+): Promise<
+    | {
+          status: Status
+          message: string
+          data: any
+      }
+    | undefined
+> => {
+    try {
+        console.log('Starting sign in process...')
+        const resp = await apiSignIn(values)
+        console.log('API Response:', resp)
+
+        if (resp.data) {
+            // ✅ Save entire response to localStorage
+            localStorage.setItem('userdetails', JSON.stringify(resp.data))
+
+            const token = resp.data.data?.token || resp.data.data?.accessToken || resp.data.token
+            console.log('Token received:', token)
+
+            dispatch(signInSuccess(token))
+            console.log('signInSuccess dispatched')
+
+            const userData = resp.data.data?.user || resp.data.user
+            if (userData) {
+                dispatch(
+                    setUser(
+                        userData || {
+                            avatar: '',
+                            userName: 'Anonymous',
+                            authority: ['DOCTOR'],
+                            email: '',
+                        },
+                    ),
                 )
+                console.log('User set:', userData)
+            }
+
+            if (token) {
+                await new Promise(resolve => setTimeout(resolve, 100))
+
+                const authenticatedEntryPath = getAuthenticatedEntryPath(resp.data)
+                console.log('About to navigate to:', authenticatedEntryPath)
+                navigate(authenticatedEntryPath)
+
                 return {
-                    status: 'success',
-                    message: '',
+                    status: true,
+                    message: 'Sign in successful',
+                    data: resp.data
+                }
+            } else {
+                console.error('No token found in response')
+                return {
+                    status: false,
+                    message: 'Authentication failed - no token received',
+                    data: {}
                 }
             }
-            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-        } catch (errors: any) {
+        } else {
+            console.log('No data in response')
             return {
-                status: 'failed',
-                message: errors?.response?.data?.message || errors.toString(),
+                status: false,
+                message: 'Invalid response from server',
+                data: {}
             }
         }
+    } catch (errors: any) {
+        console.error('Sign in error:', errors)
+        return {
+            status: false,
+            message: errors?.response?.data?.message || errors.toString(),
+            data: {}
+        }
     }
+}
+
 
     const signUp = async (values: SignUpCredential) => {
         try {
@@ -75,33 +113,39 @@ function useAuth() {
             if (resp.data) {
                 const { token } = resp.data
                 dispatch(signInSuccess(token))
+                
                 if (resp.data.user) {
                     dispatch(
                         setUser(
                             resp.data.user || {
                                 avatar: '',
                                 userName: 'Anonymous',
-                                authority: ['USER'],
+                                authority: ['Doctor'],
                                 email: '',
                             },
                         ),
                     )
                 }
-                const redirectUrl = query.get(REDIRECT_URL_KEY)
-                navigate(
-                    redirectUrl
-                        ? redirectUrl
-                        : appConfig.authenticatedEntryPath,
-                )
+                
+                await new Promise(resolve => setTimeout(resolve, 100))
+                
+                const authenticatedEntryPath = getAuthenticatedEntryPath(resp)
+                navigate(authenticatedEntryPath)
+                
                 return {
-                    status: 'success',
-                    message: '',
+                    status: true,
+                    message: 'Sign up successful',
+                }
+            } else {
+                return {
+                    status: false,
+                    message: 'Invalid response from server',
                 }
             }
-            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
         } catch (errors: any) {
+            console.error('Sign up error:', errors)
             return {
-                status: 'failed',
+                status: false,
                 message: errors?.response?.data?.message || errors.toString(),
             }
         }

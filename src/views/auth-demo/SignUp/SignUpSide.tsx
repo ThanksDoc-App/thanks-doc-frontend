@@ -11,7 +11,7 @@ const SignUpSide = () => {
                 </>
             }
         >
-            <SignUpForm disableSubmit={true} signInUrl="/auth/sign-in-side" />
+            <SignUpForm signInUrl="/auth/sign-in-side" />
         </Side>
     )
 }

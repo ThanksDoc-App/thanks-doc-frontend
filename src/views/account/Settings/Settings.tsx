@@ -59,7 +59,6 @@ const settingsMenu: Record<
     profile: { label: 'Profile', path: 'profile' },
     integration: { label: 'Documents', path: 'integration' },
     billing: { label: 'Account Details', path: 'billing' },
-    //  notification: { label: 'Notification', path: 'notification' },
     password: { label: 'Password', path: 'password' },
 }
 
@@ -68,7 +67,6 @@ const Settings = () => {
     const [data, setData] = useState<Partial<AccountSetting>>({})
 
     const navigate = useNavigate()
-
     const location = useLocation()
 
     const path = location.pathname.substring(
@@ -93,12 +91,35 @@ const Settings = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    // Get signedUpAs from localStorage
+    let signedUpAs: string | null = null
+    try {
+        const userDetails = localStorage.getItem('userdetails')
+        if (userDetails) {
+            const parsed = JSON.parse(userDetails)
+            signedUpAs = parsed?.data?.signedUpAs
+        }
+    } catch (error) {
+        console.error('Error parsing userdetails:', error)
+    }
+
+    // Filter tabs based on signedUpAs
+    const filteredTabs = Object.keys(settingsMenu).filter((key) => {
+        if (
+            signedUpAs === 'business' &&
+            (key === 'integration' || key === 'billing')
+        ) {
+            return false
+        }
+        return true
+    })
+
     return (
         <Container>
             <AdaptableCard>
                 <Tabs value={currentTab} onChange={(val) => onTabChange(val)}>
                     <TabList>
-                        {Object.keys(settingsMenu).map((key) => (
+                        {filteredTabs.map((key) => (
                             <TabNav key={key} value={key}>
                                 {settingsMenu[key].label}
                             </TabNav>
@@ -125,8 +146,10 @@ const Settings = () => {
                         {currentTab === 'notification' && (
                             <NotificationSetting data={data.notification} />
                         )}
-                        {currentTab === 'integration' && <Integration />}
-                        {currentTab === 'billing' && <Billing />}
+                        {currentTab === 'integration' &&
+                            signedUpAs !== 'business' && <Integration />}
+                        {currentTab === 'billing' &&
+                            signedUpAs !== 'business' && <Billing />}
                     </Suspense>
                 </div>
             </AdaptableCard>
