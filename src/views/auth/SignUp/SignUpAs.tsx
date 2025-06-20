@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react' // Make sure this is the right import
-import { Button } from '@/components/ui/button' // Adjust this based on your setup
+import { Button } from '@/components/ui'
 
 const SignUpAs = () => {
     const navigate = useNavigate()
