@@ -6,7 +6,8 @@
             "dashboard": "Explore",
             "projectList": "Job List",
             "scrumBoard": "Scrum Board",
-            "issue": "Job Details"
+            "issue": "Job Details",
+            "history": "Job History"
         },
         "appsCrm": {
             "crm": "Admin CRM",

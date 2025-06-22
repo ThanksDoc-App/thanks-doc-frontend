@@ -100,7 +100,7 @@ function useAuth() {
                 } else {
                     return {
                         status: false,
-                        message: 'Authentication failed - no token received',
+                        message: resp.data.message,
                         data: {},
                     }
                 }

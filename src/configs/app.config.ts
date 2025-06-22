@@ -1,7 +1,7 @@
 // configs/app.config.ts
+
 export type AppConfig = {
     apiPrefix: string
-    authenticatedEntryPath: string
     unAuthenticatedEntryPath: string
     tourPath: string
     locale: string
@@ -10,18 +10,17 @@ export type AppConfig = {
 
 const appConfig: AppConfig = {
     apiPrefix: '/api',
-    authenticatedEntryPath: '/app/dashboard', // Default fallback path
     unAuthenticatedEntryPath: '/sign-in',
     tourPath: '/app/account/kyc-form',
     locale: 'en',
     enableMock: true,
 }
 
-// Role-based entry paths
-export const ROLE_BASED_PATHS = {
+// Role-based entry paths (used dynamically in logic)
+export const ROLE_BASED_PATHS: Record<string, string> = {
     business: '/app/sales/dashboard',
     doctor: '/app/project/dashboard',
-    // default: '/app/dashboard'
+    // Do not add a default fallback here
 }
 
 export default appConfig

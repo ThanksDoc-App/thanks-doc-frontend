@@ -35,6 +35,7 @@ export type ProfileFormModel = {
     timeZone: string
     lang: string
     syncData: boolean
+    gmcNumber?: number
 }
 
 type ProfileProps = {
@@ -113,20 +114,39 @@ const CustomSelectOption = ({
 //     )
 // }
 
-const Profile = ({
-    data = {
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        avatar: '',
+const Profile = ({ data }: ProfileProps) => {
+    const userDetails = JSON.parse(localStorage.getItem('userdetails') || '{}')
+    const signedUpAs = userDetails?.data?.signedUpAs
+
+    // OLD: Static initial values
+    // const data = {
+    //     name: '',
+    //     email: '',
+    //     phone: '',
+    //     address: '',
+    //     avatar: '',
+    //     timeZone: '',
+    //     lang: '',
+    //     syncData: false,
+    // }
+
+    // ✅ NEW: Use localStorage values as default, override with props if passed
+    const defaultData: ProfileFormModel = {
+        name: userDetails?.data?.name || '',
+        email: userDetails?.data?.email || '',
+        phone: userDetails?.data?.phone || '',
+        address: userDetails?.data?.address || '',
+        avatar: userDetails?.data?.profile_image || '',
+        gmcNumber: userDetails?.data?.gmcNumber || '',
         timeZone: '',
         lang: '',
         syncData: false,
-    },
-}: ProfileProps) => {
-    const userDetails = JSON.parse(localStorage.getItem('userdetails') || '{}')
-    const signedUpAs = userDetails?.data?.signedUpAs // <-- Added to control field visibility
+    }
+
+    const initialData = {
+        ...defaultData,
+        ...data,
+    }
 
     const onSetFormFile = (
         form: FormikProps<ProfileFormModel>,
@@ -150,7 +170,7 @@ const Profile = ({
     return (
         <Formik
             enableReinitialize
-            initialValues={data}
+            initialValues={initialData}
             validationSchema={validationSchema}
             onSubmit={(values, { setSubmitting }) => {
                 setSubmitting(true)
@@ -256,7 +276,7 @@ const Profile = ({
                                 <Field
                                     type="text"
                                     autoComplete="off"
-                                    name="title"
+                                    name="address"
                                     placeholder="Address"
                                     component={Input}
                                     prefix={
@@ -282,14 +302,14 @@ const Profile = ({
                             </FormRow>
                             {signedUpAs !== 'business' && (
                                 <FormRow
-                                    name="phone"
+                                    name="gmcNumber"
                                     label="GMC Number"
                                     {...validatorProps}
                                 >
                                     <Field
                                         type="text"
                                         autoComplete="off"
-                                        name="number"
+                                        name="gmcNumber" // ✅ Corrected
                                         placeholder="GMC Number"
                                         component={Input}
                                         prefix={
@@ -299,7 +319,6 @@ const Profile = ({
                                 </FormRow>
                             )}
 
-                            {/* Removed invalid address field as 'address' is not in ProfileFormModel */}
                             {/* <FormDesription
                                 className="mt-8"
                                 title="Preferences"

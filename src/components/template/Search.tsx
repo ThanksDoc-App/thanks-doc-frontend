@@ -10,6 +10,7 @@ import debounce from 'lodash/debounce'
 import { HiOutlineSearch, HiChevronRight } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
 import Highlighter from 'react-highlight-words'
+import { IoClose } from 'react-icons/io5'
 
 type SearchData = {
     title: string
@@ -179,7 +180,7 @@ const _Search = ({ className }: { className?: string }) => {
                 closable={false}
                 onRequestClose={handleSearchClose}
             >
-                <div>
+                <div className="h-[330px]">
                     <div className="px-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-600">
                         <div className="flex items-center">
                             <HiOutlineSearch className="text-xl" />
@@ -191,11 +192,11 @@ const _Search = ({ className }: { className?: string }) => {
                             />
                         </div>
                         <Button size="xs" onClick={handleSearchClose}>
-                            Esc
+                            <IoClose />
                         </Button>
                     </div>
                     <div className="py-6 px-5 max-h-[550px] overflow-y-auto">
-                        {searchResult.map((result) => (
+                        {/* {searchResult.map((result) => (
                             <div key={result.title} className="mb-6">
                                 <h6 className="mb-3">{result.title}</h6>
                                 {result.data.map((data, index) => (
@@ -209,7 +210,7 @@ const _Search = ({ className }: { className?: string }) => {
                                     />
                                 ))}
                             </div>
-                        ))}
+                        ))} */}
                         {searchResult.length === 0 && noResult && (
                             <div className="my-10 text-center text-lg">
                                 <span>No results for </span>

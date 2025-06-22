@@ -57,11 +57,21 @@ const baseConfig: NavigationTree[] = [
                     //     authority: [DOCTOR],
                     //     subMenu: [],
                     // },
+                    // {
+                    //     key: 'appsProject.issue',
+                    //     path: `${APP_PREFIX_PATH}/project/issue`,
+                    //     title: 'Issue',
+                    //     translateKey: 'nav.appsProject.issue',
+                    //     icon: '',
+                    //     type: NAV_ITEM_TYPE_ITEM,
+                    //     authority: [DOCTOR],
+                    //     subMenu: [],
+                    // },
                     {
-                        key: 'appsProject.issue',
-                        path: `${APP_PREFIX_PATH}/project/issue`,
-                        title: 'Issue',
-                        translateKey: 'nav.appsProject.issue',
+                        key: 'appsProject.history',
+                        path: `${APP_PREFIX_PATH}/project/history`,
+                        title: 'Listing',
+                        translateKey: 'nav.appsProject.history',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
                         authority: [DOCTOR],
@@ -197,18 +207,34 @@ const baseConfig: NavigationTree[] = [
     },
 ]
 
-export const getAppsNavigationConfig = (pathname: string): NavigationTree[] => {
+export const getAppsNavigationConfig = (): NavigationTree[] => {
     const configCopy = structuredClone(baseConfig)
 
-    const appsSection = configCopy.find(section => section.key === 'apps')
+    // Get user details from localStorage
+    const userDetailsString = localStorage.getItem('userdetails')
+    console.log("jjjj", userDetailsString)
 
-    if (appsSection) {
+    let signedUpAs = null
+
+    if (userDetailsString) {
+        try {
+            const userDetails = JSON.parse(userDetailsString)
+            signedUpAs = userDetails.data?.signedUpAs?.toLowerCase()
+        } catch (error) {
+            console.error('Error parsing user details from localStorage:', error)
+        }
+    }
+
+    const appsSection = configCopy.find(section => section.key === 'apps')
+    if (appsSection && signedUpAs) {
         appsSection.subMenu = appsSection.subMenu.filter(item => {
-            if (pathname.includes('/project') && item.key === 'apps.sales') {
-                return false // Hide Sales when in /project path
+            // Hide Sales for doctor
+            if (signedUpAs === 'doctor' && item.key === 'apps.sales') {
+                return false
             }
-            if (pathname.includes('/sales') && item.key === 'apps.project') {
-                return false // Hide Doctor Dashboard when in /sales path
+            // Hide Project for business
+            if (signedUpAs === 'business' && item.key === 'apps.project') {
+                return false
             }
             return true
         })
@@ -216,6 +242,7 @@ export const getAppsNavigationConfig = (pathname: string): NavigationTree[] => {
 
     return configCopy
 }
+
 
 // export const getAppsNavigationConfig = (pathname: string): NavigationTree[] => {
 //     const configCopy = structuredClone(baseConfig)
@@ -259,4 +286,4 @@ export const getAppsNavigationConfig = (pathname: string): NavigationTree[] => {
 
 
 // Optional default export for fallback cases
-export default getAppsNavigationConfig(window.location.pathname)
+export default getAppsNavigationConfig()

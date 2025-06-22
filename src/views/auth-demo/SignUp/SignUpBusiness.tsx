@@ -29,8 +29,8 @@ const SignUpBusiness = () => {
             <Simple
                 content={
                     <div className="mb-4">
-                        <h3 className="mb-1">Sign Up</h3>
-                        <p>Start posting jobs!</p>
+                        <h3 className="mb-1">Get Started</h3>
+                        {/* <p>Start posting jobs!</p> */}
                     </div>
                 }
             >

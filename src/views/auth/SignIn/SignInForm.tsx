@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom'
 // useEffect import removed since we no longer need it
 import * as Yup from 'yup'
 import type { CommonProps } from '@/@types/common'
+import { toast } from 'react-toastify'
 
 interface SignInFormProps extends CommonProps {
     disableSubmit?: boolean
@@ -63,6 +64,7 @@ const SignInForm = ({
 
             if (result?.status === false) {
                 setMessage(result.message)
+                // toast.error(result.message)
             } else if (result?.status === true && result?.data?.signedUpAs) {
                 // Get signedUpAs from the API response data
                 const signedUpAs = result.data.signedUpAs

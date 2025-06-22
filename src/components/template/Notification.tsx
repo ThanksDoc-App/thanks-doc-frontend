@@ -280,7 +280,7 @@ const _Notification = ({ className }: { className?: string }) => {
                         to="/app/account/activity-log"
                         className="font-semibold cursor-pointer p-2 px-3 text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
                     >
-                        View All Activity
+                        View All Activity11
                     </Link>
                 </div>
             </Dropdown.Item>

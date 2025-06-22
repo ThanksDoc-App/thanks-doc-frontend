@@ -3,7 +3,7 @@ import SignInForm from './SignInForm'
 
 const SignIn = () => {
     return (
-        <div>
+        <div className="min-h-screen flex items-center justify-center">
             <Simple>
                 <SignInForm disableSubmit={false} />
             </Simple>

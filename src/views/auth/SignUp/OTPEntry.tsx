@@ -33,11 +33,7 @@ const OTPEntry = <T extends Meta>(props: T): React.JSX.Element => {
                 const responseData = response.data as OTPResponse
                 const statusCode = response.status
 
-                if (
-                    statusCode === 200 ||
-                    statusCode === 201 ||
-                    responseData.status === true
-                ) {
+                if (responseData.status === true) {
                     toast.success('OTP verified successfully!')
                     navigate('/sign-in')
                 } else {
@@ -56,7 +52,6 @@ const OTPEntry = <T extends Meta>(props: T): React.JSX.Element => {
                 setIsLoading(false)
             }
         } else {
-            toast.error('Please enter all 6 digits')
         }
     }
 
