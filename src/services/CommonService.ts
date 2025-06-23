@@ -37,3 +37,17 @@ export async function apiGetSearchResult<T>(data: { query: string }) {
         data,
     })
 }
+
+export async function apiChangePassword(data: {
+    currentPassword: string
+    newPassword: string
+}) {
+    return ApiService.fetchData<{
+        status: boolean
+        message?: any
+    }>({
+        url: 'api/v1/user/change-password',
+        method: 'post',
+        data,
+    })
+}

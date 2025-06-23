@@ -16,6 +16,7 @@ import {
 } from 'react-icons/hi'
 import dayjs from 'dayjs'
 import * as Yup from 'yup'
+import { apiChangePassword } from '@/services/CommonService'
 
 type LoginHistory = {
     type: string
@@ -47,8 +48,11 @@ const validationSchema = Yup.object().shape({
     password: Yup.string().required('Password Required'),
     newPassword: Yup.string()
         .required('Enter your new password')
-        .min(8, 'Too Short!')
-        .matches(/^[A-Za-z0-9_-]*$/, 'Only Letters & Numbers Allowed'),
+        .min(8, 'Password must be at least 8 characters long')
+        .matches(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]+$/,
+            'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+        ),
     confirmNewPassword: Yup.string().oneOf(
         [Yup.ref('newPassword'), ''],
         'Password not match',
@@ -56,15 +60,77 @@ const validationSchema = Yup.object().shape({
 })
 
 const Password = ({ data }: { data?: LoginHistory[] }) => {
-    const onFormSubmit = (
+    const onFormSubmit = async (
         values: PasswordFormModel,
         setSubmitting: (isSubmitting: boolean) => void,
+        resetForm: () => void,
     ) => {
-        toast.push(<Notification title={'Password updated'} type="success" />, {
-            placement: 'top-center',
-        })
+        setSubmitting(true)
+        try {
+            const result = await apiChangePassword({
+                currentPassword: values.password,
+                newPassword: values.newPassword,
+            })
+            if (result?.data?.status === false) {
+                // Log the error message to the console
+                console.log(
+                    'Update password error:',
+                    result?.data?.message || 'An error occurred',
+                )
+
+                // Handle failure case
+                toast.push(
+                    <Notification
+                        title="Failed to update password"
+                        type="danger"
+                        description={
+                            result?.data?.message || 'An error occurred'
+                        }
+                    />,
+                    {
+                        placement: 'top-center',
+                    },
+                )
+            } else if (result?.data?.status === true) {
+                // Handle success case
+                toast.push(
+                    <Notification
+                        title="Password updated successfully"
+                        type="success"
+                    />,
+                    {
+                        placement: 'top-center',
+                    },
+                )
+                resetForm()
+            } else {
+                // Handle case where API response doesn't have expected structure
+                console.error('API response missing status:', result)
+                toast.push(
+                    <Notification
+                        title="Invalid response from server"
+                        type="danger"
+                        description="Please try again"
+                    />,
+                    {
+                        placement: 'top-center',
+                    },
+                )
+            }
+        } catch (error) {
+            console.error('Password change error:', error)
+            toast.push(
+                <Notification
+                    title="Error updating password"
+                    type="danger"
+                    description="Please check your current password and try again"
+                />,
+                {
+                    placement: 'top-center',
+                },
+            )
+        }
         setSubmitting(false)
-        console.log('values', values)
     }
 
     return (
@@ -76,11 +142,8 @@ const Password = ({ data }: { data?: LoginHistory[] }) => {
                     confirmNewPassword: '',
                 }}
                 validationSchema={validationSchema}
-                onSubmit={(values, { setSubmitting }) => {
-                    setSubmitting(true)
-                    setTimeout(() => {
-                        onFormSubmit(values, setSubmitting)
-                    }, 1000)
+                onSubmit={(values, { setSubmitting, resetForm }) => {
+                    onFormSubmit(values, setSubmitting, resetForm)
                 }}
             >
                 {({ touched, errors, isSubmitting, resetForm }) => {
@@ -136,6 +199,7 @@ const Password = ({ data }: { data?: LoginHistory[] }) => {
                                         className="ltr:mr-2 rtl:ml-2"
                                         type="button"
                                         onClick={() => resetForm()}
+                                        disabled={isSubmitting}
                                     >
                                         Reset
                                     </Button>

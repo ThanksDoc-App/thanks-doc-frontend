@@ -15,6 +15,7 @@ export interface NotificationProps extends CommonProps {
     triggerByToast?: boolean
     type?: TypeAttributes.Status
     width?: number | string
+    description?: string
 }
 
 const Notification = forwardRef<HTMLDivElement, NotificationProps>(
