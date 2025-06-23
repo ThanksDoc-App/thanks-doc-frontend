@@ -4,8 +4,8 @@ import {
     NAV_ITEM_TYPE_COLLAPSE,
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
-import { DOCTOR, BUSINESS } from '@/constants/roles.constant'
-// import { DOCTOR, BUSINESS, ADMIN, USER } from '@/constants/roles.constant'
+// import { DOCTOR, BUSINESS } from '@/constants/roles.constant'
+import { DOCTOR, BUSINESS, ADMIN, USER } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
 const baseConfig: NavigationTree[] = [
@@ -37,36 +37,6 @@ const baseConfig: NavigationTree[] = [
                         authority: [DOCTOR],
                         subMenu: [],
                     },
-                    // {
-                    //     key: 'appsProject.projectList',
-                    //     path: `${APP_PREFIX_PATH}/project/project-list`,
-                    //     title: 'Project List',
-                    //     translateKey: 'nav.appsProject.projectList',
-                    //     icon: '',
-                    //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [DOCTOR],
-                    //     subMenu: [],
-                    // },
-                    // {
-                    //     key: 'appsProject.scrumBoard',
-                    //     path: `${APP_PREFIX_PATH}/project/scrum-board`,
-                    //     title: 'Scrum Board',
-                    //     translateKey: 'nav.appsProject.scrumBoard',
-                    //     icon: '',
-                    //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [DOCTOR],
-                    //     subMenu: [],
-                    // },
-                    // {
-                    //     key: 'appsProject.issue',
-                    //     path: `${APP_PREFIX_PATH}/project/issue`,
-                    //     title: 'Issue',
-                    //     translateKey: 'nav.appsProject.issue',
-                    //     icon: '',
-                    //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [DOCTOR],
-                    //     subMenu: [],
-                    // },
                     {
                         key: 'appsProject.history',
                         path: `${APP_PREFIX_PATH}/project/history`,
@@ -79,7 +49,6 @@ const baseConfig: NavigationTree[] = [
                     },
                 ],
             },
-
             {
                 key: 'apps.sales',
                 path: '',
@@ -99,59 +68,69 @@ const baseConfig: NavigationTree[] = [
                         authority: [BUSINESS],
                         subMenu: [],
                     },
-                    {
-                        key: 'appsSales.productList',
-                        path: `${APP_PREFIX_PATH}/sales/product-list`,
-                        title: 'Product List',
-                        translateKey: 'nav.appsSales.productList',
-                        icon: '',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [BUSINESS],
-                        subMenu: [],
-                    },
-                    {
-                        key: 'appsSales.productEdit',
-                        path: `${APP_PREFIX_PATH}/sales/product-edit/12`,
-                        title: 'Product Edit',
-                        translateKey: 'nav.appsSales.productEdit',
-                        icon: '',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [BUSINESS],
-                        subMenu: [],
-                    },
-                    // {
-                    //     key: 'appsSales.productNew',
-                    //     path: `${APP_PREFIX_PATH}/sales/product-new`,
-                    //     title: 'New Product',
-                    //     translateKey: 'nav.appsSales.productNew',
-                    //     icon: '',
-                    //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [BUSINESS],
-                    //     subMenu: [],
-                    // },
-                    // {
-                    //     key: 'appsSales.orderList',
-                    //     path: `${APP_PREFIX_PATH}/sales/order-list`,
-                    //     title: 'Order List',
-                    //     translateKey: 'nav.appsSales.orderList',
-                    //     icon: '',
-                    //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [BUSINESS],
-                    //     subMenu: [],
-                    // },
-                    // {
-                    //     key: 'appsSales.orderDetails',
-                    //     path: `${APP_PREFIX_PATH}/sales/order-details/95954`,
-                    //     title: 'Order Details',
-                    //     translateKey: 'nav.appsSales.orderDetails',
-                    //     icon: '',
-                    //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [BUSINESS],
-                    //     subMenu: [],
-                    // },
                 ],
             },
-
+              {
+                 key: 'apps.crm',
+                 path: '',
+                 title: 'CRM',
+                 translateKey: 'nav.appsCrm.crm',
+                 icon: 'crm',
+                 type: NAV_ITEM_TYPE_COLLAPSE,
+                 authority: [ADMIN, USER],
+                 subMenu: [
+                     {
+                         key: 'appsCrm.dashboard',
+                         path: `${APP_PREFIX_PATH}/crm/dashboard`,
+                         title: 'Dashboard',
+                         translateKey: 'nav.appsCrm.dashboard',
+                         icon: '',
+                         type: NAV_ITEM_TYPE_ITEM,
+                         authority: [ADMIN, USER],
+                         subMenu: [],
+                     },
+                     {
+                         key: 'appsCrm.calendar',
+                         path: `${APP_PREFIX_PATH}/crm/calendar`,
+                         title: 'Calendar',
+                         translateKey: 'nav.appsCrm.calendar',
+                         icon: '',
+                         type: NAV_ITEM_TYPE_ITEM,
+                         authority: [ADMIN, USER],
+                         subMenu: [],
+                     },
+                     {
+                         key: 'appsCrm.customers',
+                         path: `${APP_PREFIX_PATH}/crm/customers`,
+                         title: 'Customers',
+                         translateKey: 'nav.appsCrm.customers',
+                         icon: '',
+                         type: NAV_ITEM_TYPE_ITEM,
+                         authority: [ADMIN, USER],
+                         subMenu: [],
+                     },
+                     {
+                         key: 'appsCrm.customerDetails',
+                         path: `${APP_PREFIX_PATH}/crm/customer-details?id=8`,
+                         title: 'Customer Details',
+                         translateKey: 'nav.appsCrm.customerDetails',
+                         icon: '',
+                         type: NAV_ITEM_TYPE_ITEM,
+                         authority: [ADMIN, USER],
+                         subMenu: [],
+                     },
+                     {
+                         key: 'appsCrm.mail',
+                         path: `${APP_PREFIX_PATH}/crm/mail`,
+                         title: 'Mail',
+                         translateKey: 'nav.appsCrm.mail',
+                         icon: '',
+                         type: NAV_ITEM_TYPE_ITEM,
+                         authority: [ADMIN, USER],
+                         subMenu: [],
+                     },
+                 ],
+             },
             {
                 key: 'apps.account',
                 path: '',
@@ -171,26 +150,6 @@ const baseConfig: NavigationTree[] = [
                         authority: [DOCTOR, BUSINESS],
                         subMenu: [],
                     },
-                    // {
-                    //     key: 'appsAccount.invoice',
-                    //     path: `${APP_PREFIX_PATH}/account/invoice/36223`,
-                    //     title: 'Invoice',
-                    //     translateKey: 'nav.appsAccount.invoice',
-                    //     icon: '',
-                    //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [DOCTOR, BUSINESS],
-                    //     subMenu: [],
-                    // },
-                    // {
-                    //     key: 'appsAccount.activityLog',
-                    //     path: `${APP_PREFIX_PATH}/account/activity-log`,
-                    //     title: 'Activity Log',
-                    //     translateKey: 'nav.appsAccount.activityLog',
-                    //     icon: '',
-                    //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [DOCTOR, BUSINESS],
-                    //     subMenu: [],
-                    // },
                     {
                         key: 'appsAccount.kycForm',
                         path: `${APP_PREFIX_PATH}/account/kyc-form`,
@@ -210,80 +169,59 @@ const baseConfig: NavigationTree[] = [
 export const getAppsNavigationConfig = (): NavigationTree[] => {
     const configCopy = structuredClone(baseConfig)
 
-    // Get user details from localStorage
     const userDetailsString = localStorage.getItem('userdetails')
-    console.log("jjjj", userDetailsString)
-
-    let signedUpAs = null
+    let signedUpAs: string | null = null
 
     if (userDetailsString) {
         try {
             const userDetails = JSON.parse(userDetailsString)
-            signedUpAs = userDetails.data?.signedUpAs?.toLowerCase()
+            signedUpAs = userDetails.data?.signedUpAs?.toLowerCase() || null
         } catch (error) {
             console.error('Error parsing user details from localStorage:', error)
         }
     }
 
     const appsSection = configCopy.find(section => section.key === 'apps')
-    if (appsSection && signedUpAs) {
-        appsSection.subMenu = appsSection.subMenu.filter(item => {
-            // Hide Sales for doctor
-            if (signedUpAs === 'doctor' && item.key === 'apps.sales') {
-                return false
+
+    if (appsSection && Array.isArray(appsSection.subMenu)) {
+        let newSubMenu: NavigationTree[] = []
+
+        for (const item of appsSection.subMenu) {
+            // Filter based on role
+            if ((signedUpAs === 'doctor' && item.key === 'apps.sales') ||
+                (signedUpAs === 'business' && item.key === 'apps.project')) {
+                continue
             }
-            // Hide Project for business
-            if (signedUpAs === 'business' && item.key === 'apps.project') {
-                return false
+
+            // Keep Account section as collapsible parent, flatten others
+            if (item.key === 'apps.account' || item.key === "apps.crm") {
+                // Keep account as is, but filter KYC Form for business users
+                if (signedUpAs === 'business' && Array.isArray(item.subMenu)) {
+                    item.subMenu = item.subMenu.filter(child => 
+                        child.key !== 'appsAccount.kycForm'
+                    )
+                }
+                newSubMenu.push(item)
+            } else if (item.type === NAV_ITEM_TYPE_COLLAPSE && Array.isArray(item.subMenu)) {
+                // Flatten Doctor Dashboard and Sales sections
+                const children = structuredClone(item.subMenu)
+
+                if (children.length > 0) {
+                    // Move parent icon to first child
+                    children[0].icon = item.icon
+                }
+
+                newSubMenu.push(...children)
+            } else {
+                newSubMenu.push(item)
             }
-            return true
-        })
+        }
+
+        appsSection.subMenu = newSubMenu
     }
 
     return configCopy
 }
-
-
-// export const getAppsNavigationConfig = (pathname: string): NavigationTree[] => {
-//     const configCopy = structuredClone(baseConfig)
-
-//     let signedUpAs = null
-//     try {
-//         const userData = JSON.parse(localStorage.getItem('userdetails') || '{}')
-//         signedUpAs = userData?.signedUpAs?.toLowerCase()
-//     } catch (error) {
-//         console.error('Invalid userdetails format in localStorage')
-//     }
-
-//     const appsSection = configCopy.find(section => section.key === 'apps')
-
-//     if (appsSection) {
-//         appsSection.subMenu = appsSection.subMenu.filter(item => {
-//             if (pathname.includes('/project') && item.key === 'apps.sales') {
-//                 return false
-//             }
-//             if (pathname.includes('/sales') && item.key === 'apps.project') {
-//                 return false
-//             }
-
-//             // Filter KYC Form inside the account submenu based on signedUpAs
-//             if (item.key === 'apps.account') {
-//                 item.subMenu = item.subMenu.filter(subItem => {
-//                     // Hide KYC Form if signedUpAs is 'business'
-//                     if (subItem.key === 'appsAccount.kycForm') {
-//                         return signedUpAs !== 'business'
-//                     }
-//                     return true
-//                 })
-//             }
-
-//             return true
-//         })
-//     }
-
-//     return configCopy
-// }
-
 
 // Optional default export for fallback cases
 export default getAppsNavigationConfig()
