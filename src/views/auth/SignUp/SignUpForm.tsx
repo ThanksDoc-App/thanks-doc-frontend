@@ -40,7 +40,7 @@ const validatePassword = (password: string) => {
 
 const getValidationSchema = (signedUpAs: string) => {
     const baseSchema = {
-        userName: Yup.string().required('Please enter your user name'),
+        userName: Yup.string().required('Please enter your full name'),
         email: Yup.string()
             .email('Invalid email')
             .required('Please enter your email'),
@@ -225,7 +225,7 @@ const SignUpForm = (props: SignUpFormProps) => {
                                     type="text"
                                     name="userName"
                                     autoComplete="off"
-                                    placeholder="User Name"
+                                    placeholder="First and Last Name"
                                     component={Input}
                                     disabled={signUpSuccess}
                                 />

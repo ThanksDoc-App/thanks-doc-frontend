@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react' // Make sure this is the right import
+import { ArrowLeft, User, Briefcase } from 'lucide-react' // Make sure this is the right import
 import { Button } from '@/components/ui'
 
 const SignUpAs = () => {
@@ -21,9 +21,9 @@ const SignUpAs = () => {
     }
 
     return (
-        <div className="relative flex items-center justify-center min-h-screen p-3">
+        <div className="relative flex items-center justify-center min-h-screen p-3 bg-[#F9FAFB]">
             {/* Back Button */}
-            <div className="absolute top-10 left-5 z-10">
+            <div className="absolute top-4 left-2 sm:top-10 sm:left-5 z-10">
                 <Button
                     variant="plain"
                     onClick={handleBack}
@@ -35,21 +35,23 @@ const SignUpAs = () => {
             </div>
 
             {/* Centered Content */}
-            <div className="w-full max-w-md">
-                <h1 className="text-[30px] font-[600] text-[#202430] text-center mb-12">
-                    Sign up
+            <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6 sm:p-10">
+                <h1 className="text-[24px] sm:text-[30px] font-[600] text-[#202430] text-center mb-8 sm:mb-12">
+                    Sign up as
                 </h1>
-                <div className="flex flex-wrap justify-center gap-3 sm:gap-5">
+                <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-5">
                     <button
                         onClick={handleDoctorSignUp}
-                        className="flex-1 min-w-[140px] h-[50px] px-5 bg-white border border-[#D6DDEB] rounded-md text-[16px] text-[#25324B] font-[500] hover:bg-gray-50 transition-colors duration-200"
+                        className="w-full sm:w-auto min-w-[140px] h-[50px] px-5 bg-white border border-[#D6DDEB] rounded-md text-[16px] text-[#25324B] font-[500] hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
                     >
+                        <User className="w-5 h-5" />
                         As a Doctor
                     </button>
                     <button
                         onClick={handleBusinessSignUp}
-                        className="flex-1 min-w-[160px] h-[47px] px-5 bg-teal-600 text-white rounded-md font-[700] text-[16px] hover:bg-teal-700 transition-colors duration-200"
+                        className="w-full sm:w-auto min-w-[140px] h-[50px] px-5 bg-white border border-[#D6DDEB] rounded-md text-[16px] text-[#25324B] font-[500] hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
                     >
+                        <Briefcase className="w-5 h-5" />
                         As a Business
                     </button>
                 </div>
