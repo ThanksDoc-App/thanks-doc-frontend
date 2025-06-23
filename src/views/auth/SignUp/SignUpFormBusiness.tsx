@@ -198,8 +198,8 @@ const SignUpFormBusiness = (props: SignUpFormProps) => {
                                     disabled={signUpSuccess}
                                 />
                             </FormItem>
-                            {/* <FormItem
-                                label="Full Name"
+                            <FormItem
+                                label="Contact Name"
                                 invalid={errors.userName && touched.userName}
                                 errorMessage={errors.userName}
                             >
@@ -207,11 +207,11 @@ const SignUpFormBusiness = (props: SignUpFormProps) => {
                                     type="text"
                                     name="userName"
                                     autoComplete="off"
-                                    placeholder="Full Name"
+                                    placeholder="Contact Name"
                                     component={Input}
                                     disabled={signUpSuccess}
                                 />
-                            </FormItem> */}
+                            </FormItem>
 
                             <FormItem
                                 label="Email"
