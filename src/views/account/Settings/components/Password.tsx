@@ -50,9 +50,10 @@ const validationSchema = Yup.object().shape({
         .required('Enter your new password')
         .min(8, 'Password must be at least 8 characters long')
         .matches(
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]+$/,
-            'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
+            'Password must contain at least one uppercase letter, one lowercase letter, one number, and be at least 8 characters',
         ),
+
     confirmNewPassword: Yup.string().oneOf(
         [Yup.ref('newPassword'), ''],
         'Password not match',
@@ -81,7 +82,9 @@ const Password = ({ data }: { data?: LoginHistory[] }) => {
                 // Handle failure case
                 toast.push(
                     <Notification
-                        title="Failed to update password"
+                        title={
+                            result?.data?.message || 'Failed to update password'
+                        }
                         type="danger"
                         description={
                             result?.data?.message || 'An error occurred'
