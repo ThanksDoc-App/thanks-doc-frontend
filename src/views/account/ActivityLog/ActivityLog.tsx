@@ -1,4 +1,4 @@
-import AdaptableCard from '@/components/shared/AdaptableCard'
+    import AdaptableCard from '@/components/shared/AdaptableCard'
 import Container from '@/components/shared/Container'
 import Log from './components/Log'
 import LogFilter from './components/LogFilter'

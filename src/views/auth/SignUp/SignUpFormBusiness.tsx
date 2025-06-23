@@ -19,7 +19,8 @@ interface SignUpFormProps extends CommonProps {
 }
 
 type SignUpFormSchema = {
-    userName: string
+    name: string
+    contactName: string
     password: string
     confirmPassword: string
     email: string
@@ -37,9 +38,9 @@ const validatePassword = (password: string) => {
         isLongEnough: password.length >= 8,
     }
 }
-
 const validationSchema = Yup.object().shape({
-    userName: Yup.string().required('Please enter your user name'),
+    name: Yup.string().required('Please enter your full name'),
+    contactName: Yup.string().required('Please enter the contact person name'),
     email: Yup.string()
         .email('Invalid email')
         .required('Please enter your email'),
@@ -91,7 +92,7 @@ const SignUpFormBusiness = (props: SignUpFormProps) => {
         values: SignUpFormSchema,
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
-        const { userName, password, email, confirmPassword } = values
+        const { name, contactName, password, email, confirmPassword } = values
         setLoader(true)
         setSubmitting(true)
 
@@ -125,7 +126,8 @@ const SignUpFormBusiness = (props: SignUpFormProps) => {
         try {
             console.log('Starting signup process...')
             const requestBody = {
-                name: userName,
+                name,
+                contactName,
                 email,
                 password,
                 signedUpAs, // Use the prop value
@@ -167,7 +169,8 @@ const SignUpFormBusiness = (props: SignUpFormProps) => {
             )}
             <Formik
                 initialValues={{
-                    userName: '',
+                    name: '',
+                    contactName: '',
                     email: '',
                     password: '',
                     confirmPassword: '',
@@ -186,26 +189,29 @@ const SignUpFormBusiness = (props: SignUpFormProps) => {
                         <FormContainer>
                             <FormItem
                                 label="Full Name"
-                                invalid={errors.userName && touched.userName}
-                                errorMessage={errors.userName}
+                                invalid={errors.name && touched.name}
+                                errorMessage={errors.name}
                             >
                                 <Field
                                     type="text"
-                                    name="userName"
+                                    name="fullName"
                                     autoComplete="off"
                                     placeholder="Full Name"
                                     component={Input}
                                     disabled={signUpSuccess}
                                 />
                             </FormItem>
+
                             <FormItem
                                 label="Contact Name"
-                                invalid={errors.userName && touched.userName}
-                                errorMessage={errors.userName}
+                                invalid={
+                                    errors.contactName && touched.contactName
+                                }
+                                errorMessage={errors.contactName}
                             >
                                 <Field
                                     type="text"
-                                    name="userName"
+                                    name="contactName"
                                     autoComplete="off"
                                     placeholder="Contact Name"
                                     component={Input}
