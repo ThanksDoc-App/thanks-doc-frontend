@@ -1,6 +1,7 @@
 export type SignInCredential = {
-    userName: string
+    userName?: string
     password: string
+    email?: string
 }
 
 export type SignInResponse = {
@@ -11,14 +12,26 @@ export type SignInResponse = {
         avatar: string
         email: string
     }
+    message?: any
+    status: boolean
+    data?: any
+}
+export type OTPResponse = {    
+    message?: any
+    status: boolean
 }
 
 export type SignUpResponse = SignInResponse
 
-export type SignUpCredential = {
-    userName: string
-    email: string
-    password: string
+    export type SignUpCredential = {
+        name: string
+        email: string
+        password: string
+        signedUpAs: string
+    }
+    
+    export type VerifyOtpPayload = {
+    otp: number;
 }
 
 export type ForgotPassword = {
@@ -27,4 +40,5 @@ export type ForgotPassword = {
 
 export type ResetPassword = {
     password: string
+    resetToken: any
 }

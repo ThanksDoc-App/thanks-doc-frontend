@@ -10,8 +10,14 @@ import './locales'
 
 const environment = process.env.NODE_ENV
 
-if (appConfig.enableMock) {
+// DISABLE MIRAGEJS COMPLETELY
+const DISABLE_MIRAGE = true
+
+if (appConfig.enableMock && !DISABLE_MIRAGE) {
     mockServer({ environment })
+    console.log('🟢 MirageJS enabled')
+} else {
+    console.log('🔴 MirageJS disabled - using real APIs')
 }
 
 function App() {

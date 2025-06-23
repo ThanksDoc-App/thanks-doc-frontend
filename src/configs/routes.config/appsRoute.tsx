@@ -10,6 +10,7 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/project/ProjectDashboard')),
         authority: [ADMIN, USER],
     },
+
     // {
     //     key: 'appsProject.projectList',
     //     path: `${APP_PREFIX_PATH}/project/project-list`,
@@ -29,6 +30,12 @@ const appsRoute: Routes = [
         key: 'appsProject.issue',
         path: `${APP_PREFIX_PATH}/project/issue`,
         component: lazy(() => import('@/views/project/Issue')),
+        authority: [ADMIN, USER],
+    },
+    {
+        key: 'appsProject.history',
+        path: `${APP_PREFIX_PATH}/project/history`,
+        component: lazy(() => import('@/views/project/JobHistory')),
         authority: [ADMIN, USER],
     },
     {

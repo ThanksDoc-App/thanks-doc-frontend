@@ -1,18 +1,44 @@
 import SignUpForm from '@/views/auth/SignUp/SignUpForm'
 import Simple from '@/components/layouts/AuthLayout/Simple'
+import { ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui'
 
 const SignUpSimple = () => {
+    const navigate = useNavigate()
+
+    const handleBack = () => {
+        navigate(-1)
+    }
     return (
-        <Simple
-            content={
-                <div className="mb-4">
-                    <h3 className="mb-1">Sign Up</h3>
-                    <p>And start getting jobs around you</p>
-                </div>
-            }
-        >
-            <SignUpForm disableSubmit={true} signInUrl="/auth/sign-in-simple" />
-        </Simple>
+        <div className="relative min-h-screen">
+            {/* Back button */}
+            <div className="absolute top-10 z-10">
+                <Button
+                    variant="plain"
+                    onClick={handleBack}
+                    type="button"
+                    className="flex items-center gap-1"
+                >
+                    <ArrowLeft className="w-4 h-4" /> Back
+                </Button>
+            </div>
+
+            {/* Main Layout */}
+            <Simple
+                content={
+                    <div className="mb-4">
+                        <h3 className="mb-1">Sign Up</h3>
+                        <p>And start getting jobs around you</p>
+                    </div>
+                }
+            >
+                <SignUpForm
+                    // disableSubmit={false}
+                    signInUrl="/auth/sign-in-simple"
+                />
+            </Simple>
+        </div>
     )
 }
 

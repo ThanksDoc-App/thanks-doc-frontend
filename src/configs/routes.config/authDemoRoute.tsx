@@ -49,9 +49,22 @@ const authDemoRoute: Routes = [
         },
     },
     {
-        key: 'authentication.signUpSide',
-        path: `${AUTH_PREFIX_PATH}/sign-up-side`,
-        component: lazy(() => import('@/views/auth-demo/SignUp/SignUpSide')),
+        key: 'authentication.signUpSimple',
+        path: `${AUTH_PREFIX_PATH}/sign-up-business`,
+        component: lazy(
+            () => import('@/views/auth-demo/SignUp/SignUpBusiness'),
+        ),
+        authority: [ADMIN, USER],
+        meta: {
+            layout: 'blank',
+            pageContainerType: 'gutterless',
+            footer: false,
+        },
+    },
+    {
+        key: 'authentication.signUpAs',
+        path: `${AUTH_PREFIX_PATH}/sign-up-as`,
+        component: lazy(() => import('@/views/auth/SignUp/SignUpAs')),
         authority: [ADMIN, USER],
         meta: {
             layout: 'blank',

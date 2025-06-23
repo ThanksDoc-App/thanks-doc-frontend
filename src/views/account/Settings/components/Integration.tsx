@@ -102,46 +102,46 @@ const Integration = () => {
     return (
         <>
             <div className="mt-4">
-            <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-lg">My Documents</h4>
-            </div>
+                <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold text-lg">My Documents</h4>
+                </div>
                 <div className="grid lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 mt-4">
                     {data?.available?.map((app) => (
-                            <Card
-                                key={app.name}
-                                bodyClass="p-0"
-                                footerClass="flex justify-end p-2"
-                                footer={
-                                    <Button
-                                        variant="plain"
-                                        size="sm"
-                                        onClick={() =>
-                                            onViewIntegrationOpen(app, false)
-                                        }
-                                    >
-                                        View Document
-                                    </Button>
-                                }
-                            >
-                                <div className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center">
-                                            <Avatar
-                                                className="bg-transparent dark:bg-transparent"
-                                                src={app.img}
-                                            />
-                                            <div className="ltr:ml-2 rtl:mr-2">
-                                                <h6>{app.name}</h6>
-                                            </div>
+                        <Card
+                            key={app.name}
+                            bodyClass="p-0"
+                            footerClass="flex justify-end p-2"
+                            footer={
+                                <Button
+                                    variant="plain"
+                                    size="sm"
+                                    onClick={() =>
+                                        onViewIntegrationOpen(app, false)
+                                    }
+                                >
+                                    View Document
+                                </Button>
+                            }
+                        >
+                            <div className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                        <Avatar
+                                            className="bg-transparent dark:bg-transparent"
+                                            src={app.img}
+                                        />
+                                        <div className="ltr:ml-2 rtl:mr-2">
+                                            <h6>{app.name}</h6>
                                         </div>
-                                        {/* Tag added here */}
-                                        <span className="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-1 rounded">
-                                            {app.type}
-                                        </span>
                                     </div>
-                                    <p className="mt-6">{app.desc}</p>
+                                    {/* Tag added here */}
+                                    <span className="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-1 rounded">
+                                        {app.type}
+                                    </span>
                                 </div>
-                            </Card>
+                                <p className="mt-6">{app.desc}</p>
+                            </div>
+                        </Card>
                     ))}
                 </div>
             </div>
@@ -179,10 +179,7 @@ const Integration = () => {
                             Update
                         </Button>
                     ) : (
-                        <Button
-                            variant="solid"
-                            loading={installing}
-                        >
+                        <Button variant="solid" loading={installing}>
                             Update
                         </Button>
                     )}

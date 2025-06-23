@@ -9,12 +9,13 @@ import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import type { CommonProps } from '@/@types/common'
 import { apiSignUp } from '@/services/AuthService'
-import { useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface SignUpFormProps extends CommonProps {
     disableSubmit?: boolean
     signInUrl?: string
+    signedUpAs?: string // Add this prop to receive the role
 }
 
 type SignUpFormSchema = {
@@ -22,7 +23,6 @@ type SignUpFormSchema = {
     password: string
     confirmPassword: string
     email: string
-    gmcNumber?: string
 }
 
 const validatePassword = (password: string) => {
@@ -38,50 +38,30 @@ const validatePassword = (password: string) => {
     }
 }
 
-const getValidationSchema = (signedUpAs: string) => {
-    const baseSchema = {
-        userName: Yup.string().required('Please enter your user name'),
-        email: Yup.string()
-            .email('Invalid email')
-            .required('Please enter your email'),
-        password: Yup.string().required('Please enter your password'),
-        confirmPassword: Yup.string()
-            .oneOf([Yup.ref('password')], 'Your passwords do not match')
-            .required('Please confirm your password'),
-    }
+const validationSchema = Yup.object().shape({
+    userName: Yup.string().required('Please enter your user name'),
+    email: Yup.string()
+        .email('Invalid email')
+        .required('Please enter your email'),
+    password: Yup.string().required('Please enter your password'),
+    confirmPassword: Yup.string()
+        .oneOf([Yup.ref('password')], 'Your passwords do not match')
+        .required('Please confirm your password'),
+})
 
-    if (signedUpAs === 'doctor') {
-        return Yup.object().shape({
-            ...baseSchema,
-            gmcNumber: Yup.string().required('Please enter your GMC number'),
-        })
-    }
+const SignUpFormBusiness = (props: SignUpFormProps) => {
+    const {
+        disableSubmit = false,
+        className,
+        signInUrl = '/sign-in',
+        signedUpAs = 'business',
+    } = props
 
-    return Yup.object().shape(baseSchema)
-}
-
-const SignUpForm = (props: SignUpFormProps) => {
-    const { disableSubmit = false, className, signInUrl = '/sign-in' } = props
-    const location = useLocation()
     const navigate = useNavigate()
-
     const [message, setMessage] = useTimeOutMessage()
     const [signUpSuccess, setSignUpSuccess] = useState(false)
-    const [selectedRole, setSelectedRole] = useState('')
     const [loader, setLoader] = useState(false)
     const [passwordError, setPasswordError] = useState('')
-
-    useEffect(() => {
-        let role = ''
-        const savedRole = localStorage.getItem('signedUpAs')
-        if (savedRole) {
-            role = savedRole
-        }
-        if (location.state?.signedUpAs) {
-            role = location.state.signedUpAs
-        }
-        setSelectedRole(role)
-    }, [location])
 
     const handlePasswordChange = (
         value: string,
@@ -111,7 +91,7 @@ const SignUpForm = (props: SignUpFormProps) => {
         values: SignUpFormSchema,
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
-        const { userName, password, email, gmcNumber, confirmPassword } = values
+        const { userName, password, email, confirmPassword } = values
         setLoader(true)
         setSubmitting(true)
 
@@ -143,18 +123,17 @@ const SignUpForm = (props: SignUpFormProps) => {
         }
 
         try {
+            console.log('Starting signup process...')
             const requestBody = {
                 name: userName,
                 email,
                 password,
-                signedUpAs: selectedRole,
-                ...(selectedRole === 'doctor' && gmcNumber && { gmcNumber }),
+                signedUpAs, // Use the prop value
             }
 
             const response = await apiSignUp(requestBody)
 
             if (response.data.status === true) {
-                localStorage.removeItem('signedUpAs')
                 setSignUpSuccess(true)
                 navigate('/verify-email')
             } else {
@@ -173,16 +152,6 @@ const SignUpForm = (props: SignUpFormProps) => {
         }
     }
 
-    if (!selectedRole) {
-        return (
-            <div className={className}>
-                <Alert showIcon className="mb-4" type="warning">
-                    Please select a role first. Redirecting...
-                </Alert>
-            </div>
-        )
-    }
-
     return (
         <div className={className}>
             {message && (
@@ -190,21 +159,20 @@ const SignUpForm = (props: SignUpFormProps) => {
                     {message}
                 </Alert>
             )}
+
             {signUpSuccess && (
                 <Alert showIcon className="mb-4" type="success">
                     Account created successfully! Redirecting to verify email...
                 </Alert>
             )}
-
             <Formik
                 initialValues={{
                     userName: '',
                     email: '',
                     password: '',
                     confirmPassword: '',
-                    gmcNumber: '',
                 }}
-                validationSchema={getValidationSchema(selectedRole)}
+                validationSchema={validationSchema}
                 onSubmit={(values, { setSubmitting }) => {
                     if (!disableSubmit) {
                         onSignUp(values, setSubmitting)
@@ -217,7 +185,7 @@ const SignUpForm = (props: SignUpFormProps) => {
                     <Form>
                         <FormContainer>
                             <FormItem
-                                label="FullName"
+                                label="Full Name"
                                 invalid={errors.userName && touched.userName}
                                 errorMessage={errors.userName}
                             >
@@ -225,11 +193,25 @@ const SignUpForm = (props: SignUpFormProps) => {
                                     type="text"
                                     name="userName"
                                     autoComplete="off"
-                                    placeholder="User Name"
+                                    placeholder="Full Name"
                                     component={Input}
                                     disabled={signUpSuccess}
                                 />
                             </FormItem>
+                            {/* <FormItem
+                                label="Full Name"
+                                invalid={errors.userName && touched.userName}
+                                errorMessage={errors.userName}
+                            >
+                                <Field
+                                    type="text"
+                                    name="userName"
+                                    autoComplete="off"
+                                    placeholder="Full Name"
+                                    component={Input}
+                                    disabled={signUpSuccess}
+                                />
+                            </FormItem> */}
 
                             <FormItem
                                 label="Email"
@@ -245,25 +227,6 @@ const SignUpForm = (props: SignUpFormProps) => {
                                     disabled={signUpSuccess}
                                 />
                             </FormItem>
-
-                            {selectedRole === 'doctor' && (
-                                <FormItem
-                                    label="GMC Number"
-                                    invalid={
-                                        errors.gmcNumber && touched.gmcNumber
-                                    }
-                                    errorMessage={errors.gmcNumber}
-                                >
-                                    <Field
-                                        type="text"
-                                        autoComplete="off"
-                                        name="gmcNumber"
-                                        placeholder="GMC Number"
-                                        component={Input}
-                                        disabled={signUpSuccess}
-                                    />
-                                </FormItem>
-                            )}
 
                             <FormItem
                                 label="Password"
@@ -320,8 +283,13 @@ const SignUpForm = (props: SignUpFormProps) => {
                                 loading={isSubmitting || loader}
                                 variant="solid"
                                 type="submit"
+                                disabled={signUpSuccess}
                             >
-                                Sign Up
+                                {signUpSuccess
+                                    ? 'Account Created!'
+                                    : isSubmitting
+                                      ? 'Creating Account...'
+                                      : 'Sign Up'}
                             </Button>
 
                             <div className="mt-4 text-center">
@@ -336,4 +304,4 @@ const SignUpForm = (props: SignUpFormProps) => {
     )
 }
 
-export default SignUpForm
+export default SignUpFormBusiness

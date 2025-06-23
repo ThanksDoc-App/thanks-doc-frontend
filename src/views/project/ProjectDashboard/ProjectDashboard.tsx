@@ -18,9 +18,18 @@ const ProjectDashboard = () => {
     const dashboardData = useAppSelector(
         (state) => state.projectDashboard.data.dashboardData,
     )
-    const loading = useAppSelector(
-        (state) => state.projectDashboard.data.loading,
-    )
+    const loading = useAppSelector((state) => state.projectDashboard.loading)
+
+    // Old logic: only used dashboardData?.userName
+    // <ProjectDashboardHeader
+    //     userName={dashboardData?.userName}
+    //     taskCount={dashboardData?.taskCount}
+    // />
+
+    // New logic: fallback to name in localStorage if dashboardData.userName is missing
+    const localUserName =
+        JSON.parse(localStorage.getItem('userdetails') || '{}')?.data?.name ||
+        'Doctor'
 
     useEffect(() => {
         fetchData()
@@ -34,10 +43,18 @@ const ProjectDashboard = () => {
     return (
         <div className="flex flex-col gap-4 h-full">
             <Loading loading={loading}>
-                <ProjectDashboardHeader
+                {/* Old version */}
+                {/* <ProjectDashboardHeader
                     userName={dashboardData?.userName}
                     taskCount={dashboardData?.taskCount}
+                /> */}
+
+                {/* New version with localStorage fallback */}
+                <ProjectDashboardHeader
+                    userName={dashboardData?.userName || localUserName}
+                    taskCount={dashboardData?.taskCount}
                 />
+
                 <div className="flex flex-col xl:flex-row gap-4">
                     <div className="flex flex-col gap-4 flex-auto">
                         {/* <TaskOverview

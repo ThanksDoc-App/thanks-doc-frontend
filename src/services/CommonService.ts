@@ -4,7 +4,8 @@ export async function apiGetNotificationCount() {
     return ApiService.fetchData<{
         count: number
     }>({
-        url: '/notification/count',
+        // url: '/notification/count',
+        url: 'api/v1/notification/user-notifications',
         method: 'get',
     })
 }
@@ -24,7 +25,7 @@ export async function apiGetNotificationList() {
             readed: boolean
         }[]
     >({
-        url: '/notification/list',
+        url: 'api/v1/notification/user-notifications',
         method: 'get',
     })
 }

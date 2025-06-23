@@ -10,6 +10,7 @@ type FormRow<T> = PropsWithChildren<{
     name: keyof T
     border?: boolean
     alignCenter?: boolean
+    number?: number
 }>
 
 const FormRow = <T extends Record<string, unknown>>(props: FormRow<T>) => {

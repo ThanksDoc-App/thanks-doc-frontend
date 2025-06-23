@@ -1,3 +1,4 @@
+// src/views/auth/SignInForm.tsx
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Checkbox from '@/components/ui/Checkbox'
@@ -7,9 +8,13 @@ import PasswordInput from '@/components/shared/PasswordInput'
 import ActionLink from '@/components/shared/ActionLink'
 import useTimeOutMessage from '@/utils/hooks/useTimeOutMessage'
 import useAuth from '@/utils/hooks/useAuth'
+import { ROLE_BASED_PATHS } from '@/configs/app.config'
 import { Field, Form, Formik } from 'formik'
+import { useNavigate } from 'react-router-dom'
+// useEffect import removed since we no longer need it
 import * as Yup from 'yup'
 import type { CommonProps } from '@/@types/common'
+import { toast } from 'react-toastify'
 
 interface SignInFormProps extends CommonProps {
     disableSubmit?: boolean
@@ -18,42 +23,80 @@ interface SignInFormProps extends CommonProps {
 }
 
 type SignInFormSchema = {
-    userName: string
+    email: string
     password: string
     rememberMe: boolean
 }
 
 const validationSchema = Yup.object().shape({
-    userName: Yup.string().required('Please enter your user name'),
+    email: Yup.string()
+        .email('Please enter a valid email')
+        .required('Please enter your email'),
     password: Yup.string().required('Please enter your password'),
     rememberMe: Yup.bool(),
 })
 
-const SignInForm = (props: SignInFormProps) => {
-    const {
-        disableSubmit = false,
-        className,
-        forgotPasswordUrl = '/forgot-password',
-        signUpUrl = '/sign-up',
-    } = props
-
+const SignInForm = ({
+    disableSubmit = false,
+    className,
+    forgotPasswordUrl = '/forgot-password',
+    signUpUrl = '/sign-up-as',
+}: SignInFormProps) => {
     const [message, setMessage] = useTimeOutMessage()
-
     const { signIn } = useAuth()
+    const navigate = useNavigate()
+
+    // This useEffect can be removed since we're getting role from API response
+    // useEffect(() => {
+    //     // No longer needed - role check happens after API response
+    // }, [navigate])
 
     const onSignIn = async (
         values: SignInFormSchema,
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
-        const { userName, password } = values
         setSubmitting(true)
+        try {
+            const result = await signIn({
+                email: values.email,
+                password: values.password,
+            })
 
-        const result = await signIn({ userName, password })
+            if (result?.status === false) {
+                setMessage(result.message)
+                // toast.error(result.message)
+            } else if (result?.status === true && result?.data?.signedUpAs) {
+                // Get signedUpAs from the API response data
+                const signedUpAs = result.data.signedUpAs
 
-        if (result?.status === 'failed') {
-            setMessage(result.message)
+                console.log('User signedUpAs:', signedUpAs) // Debug log
+
+                if (signedUpAs === 'doctor') {
+                    console.log('Redirecting to doctor dashboard')
+                    navigate(ROLE_BASED_PATHS.doctor, { replace: true })
+                } else if (signedUpAs === 'business') {
+                    console.log('Redirecting to business dashboard')
+                    navigate(ROLE_BASED_PATHS.business, { replace: true })
+                } else {
+                    // No valid role found in API response
+                    console.warn(
+                        'Invalid role found in API response:',
+                        signedUpAs,
+                    )
+                    setMessage(
+                        `Invalid user role: ${signedUpAs}. Please contact support.`,
+                    )
+                }
+            } else {
+                // Handle case where API response doesn't have expected structure
+                console.error('API response missing signedUpAs data:', result)
+                setMessage('Invalid response from server. Please try again.')
+            }
+        } catch (error) {
+            setMessage(
+                'Sign-in failed. Please check your credentials and try again.',
+            )
         }
-
         setSubmitting(false)
     }
 
@@ -61,55 +104,42 @@ const SignInForm = (props: SignInFormProps) => {
         <div className={className}>
             {message && (
                 <Alert showIcon className="mb-4" type="danger">
-                    <>{message}</>
+                    {message}
                 </Alert>
             )}
             <Formik
-                initialValues={{
-                    userName: 'admin',
-                    password: '123Qwe',
-                    rememberMe: true,
-                }}
+                initialValues={{ email: '', password: '', rememberMe: false }}
                 validationSchema={validationSchema}
                 onSubmit={(values, { setSubmitting }) => {
-                    if (!disableSubmit) {
-                        onSignIn(values, setSubmitting)
-                    } else {
-                        setSubmitting(false)
-                    }
+                    if (!disableSubmit) onSignIn(values, setSubmitting)
+                    else setSubmitting(false)
                 }}
             >
                 {({ touched, errors, isSubmitting }) => (
                     <Form>
                         <FormContainer>
                             <FormItem
-                                label="User Name"
-                                invalid={
-                                    (errors.userName &&
-                                        touched.userName) as boolean
-                                }
-                                errorMessage={errors.userName}
+                                label="Email"
+                                invalid={!!errors.email && touched.email}
+                                errorMessage={errors.email}
                             >
                                 <Field
-                                    type="text"
-                                    autoComplete="off"
-                                    name="userName"
-                                    placeholder="User Name"
+                                    type="email"
+                                    autoComplete="email"
+                                    name="email"
+                                    placeholder="Enter your email"
                                     component={Input}
                                 />
                             </FormItem>
                             <FormItem
                                 label="Password"
-                                invalid={
-                                    (errors.password &&
-                                        touched.password) as boolean
-                                }
+                                invalid={!!errors.password && touched.password}
                                 errorMessage={errors.password}
                             >
                                 <Field
-                                    autoComplete="off"
+                                    autoComplete="current-password"
                                     name="password"
-                                    placeholder="Password"
+                                    placeholder="Enter your password"
                                     component={PasswordInput}
                                 />
                             </FormItem>
@@ -134,7 +164,7 @@ const SignInForm = (props: SignInFormProps) => {
                                 {isSubmitting ? 'Signing in...' : 'Sign In'}
                             </Button>
                             <div className="mt-4 text-center">
-                                <span>{`Don't have an account yet?`} </span>
+                                <span>Don't have an account yet? </span>
                                 <ActionLink to={signUpUrl}>Sign up</ActionLink>
                             </div>
                         </FormContainer>

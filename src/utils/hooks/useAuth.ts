@@ -1,4 +1,5 @@
-import { apiSignIn, apiSignOut, apiSignUp } from '@/services/AuthService'
+import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     setUser,
     signInSuccess,
@@ -6,65 +7,115 @@ import {
     useAppSelector,
     useAppDispatch,
 } from '@/store'
-import appConfig from '@/configs/app.config'
-import { REDIRECT_URL_KEY } from '@/constants/app.constant'
-import { useNavigate } from 'react-router-dom'
+import { apiSignIn, apiSignOut, apiSignUp } from '@/services/AuthService'
+import appConfig, { ROLE_BASED_PATHS } from '@/configs/app.config'
 import useQuery from './useQuery'
 import type { SignInCredential, SignUpCredential } from '@/@types/auth'
 
-type Status = 'success' | 'failed'
+type Status = true | false
+
+function getAuthenticatedEntryPath(apiResponse: any): string {
+    const role = apiResponse?.data?.data?.role || apiResponse?.data?.role
+    return ROLE_BASED_PATHS[role as keyof typeof ROLE_BASED_PATHS]
+}
 
 function useAuth() {
     const dispatch = useAppDispatch()
-
     const navigate = useNavigate()
-
     const query = useQuery()
-
     const { token, signedIn } = useAppSelector((state) => state.auth.session)
 
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    // 🔐 Auto logout after 30 minutes of inactivity
+    useEffect(() => {
+        if (token && signedIn) {
+            const EVENTS = ['mousemove', 'keydown', 'scroll', 'click']
+
+            const resetTimer = () => {
+                if (timeoutRef.current) clearTimeout(timeoutRef.current)
+                timeoutRef.current = setTimeout(() => {
+                    console.log('User inactive for 30 minutes. Logging out...')
+                    handleSignOut()
+                }, 30 * 60 * 1000) // 30 mins
+            }
+
+            EVENTS.forEach((event) => window.addEventListener(event, resetTimer))
+            resetTimer()
+
+            return () => {
+                EVENTS.forEach((event) =>
+                    window.removeEventListener(event, resetTimer)
+                )
+                if (timeoutRef.current) clearTimeout(timeoutRef.current)
+            }
+        }
+    }, [token, signedIn])
+
     const signIn = async (
-        values: SignInCredential,
-    ): Promise<
-        | {
-              status: Status
-              message: string
-          }
-        | undefined
-    > => {
+        values: SignInCredential
+    ): Promise<{
+        status: Status
+        message: string
+        data: any
+    } | undefined> => {
         try {
             const resp = await apiSignIn(values)
+
             if (resp.data) {
-                const { token } = resp.data
+                localStorage.setItem('userdetails', JSON.stringify(resp.data))
+
+                const token =
+                    resp.data.data?.token ||
+                    resp.data.data?.accessToken ||
+                    resp.data.token
+
                 dispatch(signInSuccess(token))
-                if (resp.data.user) {
+
+                const userData = resp.data.data?.user || resp.data.user
+                if (userData) {
                     dispatch(
                         setUser(
-                            resp.data.user || {
+                            userData || {
                                 avatar: '',
                                 userName: 'Anonymous',
-                                authority: ['USER'],
+                                authority: ['DOCTOR'],
                                 email: '',
-                            },
-                        ),
+                            }
+                        )
                     )
                 }
-                const redirectUrl = query.get(REDIRECT_URL_KEY)
-                navigate(
-                    redirectUrl
-                        ? redirectUrl
-                        : appConfig.authenticatedEntryPath,
-                )
+
+                if (token) {
+                    await new Promise((resolve) => setTimeout(resolve, 100))
+
+                    const authenticatedEntryPath = getAuthenticatedEntryPath(resp.data)
+                    navigate(authenticatedEntryPath)
+
+                    return {
+                        status: true,
+                        message: 'Sign in successful',
+                        data: resp.data,
+                    }
+                } else {
+                    return {
+                        status: false,
+                        message: resp.data.message,
+                        data: {},
+                    }
+                }
+            } else {
                 return {
-                    status: 'success',
-                    message: '',
+                    status: false,
+                    message: 'Invalid response from server',
+                    data: {},
                 }
             }
-            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
         } catch (errors: any) {
             return {
-                status: 'failed',
+                status: false,
                 message: errors?.response?.data?.message || errors.toString(),
+                data: {},
             }
         }
     }
@@ -75,33 +126,37 @@ function useAuth() {
             if (resp.data) {
                 const { token } = resp.data
                 dispatch(signInSuccess(token))
+
                 if (resp.data.user) {
                     dispatch(
                         setUser(
                             resp.data.user || {
                                 avatar: '',
                                 userName: 'Anonymous',
-                                authority: ['USER'],
+                                authority: ['Doctor'],
                                 email: '',
-                            },
-                        ),
+                            }
+                        )
                     )
                 }
-                const redirectUrl = query.get(REDIRECT_URL_KEY)
-                navigate(
-                    redirectUrl
-                        ? redirectUrl
-                        : appConfig.authenticatedEntryPath,
-                )
+
+                await new Promise((resolve) => setTimeout(resolve, 100))
+                const authenticatedEntryPath = getAuthenticatedEntryPath(resp)
+                navigate(authenticatedEntryPath)
+
                 return {
-                    status: 'success',
-                    message: '',
+                    status: true,
+                    message: 'Sign up successful',
+                }
+            } else {
+                return {
+                    status: false,
+                    message: 'Invalid response from server',
                 }
             }
-            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
         } catch (errors: any) {
             return {
-                status: 'failed',
+                status: false,
                 message: errors?.response?.data?.message || errors.toString(),
             }
         }
@@ -115,8 +170,9 @@ function useAuth() {
                 userName: '',
                 email: '',
                 authority: [],
-            }),
+            })
         )
+        localStorage.removeItem('userdetails')
         navigate(appConfig.unAuthenticatedEntryPath)
     }
 

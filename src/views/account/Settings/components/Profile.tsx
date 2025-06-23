@@ -35,6 +35,7 @@ export type ProfileFormModel = {
     timeZone: string
     lang: string
     syncData: boolean
+    gmcNumber?: number
 }
 
 type ProfileProps = {
@@ -113,18 +114,40 @@ const CustomSelectOption = ({
 //     )
 // }
 
-const Profile = ({
-    data = {
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        avatar: '',
+const Profile = ({ data }: ProfileProps) => {
+    const userDetails = JSON.parse(localStorage.getItem('userdetails') || '{}')
+    const signedUpAs = userDetails?.data?.signedUpAs
+
+    // OLD: Static initial values
+    // const data = {
+    //     name: '',
+    //     email: '',
+    //     phone: '',
+    //     address: '',
+    //     avatar: '',
+    //     timeZone: '',
+    //     lang: '',
+    //     syncData: false,
+    // }
+
+    // ✅ NEW: Use localStorage values as default, override with props if passed
+    const defaultData: ProfileFormModel = {
+        name: userDetails?.data?.name || '',
+        email: userDetails?.data?.email || '',
+        phone: userDetails?.data?.phone || '',
+        address: userDetails?.data?.address || '',
+        avatar: userDetails?.data?.profile_image || '',
+        gmcNumber: userDetails?.data?.gmcNumber || '',
         timeZone: '',
         lang: '',
         syncData: false,
-    },
-}: ProfileProps) => {
+    }
+
+    const initialData = {
+        ...defaultData,
+        ...data,
+    }
+
     const onSetFormFile = (
         form: FormikProps<ProfileFormModel>,
         field: FieldInputProps<ProfileFormModel>,
@@ -147,7 +170,7 @@ const Profile = ({
     return (
         <Formik
             enableReinitialize
-            initialValues={data}
+            initialValues={initialData}
             validationSchema={validationSchema}
             onSubmit={(values, { setSubmitting }) => {
                 setSubmitting(true)
@@ -211,7 +234,7 @@ const Profile = ({
                                 name="name"
                                 label="Name"
                                 {...validatorProps}
-                                 border={false}
+                                border={false}
                             >
                                 <Field
                                     type="text"
@@ -224,40 +247,26 @@ const Profile = ({
                                     }
                                 />
                             </FormRow>
-                              <FormRow
-                                name="name"
-                                label="Business Name"
-                                {...validatorProps}
-                                 border={false}
-                            >
-                                <Field
-                                    type="text"
-                                    autoComplete="off"
-                                    name="name"
-                                    placeholder="Business Name"
-                                    component={Input}
-                                    prefix={
-                                        <HiOutlineBriefcase className="text-xl" />
-                                    }
-                                />
-                            </FormRow>
-                            <FormRow
-                                name="email"
-                                label="Email"
-                                {...validatorProps}
-                                 border={false}
-                            >
-                                <Field
-                                    type="email"
-                                    autoComplete="off"
+
+                            {signedUpAs !== 'business' && (
+                                <FormRow
                                     name="email"
-                                    placeholder="Email"
-                                    component={Input}
-                                    prefix={
-                                        <HiOutlineMail className="text-xl" />
-                                    }
-                                />
-                            </FormRow>
+                                    label="Email"
+                                    {...validatorProps}
+                                    border={false}
+                                >
+                                    <Field
+                                        type="email"
+                                        autoComplete="off"
+                                        name="email"
+                                        placeholder="Email"
+                                        component={Input}
+                                        prefix={
+                                            <HiOutlineMail className="text-xl" />
+                                        }
+                                    />
+                                </FormRow>
+                            )}
                             <FormRow
                                 name="address"
                                 label="Address"
@@ -267,7 +276,7 @@ const Profile = ({
                                 <Field
                                     type="text"
                                     autoComplete="off"
-                                    name="title"
+                                    name="address"
                                     placeholder="Address"
                                     component={Input}
                                     prefix={
@@ -291,23 +300,25 @@ const Profile = ({
                                     }
                                 />
                             </FormRow>
-                             <FormRow
-                                name="phone"
-                                label="GMC Number"
-                                {...validatorProps}
-                            >
-                                <Field
-                                    type="text"
-                                    autoComplete="off"
-                                    name="number"
-                                    placeholder="GMC Number"
-                                    component={Input}
-                                    prefix={
-                                        <HiOutlineClipboard className="text-xl" />
-                                    }
-                                />
-                            </FormRow>
-                            {/* Removed invalid address field as 'address' is not in ProfileFormModel */}
+                            {signedUpAs !== 'business' && (
+                                <FormRow
+                                    name="gmcNumber"
+                                    label="GMC Number"
+                                    {...validatorProps}
+                                >
+                                    <Field
+                                        type="text"
+                                        autoComplete="off"
+                                        name="gmcNumber" // ✅ Corrected
+                                        placeholder="GMC Number"
+                                        component={Input}
+                                        prefix={
+                                            <HiOutlineClipboard className="text-xl" />
+                                        }
+                                    />
+                                </FormRow>
+                            )}
+
                             {/* <FormDesription
                                 className="mt-8"
                                 title="Preferences"

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { FormItem, FormContainer } from '@/components/ui/Form'
 import Button from '@/components/ui/Button'
 import Alert from '@/components/ui/Alert'
@@ -6,7 +7,6 @@ import PasswordInput from '@/components/shared/PasswordInput'
 import ActionLink from '@/components/shared/ActionLink'
 import { apiResetPassword } from '@/services/AuthService'
 import useTimeOutMessage from '@/utils/hooks/useTimeOutMessage'
-import { useNavigate } from 'react-router-dom'
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import type { CommonProps } from '@/@types/common'
@@ -24,20 +24,25 @@ type ResetPasswordFormSchema = {
 
 const validationSchema = Yup.object().shape({
     password: Yup.string().required('Please enter your password'),
-    confirmPassword: Yup.string().oneOf(
-        [Yup.ref('password')],
-        'Your passwords do not match',
-    ),
+    confirmPassword: Yup.string()
+        .oneOf([Yup.ref('password')], 'Your passwords do not match')
+        .required('Please confirm your password'),
 })
 
 const ResetPasswordForm = (props: ResetPasswordFormProps) => {
     const { disableSubmit = false, className, signInUrl = '/sign-in' } = props
 
     const [resetComplete, setResetComplete] = useState(false)
-
     const [message, setMessage] = useTimeOutMessage()
 
     const navigate = useNavigate()
+    const location = useLocation()
+
+    const getQueryParam = (key: string) => {
+        return new URLSearchParams(location.search).get(key)
+    }
+
+    const resetToken = getQueryParam('token')
 
     const onSubmit = async (
         values: ResetPasswordFormSchema,
@@ -46,7 +51,10 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
         const { password } = values
         setSubmitting(true)
         try {
-            const resp = await apiResetPassword({ password })
+            const resp = await apiResetPassword({
+                password,
+                resetToken,
+            })
             if (resp.data) {
                 setSubmitting(false)
                 setResetComplete(true)
@@ -76,7 +84,8 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
                     <>
                         <h3 className="mb-1">Set new password</h3>
                         <p>
-                            Your new password must different to previos password
+                            Your new password must be different from the
+                            previous one
                         </p>
                     </>
                 )}
@@ -88,8 +97,8 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
             )}
             <Formik
                 initialValues={{
-                    password: '123Qwe1',
-                    confirmPassword: '123Qwe1',
+                    password: '',
+                    confirmPassword: '',
                 }}
                 validationSchema={validationSchema}
                 onSubmit={(values, { setSubmitting }) => {
@@ -108,7 +117,8 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
                                     <FormItem
                                         label="Password"
                                         invalid={
-                                            errors.password && touched.password
+                                            !!errors.password &&
+                                            touched.password
                                         }
                                         errorMessage={errors.password}
                                     >
@@ -122,7 +132,7 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
                                     <FormItem
                                         label="Confirm Password"
                                         invalid={
-                                            errors.confirmPassword &&
+                                            !!errors.confirmPassword &&
                                             touched.confirmPassword
                                         }
                                         errorMessage={errors.confirmPassword}
@@ -141,7 +151,7 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
                                         type="submit"
                                     >
                                         {isSubmitting
-                                            ? 'Submiting...'
+                                            ? 'Submitting...'
                                             : 'Submit'}
                                     </Button>
                                 </>
