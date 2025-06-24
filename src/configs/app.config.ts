@@ -20,7 +20,7 @@ const appConfig: AppConfig = {
 export const ROLE_BASED_PATHS: Record<string, string> = {
     business: '/app/sales/dashboard',
     doctor: '/app/project/dashboard',
-    // Do not add a default fallback here
+    admind: "/app/crm/dashboard"
 }
 
 export default appConfig

@@ -172,7 +172,7 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
                                 className="text-center py-8"
                             >
                                 <span className="text-gray-400">
-                                    No jobs found.
+                                    No jobs found.s
                                 </span>
                             </Td>
                         </Tr>

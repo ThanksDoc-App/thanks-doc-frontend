@@ -2,7 +2,7 @@ import ApiService from './ApiService'
 
 export async function apiGetProjectDashboardData<T>() {
     return ApiService.fetchData<T>({
-        url: '/api/v1/dashboard/stats/my-business',
+        url: '/api/v1/dashboard/stats/my-doctor',
         method: 'get',
     })
 }

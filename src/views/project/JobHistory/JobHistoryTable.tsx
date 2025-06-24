@@ -54,7 +54,7 @@ const JobHistoryTable = () => {
     }
 
     return (
-        <div className="w-full max-w-7xl mx-auto bg-white ">
+        <div className="w-full mx-auto bg-white ">
             {/* Responsive Table Wrapper */}
             <div className="overflow-x-auto bg-white rounded-lg scrollbar-hidden">
                 <table className="min-w-[700px] w-full">

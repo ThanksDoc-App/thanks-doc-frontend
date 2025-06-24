@@ -1,4 +1,5 @@
 // src/views/auth/SignInForm.tsx
+
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Checkbox from '@/components/ui/Checkbox'
@@ -11,10 +12,8 @@ import useAuth from '@/utils/hooks/useAuth'
 import { ROLE_BASED_PATHS } from '@/configs/app.config'
 import { Field, Form, Formik } from 'formik'
 import { useNavigate } from 'react-router-dom'
-// useEffect import removed since we no longer need it
 import * as Yup from 'yup'
 import type { CommonProps } from '@/@types/common'
-import { toast } from 'react-toastify'
 
 interface SignInFormProps extends CommonProps {
     disableSubmit?: boolean
@@ -46,11 +45,6 @@ const SignInForm = ({
     const { signIn } = useAuth()
     const navigate = useNavigate()
 
-    // This useEffect can be removed since we're getting role from API response
-    // useEffect(() => {
-    //     // No longer needed - role check happens after API response
-    // }, [navigate])
-
     const onSignIn = async (
         values: SignInFormSchema,
         setSubmitting: (isSubmitting: boolean) => void,
@@ -64,32 +58,24 @@ const SignInForm = ({
 
             if (result?.status === false) {
                 setMessage(result.message)
-                // toast.error(result.message)
             } else if (result?.status === true && result?.data?.signedUpAs) {
-                // Get signedUpAs from the API response data
-                const signedUpAs = result.data.signedUpAs
+                let signedUpAs = result.data.signedUpAs
 
-                console.log('User signedUpAs:', signedUpAs) // Debug log
+                // Treat "super admin" as "admin"
+                if (signedUpAs === 'super admin') {
+                    signedUpAs = 'admin'
+                }
 
-                if (signedUpAs === 'doctor') {
-                    console.log('Redirecting to doctor dashboard')
-                    navigate(ROLE_BASED_PATHS.doctor, { replace: true })
-                } else if (signedUpAs === 'business') {
-                    console.log('Redirecting to business dashboard')
-                    navigate(ROLE_BASED_PATHS.business, { replace: true })
+                const path = ROLE_BASED_PATHS[signedUpAs]
+
+                if (path) {
+                    navigate(path, { replace: true })
                 } else {
-                    // No valid role found in API response
-                    console.warn(
-                        'Invalid role found in API response:',
-                        signedUpAs,
-                    )
                     setMessage(
                         `Invalid user role: ${signedUpAs}. Please contact support.`,
                     )
                 }
             } else {
-                // Handle case where API response doesn't have expected structure
-                console.error('API response missing signedUpAs data:', result)
                 setMessage('Invalid response from server. Please try again.')
             }
         } catch (error) {
