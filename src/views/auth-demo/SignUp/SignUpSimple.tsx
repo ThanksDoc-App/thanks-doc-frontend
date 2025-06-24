@@ -25,19 +25,21 @@ const SignUpSimple = () => {
             </div>
 
             {/* Main Layout */}
-            <Simple
-                content={
-                    <div className="mb-4">
-                        <h3 className="mb-1">Sign Up</h3>
-                        <p>And start getting jobs around you</p>
-                    </div>
-                }
-            >
-                <SignUpForm
-                    // disableSubmit={false}
-                    signInUrl="/auth/sign-in-simple"
-                />
-            </Simple>
+            <div className="flex items-center justify-center min-h-screen w-full">
+                <Simple
+                    content={
+                        <div className="mb-4">
+                            <h3 className="mb-1">Sign Up</h3>
+                            <p>And start getting jobs around you</p>
+                        </div>
+                    }
+                >
+                    <SignUpForm
+                        // disableSubmit={false}
+                        signInUrl="/auth/sign-in-simple"
+                    />
+                </Simple>
+            </div>
         </div>
     )
 }

@@ -3,9 +3,11 @@ import ResetPasswordForm from './ResetPasswordForm'
 
 const ResetPassword = () => {
     return (
-        <Simple>
-            <ResetPasswordForm disableSubmit={false} />
-        </Simple>
+        <div className="flex items-center justify-center min-h-screen w-full">
+            <Simple>
+                <ResetPasswordForm disableSubmit={false} />
+            </Simple>
+        </div>
     )
 }
 
