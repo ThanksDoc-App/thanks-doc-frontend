@@ -34,11 +34,21 @@ const Integration = () => {
     >({})
     const [installing, setInstalling] = useState(false)
 
+    // const fetchData = async () => {
+    //     const response =
+    //         await apiGetAccountSettingIntegrationData<GetAccountSettingIntegrationDataResponse>()
+    //     setData(response.data)
+    // }
+
     const fetchData = async () => {
         const response =
             await apiGetAccountSettingIntegrationData<GetAccountSettingIntegrationDataResponse>()
+        console.log('Full API response:', response) // Add this
+        console.log('Response data:', response.data) // And this
         setData(response.data)
     }
+
+    // console.log('data', data)
 
     useEffect(() => {
         if (isEmpty(data)) {

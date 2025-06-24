@@ -81,10 +81,17 @@ export const SLICE_NAME = 'projectDashboard'
 
 export const getProjectDashboardData = createAsyncThunk(
     SLICE_NAME + '/getProjectDashboardData',
-    async () => {
-        const response =
-            await apiGetProjectDashboardData<GetProjectDashboardDataResponse>()
-        return response.data
+    async (_, { rejectWithValue, dispatch }) => {
+        try {
+            const response = await apiGetProjectDashboardData<GetProjectDashboardDataResponse>()
+            return response.data
+        } catch (error: any) {
+            if (error.response?.status === 403) {
+                // Token expired, redirect to login
+                // dispatch(logout()) or window.location.href = '/login'
+            }
+            return rejectWithValue(error.response?.data || error.message)
+        }
     },
 )
 

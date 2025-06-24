@@ -34,8 +34,8 @@ export async function apiGetSalesProduct<T, U extends Record<string, unknown>>(
     params: U,
 ) {
     return ApiService.fetchData<T>({
-        url: '/sales/product',
-        method: 'get',
+        url: '/api/v1/dashboard/stats/my-doctor',
+        method: 'GET',
         params,
     })
 }
