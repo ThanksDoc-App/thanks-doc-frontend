@@ -4,8 +4,8 @@ export async function apiGetSalesDashboardData<
     T extends Record<string, unknown>,
 >() {
     return ApiService.fetchData<T>({
-        url: '/sales/dashboard',
-        method: 'post',
+        url: '/api/v1/dashboard/stats/my-business',
+        method: 'get',
     })
 }
 

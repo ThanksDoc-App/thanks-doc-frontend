@@ -26,7 +26,7 @@ const SignUpBusiness = () => {
             </div>
 
             {/* Centered Form */}
-            <div className="w-full max-w-xl">
+            <div className="flex items-center justify-center min-h-screen w-full">
                 <Simple
                     content={
                         <div className="mb-4 text-center">
