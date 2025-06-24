@@ -20,7 +20,7 @@ const HeaderActionsStart = () => {
 const HeaderActionsEnd = () => {
     return (
         <>
-            <LanguageSelector />
+            {/* <LanguageSelector /> */}
             <Notification />
             <SidePanel />
             <UserDropdown hoverable={false} />

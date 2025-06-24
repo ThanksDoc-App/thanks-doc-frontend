@@ -62,9 +62,9 @@ const PriorityTag = ({ priority }: { priority: number }) => {
     }
 }
 
-    const MyTasks = ({ data = [] }: MyTasksProps) => {
-        const navigate = useNavigate();
-    
+const MyTasks = ({ data = [] }: MyTasksProps) => {
+    const navigate = useNavigate()
+
     const columns: ColumnDef<Task>[] = useMemo(
         () => [
             {
@@ -76,7 +76,11 @@ const PriorityTag = ({ priority }: { priority: number }) => {
                 accessorKey: 'location',
                 cell: (props) => {
                     const { location } = props.row.original
-                    return <span>{location || '22B Ealing Road, London, W1 3AD'}</span>
+                    return (
+                        <span>
+                            {location || '22B Ealing Road, London, W1 3AD'}
+                        </span>
+                    )
                 },
             },
             {
@@ -107,11 +111,7 @@ const PriorityTag = ({ priority }: { priority: number }) => {
                 header: 'Action',
                 accessorKey: 'Action',
                 cell: (props) => (
-                    <Button
-                        size="sm"
-                        color="primary"
-                        onClick={onViewAllTask}
-                    >
+                    <Button size="sm" color="primary" onClick={onViewAllTask}>
                         Details
                     </Button>
                 ),
@@ -142,7 +142,7 @@ const PriorityTag = ({ priority }: { priority: number }) => {
                     }
                     placeholder="Enter postcode or location..."
                 />
-                 <Button color="primary">Search</Button>
+                <Button color="primary">Search</Button>
             </InputGroup>
             <Table>
                 <THead>
@@ -167,8 +167,13 @@ const PriorityTag = ({ priority }: { priority: number }) => {
                 <TBody>
                     {table.getRowModel().rows.length === 0 ? (
                         <Tr>
-                            <Td colSpan={columns.length} className="text-center py-8">
-                                <span className="text-gray-400">No tasks found.</span>
+                            <Td
+                                colSpan={columns.length}
+                                className="text-center py-8"
+                            >
+                                <span className="text-gray-400">
+                                    No jobs found.
+                                </span>
                             </Td>
                         </Tr>
                     ) : (
