@@ -12,30 +12,34 @@ const SignUpBusiness = () => {
     }
 
     return (
-        <div className="relative min-h-screen">
+        <div className="relative flex items-center justify-center bg-gray-50 px-4">
             {/* Back button */}
-            <div className="absolute top-10  z-10">
+            <div className="absolute top-6 left-6 z-10">
                 <Button
                     variant="plain"
                     onClick={handleBack}
                     type="button"
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 text-gray-700 hover:text-black"
                 >
                     <ArrowLeft className="w-4 h-4" /> Back
                 </Button>
             </div>
 
-            {/* Main Layout */}
-            <Simple
-                content={
-                    <div className="mb-4">
-                        <h3 className="mb-1">Get Started</h3>
-                        {/* <p>Start posting jobs!</p> */}
-                    </div>
-                }
-            >
-                <SignUpFormBusiness signInUrl="/auth/sign-in-business" />
-            </Simple>
+            {/* Centered Form */}
+            <div className="w-full max-w-xl">
+                <Simple
+                    content={
+                        <div className="mb-4 text-center">
+                            <h3 className="text-2xl font-semibold text-gray-800 mb-1">
+                                Get Started
+                            </h3>
+                            {/* <p className="text-gray-500">Start posting jobs!</p> */}
+                        </div>
+                    }
+                >
+                    <SignUpFormBusiness signInUrl="/auth/sign-in-business" />
+                </Simple>
+            </div>
         </div>
     )
 }

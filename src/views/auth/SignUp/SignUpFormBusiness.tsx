@@ -15,12 +15,12 @@ import { useNavigate } from 'react-router-dom'
 interface SignUpFormProps extends CommonProps {
     disableSubmit?: boolean
     signInUrl?: string
-    signedUpAs?: string // Add this prop to receive the role
+    signedUpAs?: string
 }
 
 type SignUpFormSchema = {
-    name: string
-    contactName: string
+    businessName: string
+    name: string // Contact Person Name
     password: string
     confirmPassword: string
     email: string
@@ -38,9 +38,10 @@ const validatePassword = (password: string) => {
         isLongEnough: password.length >= 8,
     }
 }
+
 const validationSchema = Yup.object().shape({
-    name: Yup.string().required('Please enter your full name'),
-    contactName: Yup.string().required('Please enter the contact person name'),
+    businessName: Yup.string().required('Please enter your business name'),
+    name: Yup.string().required('Please enter the contact person name'),
     email: Yup.string()
         .email('Invalid email')
         .required('Please enter your email'),
@@ -92,11 +93,10 @@ const SignUpFormBusiness = (props: SignUpFormProps) => {
         values: SignUpFormSchema,
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
-        const { name, contactName, password, email, confirmPassword } = values
+        const { businessName, name, password, email, confirmPassword } = values
         setLoader(true)
         setSubmitting(true)
 
-        // Additional validation before submission
         const { hasUppercase, hasNumber, hasSymbol, isLongEnough } =
             validatePassword(password)
 
@@ -124,13 +124,12 @@ const SignUpFormBusiness = (props: SignUpFormProps) => {
         }
 
         try {
-            console.log('Starting signup process...')
             const requestBody = {
+                businessName,
                 name,
-                contactName,
                 email,
                 password,
-                signedUpAs, // Use the prop value
+                signedUpAs,
             }
 
             const response = await apiSignUp(requestBody)
@@ -167,10 +166,11 @@ const SignUpFormBusiness = (props: SignUpFormProps) => {
                     Account created successfully! Redirecting to verify email...
                 </Alert>
             )}
+
             <Formik
                 initialValues={{
+                    businessName: '',
                     name: '',
-                    contactName: '',
                     email: '',
                     password: '',
                     confirmPassword: '',
@@ -188,32 +188,32 @@ const SignUpFormBusiness = (props: SignUpFormProps) => {
                     <Form>
                         <FormContainer>
                             <FormItem
-                                label="Full Name"
-                                invalid={errors.name && touched.name}
-                                errorMessage={errors.name}
+                                label="Business Name"
+                                invalid={
+                                    errors.businessName && touched.businessName
+                                }
+                                errorMessage={errors.businessName}
                             >
                                 <Field
                                     type="text"
-                                    name="fullName"
+                                    name="businessName"
                                     autoComplete="off"
-                                    placeholder="Full Name"
+                                    placeholder="Business Name"
                                     component={Input}
                                     disabled={signUpSuccess}
                                 />
                             </FormItem>
 
                             <FormItem
-                                label="Contact Name"
-                                invalid={
-                                    errors.contactName && touched.contactName
-                                }
-                                errorMessage={errors.contactName}
+                                label="Contact Person Name"
+                                invalid={errors.name && touched.name}
+                                errorMessage={errors.name}
                             >
                                 <Field
                                     type="text"
-                                    name="contactName"
+                                    name="name"
                                     autoComplete="off"
-                                    placeholder="Contact Name"
+                                    placeholder="Contact Person Name"
                                     component={Input}
                                     disabled={signUpSuccess}
                                 />
