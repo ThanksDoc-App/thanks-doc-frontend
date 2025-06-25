@@ -3,11 +3,9 @@ import Upload from '@/components/ui/Upload'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { FormItem, FormContainer } from '@/components/ui/Form'
-import SvgIcon from '@/components/shared/SvgIcon'
 import DoubleSidedImage from '@/components/shared/DoubleSidedImage'
 import SegmentItemOption from '@/components/shared/SegmentItemOption'
 import DatePicker from '@/components/ui/DatePicker'
-import { DriversLicenseSvg, PassportSvg, NationalIdSvg } from '@/assets/svg'
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi'
 import classNames from 'classnames'
 import {
@@ -184,11 +182,6 @@ const documentUploadDescription = settingIntergrationData.available.reduce(
     },
     {} as Record<string, string[]>,
 )
-
-const DocumentTypeIcon = ({ type }: { type: string }) => {
-    // Default to NationalIdSvg for most documents
-    return <NationalIdSvg />
-}
 
 const DocumentUploadField = (props: DocumentUploadFieldProps) => {
     const { label, name, children, touched, errors } = props
@@ -429,26 +422,13 @@ const Identification = ({
                                                                                 disabled={
                                                                                     disabled
                                                                                 }
-                                                                                className="w-full xl:w-[260px]"
+                                                                                className="w-full xl:w-[260px] h-18"
                                                                                 onSegmentItemClick={
                                                                                     onSegmentItemClick
                                                                                 }
                                                                             >
-                                                                                <div className="flex items-center">
-                                                                                    <SvgIcon
-                                                                                        className={classNames(
-                                                                                            'text-4xl ltr:mr-3 rtl:ml-3',
-                                                                                            active &&
-                                                                                                textTheme,
-                                                                                        )}
-                                                                                    >
-                                                                                        <DocumentTypeIcon
-                                                                                            type={
-                                                                                                value
-                                                                                            }
-                                                                                        />
-                                                                                    </SvgIcon>
-                                                                                    <h6>
+                                                                                <div className="flex items-center justify-center h-full">
+                                                                                    <h6 className="text-center text-[15px]">
                                                                                         {
                                                                                             item.label
                                                                                         }
