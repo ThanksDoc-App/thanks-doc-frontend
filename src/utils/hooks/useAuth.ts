@@ -15,8 +15,14 @@ import type { SignInCredential, SignUpCredential } from '@/@types/auth'
 type Status = true | false
 
 function getAuthenticatedEntryPath(apiResponse: any): string {
-    const role = apiResponse?.data?.data?.role || apiResponse?.data?.role
-    return ROLE_BASED_PATHS[role as keyof typeof ROLE_BASED_PATHS]
+    let role = apiResponse?.data?.data?.role || apiResponse?.data?.role
+
+    // Normalize 'super admin' to 'admin'
+    if (role === 'super admin') {
+        role = 'admin'
+    }
+
+    return ROLE_BASED_PATHS[role as keyof typeof ROLE_BASED_PATHS] || appConfig.unAuthenticatedEntryPath
 }
 
 function useAuth() {
@@ -31,15 +37,13 @@ function useAuth() {
     useEffect(() => {
         if (token && signedIn) {
             const EVENTS = ['mousemove', 'keydown', 'scroll', 'click']
-
             const resetTimer = () => {
                 if (timeoutRef.current) clearTimeout(timeoutRef.current)
                 timeoutRef.current = setTimeout(() => {
                     console.log('User inactive for 30 minutes. Logging out...')
                     handleSignOut()
-                }, 30 * 60 * 1000) // 30 mins
+                }, 30 * 60 * 1000)
             }
-
             EVENTS.forEach((event) => window.addEventListener(event, resetTimer))
             resetTimer()
 
@@ -90,7 +94,16 @@ function useAuth() {
                     await new Promise((resolve) => setTimeout(resolve, 100))
 
                     const authenticatedEntryPath = getAuthenticatedEntryPath(resp.data)
-                    navigate(authenticatedEntryPath)
+
+                    if (authenticatedEntryPath) {
+                        navigate(authenticatedEntryPath)
+                    } else {
+                        return {
+                            status: false,
+                            message: `Unrecognized role. Please contact support.`,
+                            data: resp.data,
+                        }
+                    }
 
                     return {
                         status: true,
@@ -100,7 +113,7 @@ function useAuth() {
                 } else {
                     return {
                         status: false,
-                        message: resp.data.message,
+                        message: resp.data.message || 'Missing token',
                         data: {},
                     }
                 }

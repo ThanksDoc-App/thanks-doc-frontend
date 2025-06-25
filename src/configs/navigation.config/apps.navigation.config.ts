@@ -4,6 +4,7 @@ import {
     NAV_ITEM_TYPE_COLLAPSE,
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
+// import { DOCTOR, BUSINESS } from '@/constants/roles.constant'
 import { DOCTOR, BUSINESS, ADMIN, USER } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
@@ -15,7 +16,7 @@ const baseConfig: NavigationTree[] = [
         translateKey: 'nav.apps',
         icon: 'apps',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: [DOCTOR, BUSINESS, ADMIN], // Add ADMIN here for super admin
+        authority: [DOCTOR, BUSINESS],
         subMenu: [
             {
                 key: 'apps.project',
@@ -156,7 +157,7 @@ const baseConfig: NavigationTree[] = [
                         translateKey: 'nav.appsAccount.kycForm',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [DOCTOR, BUSINESS, ADMIN, USER],
+                        authority: [DOCTOR, BUSINESS, ADMIN, USER], // updated here
                         subMenu: [],
                     },
                 ],
@@ -185,28 +186,33 @@ export const getAppsNavigationConfig = (): NavigationTree[] => {
     if (appsSection && Array.isArray(appsSection.subMenu)) {
         let newSubMenu: NavigationTree[] = []
 
-        // Special handling for super admin and admin - show only CRM and Account
-        if (signedUpAs === 'super admin' || signedUpAs === 'admin') {
-            for (const item of appsSection.subMenu) {
-                if (item.key === 'apps.crm' || item.key === 'apps.account') {
-                    newSubMenu.push(item)
-                }
-            }
-        } else {
+        // Special handling for super admin - show only CRM and Account
+       if (signedUpAs === 'super admin') {
+    for (const item of appsSection.subMenu) {
+        if (item.key === 'apps.crm' || item.key === 'apps.account') {
+            newSubMenu.push(item)
+        }
+    }
+}
+else {
             // Existing logic for other roles
             for (const item of appsSection.subMenu) {
                 // Filter based on role
                 if ((signedUpAs === 'doctor' && item.key === 'apps.sales') ||
-                    (signedUpAs === 'business' && item.key === 'apps.project') ||
-                    (signedUpAs === 'doctor' && item.key === 'apps.crm') ||
-                    (signedUpAs === 'business' && item.key === 'apps.crm')) {
+                    (signedUpAs === 'business' && item.key === 'apps.project')) {
                     continue
                 }
 
                 // Keep Account section as collapsible parent, flatten others
-                if (item.key === 'apps.account' || item.key === "apps.crm") {
-                    newSubMenu.push(item)
-                } else if (item.type === NAV_ITEM_TYPE_COLLAPSE && Array.isArray(item.subMenu)) {
+               if (item.key === 'apps.account') {
+    newSubMenu.push(item)
+} else if (item.key === 'apps.crm') {
+    if (signedUpAs !== 'doctor' && signedUpAs !== 'business') {
+        newSubMenu.push(item)
+    }
+}
+
+               else if (item.type === NAV_ITEM_TYPE_COLLAPSE && Array.isArray(item.subMenu)) {
                     // Flatten Doctor Dashboard and Sales sections
                     const children = structuredClone(item.subMenu)
 

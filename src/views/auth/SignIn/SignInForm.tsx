@@ -1,5 +1,3 @@
-// src/views/auth/SignInForm.tsx
-
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Checkbox from '@/components/ui/Checkbox'
@@ -35,6 +33,12 @@ const validationSchema = Yup.object().shape({
     rememberMe: Yup.bool(),
 })
 
+// Utility function to resolve signedUpAs aliases
+const resolveUserRole = (role: string): string => {
+    if (role.toLowerCase() === 'super admin') return 'admin'
+    return role.toLowerCase()
+}
+
 const SignInForm = ({
     disableSubmit = false,
     className,
@@ -44,6 +48,8 @@ const SignInForm = ({
     const [message, setMessage] = useTimeOutMessage()
     const { signIn } = useAuth()
     const navigate = useNavigate()
+
+    // Only relevant edits shown
 
     const onSignIn = async (
         values: SignInFormSchema,
@@ -58,26 +64,9 @@ const SignInForm = ({
 
             if (result?.status === false) {
                 setMessage(result.message)
-            } else if (result?.status === true && result?.data?.signedUpAs) {
-                let signedUpAs = result.data.signedUpAs
-
-                // Treat "super admin" as "admin"
-                if (signedUpAs === 'super admin') {
-                    signedUpAs = 'admin'
-                }
-
-                const path = ROLE_BASED_PATHS[signedUpAs]
-
-                if (path) {
-                    navigate(path, { replace: true })
-                } else {
-                    setMessage(
-                        `Invalid user role: ${signedUpAs}. Please contact support.`,
-                    )
-                }
-            } else {
-                setMessage('Invalid response from server. Please try again.')
             }
+
+            // ✅ No need to manually navigate — `useAuth()` already handles it
         } catch (error) {
             setMessage(
                 'Sign-in failed. Please check your credentials and try again.',
