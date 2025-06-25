@@ -7,7 +7,7 @@ const authRoute: Routes = [
         key: 'signIn',
         path: `/sign-in`,
         component: lazy(() => import('@/views/auth/SignIn')),
-        authority: [BUSINESS, DOCTOR],
+        authority: [],
         meta: {
             layout: 'blank',
             pageContainerType: 'gutterless',

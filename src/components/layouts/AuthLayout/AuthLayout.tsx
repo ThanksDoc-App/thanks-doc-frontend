@@ -13,9 +13,9 @@ const AuthLayout = () => {
             {layoutType === LAYOUT_TYPE_BLANK ? (
                 <View />
             ) : (
-                <Side>
-                    <View />
-                </Side>
+                // <Side>
+                <View />
+                // </Side>
             )}
         </div>
     )
