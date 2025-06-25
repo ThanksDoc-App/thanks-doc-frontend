@@ -1,5 +1,4 @@
 // configs/app.config.ts
-
 export type AppConfig = {
     apiPrefix: string
     unAuthenticatedEntryPath: string
@@ -20,7 +19,7 @@ const appConfig: AppConfig = {
 export const ROLE_BASED_PATHS: Record<string, string> = {
     business: '/app/sales/dashboard',
     doctor: '/app/project/dashboard',
-    admind: "/app/crm/dashboard"
+    admin: "/app/crm/dashboard",
 }
 
 export default appConfig

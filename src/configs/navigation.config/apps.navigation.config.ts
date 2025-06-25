@@ -4,7 +4,6 @@ import {
     NAV_ITEM_TYPE_COLLAPSE,
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
-// import { DOCTOR, BUSINESS } from '@/constants/roles.constant'
 import { DOCTOR, BUSINESS, ADMIN, USER } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
@@ -16,7 +15,7 @@ const baseConfig: NavigationTree[] = [
         translateKey: 'nav.apps',
         icon: 'apps',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: [DOCTOR, BUSINESS],
+        authority: [DOCTOR, BUSINESS, ADMIN], // Add ADMIN here for super admin
         subMenu: [
             {
                 key: 'apps.project',
@@ -157,7 +156,7 @@ const baseConfig: NavigationTree[] = [
                         translateKey: 'nav.appsAccount.kycForm',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [DOCTOR, BUSINESS, ADMIN, USER], // updated here
+                        authority: [DOCTOR, BUSINESS, ADMIN, USER],
                         subMenu: [],
                     },
                 ],
@@ -186,8 +185,8 @@ export const getAppsNavigationConfig = (): NavigationTree[] => {
     if (appsSection && Array.isArray(appsSection.subMenu)) {
         let newSubMenu: NavigationTree[] = []
 
-        // Special handling for super admin - show only CRM and Account
-        if (signedUpAs === 'super admin') {
+        // Special handling for super admin and admin - show only CRM and Account
+        if (signedUpAs === 'super admin' || signedUpAs === 'admin') {
             for (const item of appsSection.subMenu) {
                 if (item.key === 'apps.crm' || item.key === 'apps.account') {
                     newSubMenu.push(item)
@@ -198,21 +197,14 @@ export const getAppsNavigationConfig = (): NavigationTree[] => {
             for (const item of appsSection.subMenu) {
                 // Filter based on role
                 if ((signedUpAs === 'doctor' && item.key === 'apps.sales') ||
-                    (signedUpAs === 'business' && item.key === 'apps.project')) {
+                    (signedUpAs === 'business' && item.key === 'apps.project') ||
+                    (signedUpAs === 'doctor' && item.key === 'apps.crm') ||
+                    (signedUpAs === 'business' && item.key === 'apps.crm')) {
                     continue
                 }
 
                 // Keep Account section as collapsible parent, flatten others
                 if (item.key === 'apps.account' || item.key === "apps.crm") {
-                    // Keep account as is, but filter KYC Form for business users
-                    // Disabled filtering below to allow KYC for all roles
-                    /*
-                    if (signedUpAs === 'business' && Array.isArray(item.subMenu)) {
-                        item.subMenu = item.subMenu.filter(child => 
-                            child.key !== 'appsAccount.kycForm'
-                        )
-                    }
-                    */
                     newSubMenu.push(item)
                 } else if (item.type === NAV_ITEM_TYPE_COLLAPSE && Array.isArray(item.subMenu)) {
                     // Flatten Doctor Dashboard and Sales sections
