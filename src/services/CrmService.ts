@@ -2,7 +2,7 @@ import ApiService from './ApiService'
 
 export async function apiGetCrmDashboardData<T>() {
     return ApiService.fetchData<T>({
-        url: '/crm/dashboard',
+        url: '/api/v1/admin',
         method: 'get',
     })
 }
