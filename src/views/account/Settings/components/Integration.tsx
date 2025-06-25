@@ -113,7 +113,7 @@ const Integration = () => {
         <>
             <div className="mt-4">
                 <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-lg">My Documents</h4>
+                    <h4 className="font-semibold text-lg">My Documentsww</h4>
                 </div>
                 <div className="grid lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 mt-4">
                     {data?.available?.map((app) => (

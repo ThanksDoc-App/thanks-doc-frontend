@@ -79,7 +79,7 @@ const Settings = () => {
     }
 
     const fetchData = async () => {
-        const response = await apiGetAccountSettingData<GetAccount>()
+        const response = await apiGetAccountSettingData<GetAccountSettingData>()
         setData(response.data)
     }
 
