@@ -31,7 +31,7 @@ const BlankLayout = () => {
         <div className="app-layout-blank flex flex-auto flex-col h-[100vh]">
             <View />
             <ConfiguratorToggle />
-            <SidePanel className="hidden" />
+            {/* <SidePanel className="hidden" /> */}
         </div>
     )
 }
