@@ -45,9 +45,29 @@ const appsRoute: Routes = [
         authority: [ADMIN, USER],
     },
     {
-        key: 'appsCrm.calendar',
-        path: `${APP_PREFIX_PATH}/crm/calendar`,
-        component: lazy(() => import('@/views/crm/Calendar')),
+        key: 'appsCrm.business',
+        path: `${APP_PREFIX_PATH}/crm/business`,
+        component: lazy(
+            () => import('@/views/crm/Business/components/Business'),
+        ),
+        authority: [ADMIN],
+    },
+    {
+        key: 'appsCrm.create-category',
+        path: `${APP_PREFIX_PATH}/crm/create-category`,
+        component: lazy(
+            () =>
+                import('@/views/crm/CrmDashboard/components/CrmCreateCategory'),
+        ),
+        authority: [ADMIN],
+    },
+    {
+        key: 'appsCrm.create-service',
+        path: `${APP_PREFIX_PATH}/crm/create-service`,
+        component: lazy(
+            () =>
+                import('@/views/crm/CrmDashboard/components/CrmCreateService'),
+        ),
         authority: [ADMIN, USER],
     },
     {
@@ -68,6 +88,32 @@ const appsRoute: Routes = [
             header: 'Customer Details',
             headerContainer: true,
         },
+    },
+    {
+        key: 'appsCrm.doctor',
+        path: `${APP_PREFIX_PATH}/crm/doctor`,
+        component: lazy(() => import('@/views/crm/Doctor/Doctor')),
+        authority: [ADMIN, USER],
+    },
+    {
+        key: 'appsCrm.doctor.details', // This keeps the parent relationship
+        path: `${APP_PREFIX_PATH}/crm/doctor/:id`,
+        component: lazy(() => import('@/views/crm/Doctor/DoctorDetails')),
+        authority: [ADMIN, USER],
+    },
+    {
+        key: 'appsCrm.service',
+        path: `${APP_PREFIX_PATH}/crm/service`,
+        component: lazy(
+            () => import('@/views/crm/Services/components/Service'),
+        ),
+        authority: [ADMIN, USER],
+    },
+    {
+        key: 'appsCrm.category',
+        path: `${APP_PREFIX_PATH}/crm/category`,
+        component: lazy(() => import('@/views/crm/Category/Category')),
+        authority: [ADMIN, USER],
     },
     {
         key: 'appsCrm.mail',

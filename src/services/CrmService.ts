@@ -82,3 +82,20 @@ export async function apiGetCrmMail<T, U extends Record<string, unknown>>(
         params,
     })
 }
+
+import BaseService from './BaseService'
+
+export async function apiCreateCategory<T, U extends Record<string, unknown>>(data: U) {
+    return BaseService.request<T>({
+        url: '/api/v1/category', // this will be prefixed by VITE_API_URL
+        method: 'post',
+        data,
+    })
+}
+
+export async function apiGetCategories<T>() {
+    return BaseService.request<T>({
+        url: '/api/v1/category',
+        method: 'get',
+    });
+}

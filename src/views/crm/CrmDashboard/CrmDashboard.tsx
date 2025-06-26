@@ -1,55 +1,12 @@
-import { useEffect } from 'react'
-import reducer, {
-    getCrmDashboardData,
-    useAppDispatch,
-    useAppSelector,
-} from './store'
-import { injectReducer } from '@/store/'
+// injectReducer('salesDashboard', reducer)
 
-import Loading from '@/components/shared/Loading'
-import Statistic from './components/Statistic'
-import LeadByCountries from './components/LeadByCountries'
-import EmailSent from './components/EmailSent'
-import Leads from './components/Leads'
-
-injectReducer('crmDashboard', reducer)
+import CrmDashboardBody from './components/CrmDashboardBody'
+import CrmDashboardHeader from './components/CrmDashboardHeader'
 
 const CrmDashboard = () => {
-    const dispatch = useAppDispatch()
-
-    const statisticData = useAppSelector(
-        (state) => state.crmDashboard.data.dashboardData.statisticData,
-    )
-    const leadByRegionData = useAppSelector(
-        (state) => state.crmDashboard.data.dashboardData.leadByRegionData,
-    )
-    const recentLeadsData = useAppSelector(
-        (state) => state.crmDashboard.data.dashboardData.recentLeadsData,
-    )
-    const emailSentData = useAppSelector(
-        (state) => state.crmDashboard.data.dashboardData.emailSentData,
-    )
-    const loading = useAppSelector((state) => state.crmDashboard.data.loading)
-
-    useEffect(() => {
-        dispatch(getCrmDashboardData())
-    }, [dispatch])
-
     return (
         <div className="flex flex-col gap-4 h-full">
-            <Loading loading={loading}>
-                <Statistic data={statisticData} />
-                {/* 
-                <div className="grid grid-cols-1 xl:grid-cols-7 gap-4">
-                    <LeadByCountries
-                        className="xl:col-span-5"
-                        data={leadByRegionData}
-                    />
-                    <EmailSent className="xl:col-span-2" data={emailSentData} />
-                </div>
-                */}
-                <Leads data={recentLeadsData} />
-            </Loading>
+            <CrmDashboardHeader /> <CrmDashboardBody />
         </div>
     )
 }

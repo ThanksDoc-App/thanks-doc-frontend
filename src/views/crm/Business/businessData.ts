@@ -1,0 +1,92 @@
+export const jobData = [
+    {
+        name: 'Menopause specialist',
+        date: '20 May 2020',
+        address: 'London, UK',
+        jobs: 19,
+    },
+    {
+        name: 'Menopause specialist',
+        date: '16 May 2020',
+        address: 'London, UK',
+        jobs: 10,
+    },
+    {
+        name: 'Menopause specialist',
+        date: '15 May 2020',
+        address: 'London, UK',
+        jobs: 5,
+    },
+    {
+        name: 'Menopause specialist',
+        date: '13 May 2020',
+        address: 'London, UK',
+        jobs: 17,
+    },
+    {
+        name: 'Menopause specialist',
+        date: '12 May 2020',
+        address: 'London, UK',
+        jobs: 12,
+    },
+    {
+        name: 'Menopause specialist',
+        date: '11 May 2020',
+        address: 'London, UK',
+        jobs: 14,
+    },
+    {
+        name: 'Menopause specialist',
+        date: '12 May 2020',
+        address: 'London, UK',
+        jobs: 12,
+    },
+    {
+        name: 'Tech Solutions Ltd',
+        date: '10 May 2020',
+        address: 'Manchester, UK',
+        jobs: 8,
+    },
+    {
+        name: 'Digital Agency',
+        date: '09 May 2020',
+        address: 'Birmingham, UK',
+        jobs: 15,
+    },
+    {
+        name: 'Marketing Pro',
+        date: '08 May 2020',
+        address: 'Leeds, UK',
+        jobs: 22,
+    },
+    {
+        name: 'Design Studio',
+        date: '07 May 2020',
+        address: 'Bristol, UK',
+        jobs: 6,
+    },
+    {
+        name: 'Finance Corp',
+        date: '06 May 2020',
+        address: 'Edinburgh, UK',
+        jobs: 18,
+    },
+    {
+        name: 'Health Services',
+        date: '05 May 2020',
+        address: 'Glasgow, UK',
+        jobs: 9,
+    },
+    {
+        name: 'Education Plus',
+        date: '04 May 2020',
+        address: 'Cardiff, UK',
+        jobs: 13,
+    },
+    {
+        name: 'Retail Chain',
+        date: '03 May 2020',
+        address: 'Liverpool, UK',
+        jobs: 25,
+    },
+]
