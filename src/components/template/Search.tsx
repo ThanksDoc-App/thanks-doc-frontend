@@ -180,7 +180,7 @@ const _Search = ({ className }: { className?: string }) => {
                 closable={false}
                 onRequestClose={handleSearchClose}
             >
-                <div className="h-[330px]">
+                <div className="h-full">
                     <div className="px-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-600">
                         <div className="flex items-center">
                             <HiOutlineSearch className="text-xl" />

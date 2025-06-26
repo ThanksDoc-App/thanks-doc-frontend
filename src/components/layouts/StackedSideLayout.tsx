@@ -22,7 +22,7 @@ const HeaderActionsEnd = () => {
         <>
             {/* <LanguageSelector /> */}
             <Notification />
-            <SidePanel />
+            {/* <SidePanel /> */}
             <UserDropdown hoverable={false} />
         </>
     )
