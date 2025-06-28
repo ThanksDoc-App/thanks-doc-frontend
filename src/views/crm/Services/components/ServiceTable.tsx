@@ -129,7 +129,7 @@ const ServiceTable: React.FC = () => {
             <div className="w-full mx-auto flex items-center justify-center py-20">
                 <div className="text-center">
                     <p className="text-red-500 mb-2">Error loading services</p>
-                    <p className="text-[#8c91a0] text-sm">{error}</p>
+                    <p className="text-[#8c91a0] text-sm">{String(error)}</p>
                     <button
                         onClick={() => dispatch(fetchServices())}
                         className="mt-4 px-4 py-2 bg-[#0F9297] text-white rounded hover:bg-[#0d7f84] text-sm"
@@ -183,11 +183,15 @@ const ServiceTable: React.FC = () => {
                                     index % 2 === 1 ? 'bg-[#F8F8FD]' : ''
                                 }`}
                             >
-                                <td className="px-6 py-4">{service.name}</td>
                                 <td className="px-6 py-4">
-                                    {service.category}
+                                    {String(service.name || '')}
                                 </td>
-                                <td className="px-6 py-4">{service.price}</td>
+                                <td className="px-6 py-4">
+                                    {service.category?.name}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {String(service.price || '')}
+                                </td>
                                 <td className="px-6 py-4">
                                     <div className="relative">
                                         <button
@@ -251,7 +255,7 @@ const ServiceTable: React.FC = () => {
                         </p>
                         {deleteError && (
                             <p className="text-red-500 text-sm mb-4">
-                                {deleteError}
+                                {String(deleteError)}
                             </p>
                         )}
                         <div className="flex gap-3 justify-end">
