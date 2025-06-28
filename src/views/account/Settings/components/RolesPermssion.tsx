@@ -14,7 +14,7 @@ const RolesPermission = () => {
         email: '',
     })
 
-    const handleInputChange = (e) => {
+    const handleInputChange = (e: any) => {
         const { name, value } = e.target
         setFormData((prev) => ({
             ...prev,
