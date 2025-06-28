@@ -118,7 +118,7 @@ const DoctorDetails = () => {
                                     Phone
                                 </p>
                                 <p className="text-[#25324B] text-[11.5px]">
-                                    +44 1245 572 135{' '}
+                                    +44 1245 5721 1353{' '}
                                 </p>
                             </div>
                         </div>
