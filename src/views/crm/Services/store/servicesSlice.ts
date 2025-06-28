@@ -16,12 +16,11 @@ interface ApiResponse {
   status: boolean
   statusCode: number
   message: string
-  data: {
     currentPage: number | null
     services: Service[]
     totalPages: number | null
     totalServices: number
-  }
+  data: any
 }
 
 // Define slice state
@@ -29,9 +28,9 @@ interface ServicesState {
   services: Service[]
   loading: boolean
   error: string | null
-  totalServices?: number
-  totalPages?: number
-  currentPage?: number
+  totalServices: number
+  totalPages: number 
+  currentPage: number 
   deleteLoading: boolean
   deleteError: string | null
 }
@@ -40,6 +39,9 @@ const initialState: ServicesState = {
   services: [],
   loading: false,
   error: null,
+  totalServices: 0,
+  totalPages: 0,
+  currentPage: 1,
   deleteLoading: false,
   deleteError: null,
 }
@@ -113,9 +115,9 @@ export const servicesSlice = createSlice({
     },
     clearServices(state) {
       state.services = []
-      state.totalServices = undefined
-      state.totalPages = undefined
-      state.currentPage = undefined
+      state.totalServices = 0
+      state.totalPages = 0
+      state.currentPage = 1
     },
   },
   extraReducers: builder => {
@@ -139,8 +141,8 @@ export const servicesSlice = createSlice({
           state.loading = false
           state.services = action.payload.services
           state.totalServices = action.payload.totalServices
-          state.totalPages = action.payload.totalPages ?? undefined
-          state.currentPage = action.payload.currentPage ?? undefined
+          state.totalPages = action.payload.totalPages ?? 0
+          state.currentPage = action.payload.currentPage ?? 1
         },
       )
       .addCase(fetchServices.rejected, (state, action) => {

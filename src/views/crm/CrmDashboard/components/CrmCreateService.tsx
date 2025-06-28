@@ -3,10 +3,6 @@ import React, { useState } from 'react'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-// import {
-//     createService,
-//     clearServiceError,
-// } from '@/store/slices/crmDashboardSlice'
 import { toast } from 'react-toastify'
 import type { AppDispatch, RootState } from '@/store'
 import { clearServiceError, createService } from '../store'
@@ -15,6 +11,7 @@ const CrmCreateService = () => {
     const navigate = useNavigate()
     const dispatch = useDispatch<AppDispatch>()
 
+    // Update 'crmDashboard' to the correct slice name as defined in your RootState, e.g., 'crm'
     const { serviceLoading = false, serviceError = null } = useSelector(
         (state: RootState) => state.crmDashboard || {},
     )
@@ -33,9 +30,22 @@ const CrmCreateService = () => {
             [name]: value,
         }))
 
-        // Clear error when user starts typing
         if (serviceError) {
             dispatch(clearServiceError())
+        }
+    }
+
+    const showErrorToast = (error: any) => {
+        if (error?.message && Array.isArray(error.message)) {
+            error?.message.forEach((msg: string) => {
+                toast.error(msg)
+            })
+        } else if (typeof error === 'string') {
+            toast.error(error)
+        } else if (error?.message) {
+            toast.error(error.message)
+        } else {
+            toast.error('An unexpected error occurred')
         }
     }
 
@@ -52,14 +62,15 @@ const CrmCreateService = () => {
             )
 
             if (createService.fulfilled.match(result)) {
-                // Success - show toast and navigate
                 toast.success('Service created successfully!')
                 setFormData({ category: '', name: '' })
                 navigate('/app/crm/service')
+            } else if (createService.rejected.match(result)) {
+                showErrorToast(result.payload || result.error)
             }
         } catch (error) {
-            // Error is handled by the reducer
             console.error('Failed to create service:', error)
+            showErrorToast(error)
         }
     }
 

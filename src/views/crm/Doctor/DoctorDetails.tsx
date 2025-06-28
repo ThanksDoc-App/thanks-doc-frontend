@@ -25,7 +25,8 @@ const documents = [
 const DoctorDetails = () => {
     const [doctor, setDoctor] = useState(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [selectedDocument, setSelectedDocument] = useState(null)
+    const [selectedDocument, setSelectedDocument] =
+        useState<DocumentItem | null>(null)
 
     const navigate = useNavigate()
 
@@ -33,7 +34,15 @@ const DoctorDetails = () => {
     //     navigate(-1)
     // }
 
-    const handleViewDocument = (document) => {
+    interface DocumentItem {
+        id: number
+        name: string
+        type: string
+    }
+
+    interface SelectedDocument extends DocumentItem {}
+
+    const handleViewDocument = (document: DocumentItem): void => {
         setSelectedDocument(document)
         setIsModalOpen(true)
     }

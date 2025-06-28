@@ -10,7 +10,7 @@ import {
     Eye,
     X,
 } from 'lucide-react'
-import { useAppDispatch, useAppSelector } from '../store'
+import { useAppDispatch, useAppSelector, RootState } from '../store'
 import {
     fetchServices,
     deleteService,
@@ -198,7 +198,15 @@ const ServiceTable: React.FC = () => {
                                             className="p-1 hover:bg-gray-100 rounded"
                                             onClick={() =>
                                                 handleActionClick(
-                                                    service,
+                                                    {
+                                                        ...service,
+                                                        _id: String(
+                                                            service._id,
+                                                        ),
+                                                        category:
+                                                            service.category
+                                                                ._id, // ← extract string ID
+                                                    },
                                                     'menu',
                                                 )
                                             }
@@ -214,8 +222,17 @@ const ServiceTable: React.FC = () => {
                                                         <button
                                                             onClick={() =>
                                                                 handleActionClick(
-                                                                    service,
-                                                                    'delete',
+                                                                    {
+                                                                        ...service,
+                                                                        _id: String(
+                                                                            service._id,
+                                                                        ),
+                                                                        category:
+                                                                            service
+                                                                                .category
+                                                                                ._id, // ← extract string ID
+                                                                    },
+                                                                    'menu',
                                                                 )
                                                             }
                                                             className="flex items-center gap-3 w-full px-4 py-2 text-[13px] text-[#25324B] hover:bg-gray-50"

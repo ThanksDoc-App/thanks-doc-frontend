@@ -19,21 +19,30 @@ interface CategoryState {
   data: Category[]
   loading: boolean
   error: string | null
-  deleteLoading?: boolean
-  deleteError?: any
+  deleteLoading: boolean
+  deleteError: any
 }
 
 // ✅ Add ServicesState interface
 interface ServicesState {
   services: Array<{
-    id: string | number;
-    service: string;
-    category: string;
+    _id: string;
+    name: string;
+    category: {
+      _id: string;
+      name: string;
+    };
     price: string;
   }>;
   loading: boolean;
   error: string | null;
+  totalServices: number;
+  totalPages: number;
+  currentPage: number;
+  deleteLoading: boolean;
+  deleteError: string | null;
 }
+
 
 export type RootState = {
     auth: AuthState
