@@ -2,14 +2,12 @@ import { Button } from '@/components/ui'
 import React, { useState } from 'react'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import { useNavigate } from 'react-router-dom'
-// import {
-//     createCategory,
-//     clearCategoryError,
-//     useAppSelector,
-// } from '@/store/slices/crmDashboard' // Adjust import path as needed
 import { useAppDispatch } from '@/store' // Adjust import path as needed
 import { clearCategoryError, createCategory } from '../store'
 import { useSelector } from 'react-redux'
+// Alternative toast imports (choose one based on your setup):
+import { toast } from 'react-toastify'
+// import { useToast } from '@/components/ui/use-toast'
 
 const CrmCreateCategory = () => {
     const navigate = useNavigate()
@@ -33,13 +31,23 @@ const CrmCreateCategory = () => {
             )
 
             if (createCategory.fulfilled.match(result)) {
-                // Success - navigate back or show success message
+                // Success - show toast message
+                toast.success('Category created successfully!', {
+                    duration: 3000,
+                    position: 'top-right',
+                })
+
                 setCategoryName('')
                 navigate(-1) // Go back to previous page
             }
         } catch (error) {
             // Error handling is managed by Redux
             console.error('Failed to create category:', error)
+            // Optional: Show error toast
+            toast.error('Failed to create category. Please try again.', {
+                duration: 3000,
+                position: 'top-right',
+            })
         }
     }
 

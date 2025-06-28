@@ -1,54 +1,72 @@
 import React, { useState, useEffect } from 'react'
+import { Star, Mail, Phone, X, FileText, Download, Eye } from 'lucide-react'
+import { IoMdArrowRoundBack } from 'react-icons/io'
 import { FaStar } from 'react-icons/fa'
 import { CiMail } from 'react-icons/ci'
 import { BsPhone } from 'react-icons/bs'
+import { IoIosArrowForward } from 'react-icons/io'
+import { useNavigate } from 'react-router-dom'
 
-import { useParams, useNavigate } from 'react-router-dom'
-import {
-    ChevronLeft,
-    Mail,
-    Phone,
-    MapPin,
-    Calendar,
-    DollarSign,
-    Briefcase,
-    Smartphone,
-} from 'lucide-react'
-import { DoctorJob } from './doctorData'
-import { Button } from '@/components/ui'
-import { IoMdArrowRoundBack } from 'react-icons/io'
+const documents = [
+    {
+        id: 1,
+        name: 'Right to Work in the UK (Passport/Visa if applicable)',
+        type: 'PDF',
+    },
+    { id: 2, name: 'GP CV', type: 'PDF' },
+    { id: 3, name: 'Occupational Health Clearance', type: 'PDF' },
+    { id: 4, name: 'Professional References – 2 references', type: 'PDF' },
+    { id: 5, name: 'Appraisal & Revalidation Evidence', type: 'PDF' },
+    { id: 6, name: 'Mandatory Training Certificates', type: 'PDF' },
+    { id: 7, name: 'DBS Certificate', type: 'PDF' },
+    { id: 8, name: 'Medical Indemnity Insurance', type: 'PDF' },
+]
 
 const DoctorDetails = () => {
-    const { id } = useParams()
-    const navigate = useNavigate()
     const [doctor, setDoctor] = useState(null)
-    const [loading, setLoading] = useState(true)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [selectedDocument, setSelectedDocument] = useState(null)
 
-    useEffect(() => {
-        const foundDoctor = DoctorJob.find((doc) => doc.id === parseInt(id))
-        if (foundDoctor) {
-            setDoctor(foundDoctor)
-        }
-        setLoading(false)
-    }, [id])
+    const navigate = useNavigate()
 
-    const handleBack = () => {
-        navigate('/app/crm/doctor')
+    // const handleBack = () => {
+    //     navigate(-1)
+    // }
+
+    const handleViewDocument = (document) => {
+        setSelectedDocument(document)
+        setIsModalOpen(true)
+    }
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false)
+        setSelectedDocument(null)
+    }
+
+    const handleAccept = () => {
+        console.log('Document accepted:', selectedDocument?.name)
+        handleCloseModal()
+    }
+
+    const handleDecline = () => {
+        console.log('Document declined:', selectedDocument?.name)
+        handleCloseModal()
     }
 
     return (
-        <div>
-            <div className="ml-[-26px]">
-                <Button
-                    className="flex items-center justify-center gap-2 border-0"
+        <div className="p-4">
+            {/* Header */}
+            <div className="mb-6">
+                <button
+                    className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
                     onClick={() => navigate(-1)}
                 >
-                    <IoMdArrowRoundBack size={30} color="#25324B" />
-                    <span className="text-[#25324B] text-[18px]">
-                        Doctor Details{' '}
-                    </span>
-                </Button>
-            </div>{' '}
+                    <IoMdArrowRoundBack size={24} />
+                    <span className="text-lg font-medium">Doctor Details</span>
+                </button>
+            </div>
+
+            {/* Main Content */}
             <div className="grid grid-cols-10 w-full gap-3 mt-5">
                 <div className="col-span-3 border border-[#D6DDEB] p-5 h-[300px]">
                     <div className="flex items-center gap-4">
@@ -106,76 +124,95 @@ const DoctorDetails = () => {
                         </div>
                     </div>
                 </div>
-                <div className="col-span-7 ">
-                    <div className="flex items-center justify-between border border-[#D6DDEB] rounded-sm  p-5 mb-4">
-                        <p className="text-[#25324B] text-[14px] font-[600]">
-                            Right to Work in the UK (Passport/Visa if
-                            applicable)
-                        </p>
-                        <button className="bg-[#0F9297] h-[30px] text-white w-[70px] rounded-sm text-[14px] font-[600]">
-                            View
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between border border-[#D6DDEB] rounded-sm  p-5 mb-4">
-                        <p className="text-[#25324B] text-[14px] font-[600]">
-                            GP CV{' '}
-                        </p>
-                        <button className="bg-[#0F9297] h-[30px] text-white w-[70px] rounded-sm text-[14px] font-[600]">
-                            View
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between border border-[#D6DDEB] rounded-sm  p-5 mb-4">
-                        <p className="text-[#25324B] text-[14px] font-[600]">
-                            Occupational Health Clearance
-                        </p>
-                        <button className="bg-[#0F9297] h-[30px] text-white w-[70px] rounded-sm text-[14px] font-[600]">
-                            View
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between border border-[#D6DDEB] rounded-sm  p-5 mb-4">
-                        <p className="text-[#25324B] text-[14px] font-[600]">
-                            Professional References – 2 references
-                        </p>
-                        <button className="bg-[#0F9297] h-[30px] text-white w-[70px] rounded-sm text-[14px] font-[600]">
-                            View
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between border border-[#D6DDEB] rounded-sm  p-5 mb-4">
-                        <p className="text-[#25324B] text-[14px] font-[600]">
-                            Appraisal & Revalidation Evidence
-                        </p>
-                        <button className="bg-[#0F9297] h-[30px] text-white w-[70px] rounded-sm text-[14px] font-[600]">
-                            View
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between border border-[#D6DDEB] rounded-sm  p-5 mb-4">
-                        <p className="text-[#25324B] text-[14px] font-[600]">
-                            Mandatory Training Certificates
-                        </p>
-                        <button className="bg-[#0F9297] h-[30px] text-white w-[70px] rounded-sm text-[14px] font-[600]">
-                            View
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between border border-[#D6DDEB] rounded-sm  p-5 mb-4">
-                        <p className="text-[#25324B] text-[14px] font-[600]">
-                            Right to Work in the UK (Passport/Visa if
-                            applicable)
-                        </p>
-                        <button className="bg-[#0F9297] h-[30px] text-white w-[70px] rounded-sm text-[14px] font-[600]">
-                            View
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-between border border-[#D6DDEB] rounded-sm  p-5 mb-4">
-                        <p className="text-[#25324B] text-[14px] font-[600]">
-                            Right to Work in the UK (Passport/Visa if
-                            applicable)
-                        </p>
-                        <button className="bg-[#0F9297] h-[30px] text-white w-[70px] rounded-sm text-[14px] font-[600]">
-                            View
-                        </button>
+                {/* Documents List */}
+                <div className="lg:col-span-7">
+                    <div className="space-y-3">
+                        {documents.map((document) => (
+                            <div
+                                key={document.id}
+                                className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:shadow-sm transition-shadow"
+                            >
+                                <p className="text-sm font-medium text-gray-800 flex-1">
+                                    {document.name}
+                                </p>
+                                <button
+                                    onClick={() => handleViewDocument(document)}
+                                    className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+                                >
+                                    View
+                                </button>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
+
+            {/* Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-[#2155A329] bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-[45vw] p-5">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-4">
+                            <h3 className="text-[17px] font-semibold text-[#272D37]">
+                                View Document
+                            </h3>
+                            <button
+                                onClick={handleCloseModal}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X className="w-5 h-5" color="#0A1629" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 mt-[-20px]">
+                            <div className="mb-4">
+                                <label className="block text-[13px] font-medium text-[#344054] mb-2">
+                                    Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={selectedDocument?.name || ''}
+                                    readOnly
+                                    className="w-full px-3 py-2 border border-[#D6DDEB] rounded-md text-[#25324B] text-[13px]"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between px-3 py-4 border border-gray-200 mb-6 w-fit">
+                                <div className="flex items-center gap-4 ">
+                                    {/* <FileText className="w-5 h-5 text-red-500" /> */}
+                                    <span className="text-sm font-bold text-[#000000]">
+                                        {selectedDocument?.type}
+                                    </span>
+                                    <span className="text-[#25324B] text-[13px] font-[500]">
+                                        View Document
+                                    </span>
+                                    <IoIosArrowForward
+                                        color="#25324B"
+                                        size={20}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleAccept}
+                                    className="flex-1 bg-[#0F9297] h-[40px] text-white rounded-md font-medium transition-colors"
+                                >
+                                    Accept
+                                </button>
+                                <button
+                                    onClick={handleDecline}
+                                    className="flex-1 bg-[#DC3454] h-[40px] text-white rounded-md font-medium transition-colors"
+                                >
+                                    Decline
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

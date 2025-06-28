@@ -4,7 +4,6 @@ import {
     NAV_ITEM_TYPE_COLLAPSE,
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
-// import { DOCTOR, BUSINESS } from '@/constants/roles.constant'
 import { DOCTOR, BUSINESS, ADMIN, USER } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
@@ -84,71 +83,51 @@ const baseConfig: NavigationTree[] = [
                         path: `${APP_PREFIX_PATH}/crm/dashboard`,
                         title: 'Dashboard',
                         translateKey: 'nav.appsCrm.dashboard',
-                icon: 'crm',
+                        icon: 'crm',
                         type: NAV_ITEM_TYPE_ITEM,
                         authority: [ADMIN],
                         subMenu: [],
                     },
-                     {
-                         key: 'appsCrm.business',
-                         path: `${APP_PREFIX_PATH}/crm/business`,
-                         title: 'Business',
-                         translateKey: 'nav.appsCrm.business',
-                 icon: 'crm',
-                         type: NAV_ITEM_TYPE_ITEM,
-                         authority: [ADMIN],
-                         subMenu: [],
-                     },
-                     {
-                         key: 'appsCrm.doctor',
-                         path: `${APP_PREFIX_PATH}/crm/doctor`,
-                         title: 'Doctor',
-                         translateKey: 'nav.appsCrm.doctor',
-                 icon: 'crm',
-                         type: NAV_ITEM_TYPE_ITEM,
-                         authority: [ADMIN],
-                         subMenu: [],
-                     },
-                     {
-                         key: 'appsCrm.service',
-                         path: `${APP_PREFIX_PATH}/crm/service`,
-                         title: 'Services',
-                         translateKey: 'nav.appsCrm.service',
-                 icon: 'crm',
-                         type: NAV_ITEM_TYPE_ITEM,
-                         authority: [ADMIN],
-                         subMenu: [],
-                     },
-                     {
-                         key: 'appsCrm.category',
-                         path: `${APP_PREFIX_PATH}/crm/category`,
-                         title: 'Category',
-                         translateKey: 'nav.appsCrm.category',
-                 icon: 'crm',
-                         type: NAV_ITEM_TYPE_ITEM,
-                         authority: [ADMIN],
-                         subMenu: [],
-                     },
-                //     {
-                //         key: 'appsCrm.customerDetails',
-                //         path: `${APP_PREFIX_PATH}/crm/customer-details?id=8`,
-                //         title: 'Customer Details',
-                //         translateKey: 'nav.appsCrm.customerDetails',
-                // icon: 'crm',
-                //         type: NAV_ITEM_TYPE_ITEM,
-                //         authority: [ADMIN],
-                //         subMenu: [],
-                //     },
-                //     {
-                //         key: 'appsCrm.mail',
-                //         path: `${APP_PREFIX_PATH}/crm/mail`,
-                //         title: 'Mail',
-                //         translateKey: 'nav.appsCrm.mail',
-                // icon: 'crm',
-                //         type: NAV_ITEM_TYPE_ITEM,
-                //         authority: [ADMIN],
-                //         subMenu: [],
-                //     },
+                    {
+                        key: 'appsCrm.business',
+                        path: `${APP_PREFIX_PATH}/crm/business`,
+                        title: 'Business',
+                        translateKey: 'nav.appsCrm.business',
+                        icon: 'crm',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN],
+                        subMenu: [],
+                    },
+                    {
+                        key: 'appsCrm.doctor',
+                        path: `${APP_PREFIX_PATH}/crm/doctor`,
+                        title: 'Doctor',
+                        translateKey: 'nav.appsCrm.doctor',
+                        icon: 'crm',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN],
+                        subMenu: [],
+                    },
+                    {
+                        key: 'appsCrm.service',
+                        path: `${APP_PREFIX_PATH}/crm/service`,
+                        title: 'Services',
+                        translateKey: 'nav.appsCrm.service',
+                        icon: 'crm',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN],
+                        subMenu: [],
+                    },
+                    {
+                        key: 'appsCrm.category',
+                        path: `${APP_PREFIX_PATH}/crm/category`,
+                        title: 'Category',
+                        translateKey: 'nav.appsCrm.category',
+                        icon: 'crm',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN],
+                        subMenu: [],
+                    },
                 ],
             },
             {
@@ -177,7 +156,7 @@ const baseConfig: NavigationTree[] = [
                         translateKey: 'nav.appsAccount.kycForm',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [DOCTOR, BUSINESS, ADMIN, USER], // updated here
+                        authority: [DOCTOR, BUSINESS, ADMIN, USER],
                         subMenu: [],
                     },
                 ],
@@ -206,51 +185,42 @@ export const getAppsNavigationConfig = (): NavigationTree[] => {
     if (appsSection && Array.isArray(appsSection.subMenu)) {
         let newSubMenu: NavigationTree[] = []
 
-        // Special handling for super admin - show only CRM and Account children
         if (signedUpAs === 'super admin') {
             for (const item of appsSection.subMenu) {
                 if (item.key === 'apps.crm') {
-                    // Flatten CRM - show only children with parent icon on first child
                     const children = structuredClone(item.subMenu)
                     if (children.length > 0) {
-                        children[0].icon = item.icon // Add parent icon to first child
+                        children[0].icon = item.icon
                     }
                     newSubMenu.push(...children)
                 } else if (item.key === 'apps.account') {
-                    // Keep Account as is (collapsible parent)
-                    newSubMenu.push(item)
+                    const filteredAccount = structuredClone(item)
+                    filteredAccount.subMenu = filteredAccount.subMenu?.filter(subItem => subItem.key !== 'appsAccount.kycForm')
+                    newSubMenu.push(filteredAccount)
                 }
             }
         } else {
-            // Existing logic for other roles
             for (const item of appsSection.subMenu) {
-                // Filter based on role
                 if ((signedUpAs === 'doctor' && item.key === 'apps.sales') ||
                     (signedUpAs === 'business' && item.key === 'apps.project')) {
                     continue
                 }
 
-                // Keep Account section as collapsible parent, flatten others
                 if (item.key === 'apps.account') {
                     newSubMenu.push(item)
                 } else if (item.key === 'apps.crm') {
                     if (signedUpAs !== 'doctor' && signedUpAs !== 'business') {
-                        // Flatten CRM - show only children with parent icon on first child
                         const children = structuredClone(item.subMenu)
                         if (children.length > 0) {
-                            children[0].icon = item.icon // Add parent icon to first child
+                            children[0].icon = item.icon
                         }
                         newSubMenu.push(...children)
                     }
                 } else if (item.type === NAV_ITEM_TYPE_COLLAPSE && Array.isArray(item.subMenu)) {
-                    // Flatten Doctor Dashboard and Sales sections
                     const children = structuredClone(item.subMenu)
-
                     if (children.length > 0) {
-                        // Move parent icon to first child
                         children[0].icon = item.icon
                     }
-
                     newSubMenu.push(...children)
                 } else {
                     newSubMenu.push(item)
@@ -264,5 +234,4 @@ export const getAppsNavigationConfig = (): NavigationTree[] => {
     return configCopy
 }
 
-// Optional default export for fallback cases
 export default getAppsNavigationConfig()

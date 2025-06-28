@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { apiGetCrmDashboardData, apiCreateCategory } from '@/services/CrmService'
+import { apiGetCrmDashboardData, apiCreateCategory, apiCreateService } from '@/services/CrmService'
 
 export type Statistic = {
     key: string
@@ -37,6 +37,14 @@ export type Category = {
     updatedAt?: string
 }
 
+export type Service = {
+    id?: number
+    name: string
+    category?: string
+    createdAt?: string
+    updatedAt?: string
+}
+
 export type DashboardData = {
     statisticData: Statistic[]
     leadByRegionData: LeadRegion[]
@@ -46,6 +54,7 @@ export type DashboardData = {
 
 type CrmDashboardDataResponse = DashboardData
 type CreateCategoryResponse = Category
+type CreateServiceResponse = Service
 
 export type CrmDashboardState = {
     loading: boolean
@@ -53,6 +62,9 @@ export type CrmDashboardState = {
     categoryLoading: boolean
     categoryError: string | null
     categories: Category[]
+    serviceLoading: boolean
+    serviceError: string | null
+    services: Service[]
 }
 
 export const SLICE_NAME = 'crmDashboard'
@@ -79,12 +91,28 @@ export const createCategory = createAsyncThunk(
     }
 )
 
+// Create new service
+export const createService = createAsyncThunk(
+    'crmDashboard/service/createService',
+    async (serviceData: { name: string }, { rejectWithValue }) => {
+        try {
+            const response = await apiCreateService<CreateServiceResponse, typeof serviceData>(serviceData)
+            return response.data
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : 'Failed to create service')
+        }
+    }
+)
+
 const initialState: CrmDashboardState = {
     loading: true,
     dashboardData: {},
     categoryLoading: false,
     categoryError: null,
     categories: [],
+    serviceLoading: false,
+    serviceError: null,
+    services: [],
 }
 
 const crmDashboardSlice = createSlice({
@@ -93,6 +121,9 @@ const crmDashboardSlice = createSlice({
     reducers: {
         clearCategoryError: (state) => {
             state.categoryError = null
+        },
+        clearServiceError: (state) => {
+            state.serviceError = null
         },
     },
     extraReducers: (builder) => {
@@ -119,8 +150,22 @@ const crmDashboardSlice = createSlice({
                 state.categoryLoading = false
                 state.categoryError = action.payload as string
             })
+            // Service creation
+            .addCase(createService.pending, (state) => {
+                state.serviceLoading = true
+                state.serviceError = null
+            })
+            .addCase(createService.fulfilled, (state, action) => {
+                state.serviceLoading = false
+                state.serviceError = null
+                state.services.push(action.payload)
+            })
+            .addCase(createService.rejected, (state, action) => {
+                state.serviceLoading = false
+                state.serviceError = action.payload as string
+            })
     },
 })
 
-export const { clearCategoryError } = crmDashboardSlice.actions
+export const { clearCategoryError, clearServiceError } = crmDashboardSlice.actions
 export default crmDashboardSlice.reducer

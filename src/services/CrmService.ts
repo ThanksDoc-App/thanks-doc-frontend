@@ -99,3 +99,31 @@ export async function apiGetCategories<T>() {
         method: 'get',
     });
 }
+
+export async function apiCreateService<T, U extends Record<string, unknown>>(data: U) {
+    return BaseService.request<T>({
+        url: '/api/v1/service', // this will be prefixed by VITE_API_URL
+        method: 'post',
+        data,
+    })
+}
+
+export async function apiGetServices<T>() {
+    return BaseService.request<T>({
+        url: '/api/v1/service', // this will be prefixed by VITE_API_URL
+        method: 'get',
+    });
+}
+
+export async function apiDeleteService<T>(id: string | number) {
+    return BaseService.request<T>({
+        url: `/api/v1/service/${id}`, // dynamic id in the URL
+        method: 'delete',
+    });
+}
+export async function apiDeleteCateory<T>(id: string | number) {
+    return BaseService.request<T>({
+        url: `/api/v1/category/${id}`, // dynamic id in the URL
+        method: 'delete',
+    });
+}
