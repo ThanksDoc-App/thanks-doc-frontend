@@ -190,7 +190,10 @@ const ServiceTable: React.FC = () => {
                                     {service.category?.name}
                                 </td>
                                 <td className="px-6 py-4">
-                                    {String(service.price || '')}
+                                    <div className="flex items-center gap-1">
+                                        <div> {service.price}</div>
+                                        <div> {service.currency}</div>{' '}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="relative">
@@ -232,7 +235,7 @@ const ServiceTable: React.FC = () => {
                                                                                 .category
                                                                                 ._id, // ← extract string ID
                                                                     },
-                                                                    'menu',
+                                                                    'delete',
                                                                 )
                                                             }
                                                             className="flex items-center gap-3 w-full px-4 py-2 text-[13px] text-[#25324B] hover:bg-gray-50"

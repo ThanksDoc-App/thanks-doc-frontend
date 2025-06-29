@@ -5,17 +5,18 @@ import { useNavigate } from 'react-router-dom'
 import { useAppDispatch } from '@/store' // Adjust import path as needed
 import { clearCategoryError, createCategory } from '../store'
 import { useSelector } from 'react-redux'
+import type { RootState } from '@/store' // Adjust the path if your RootState is defined elsewhere
 // Alternative toast imports (choose one based on your setup):
 import { toast } from 'react-toastify'
 // import { useToast } from '@/components/ui/use-toast'
 
 const CrmCreateCategory = () => {
     const navigate = useNavigate()
-    const dispatch = useAppDispatch<AppDispatch>()
+    const dispatch = useAppDispatch()
     const [categoryName, setCategoryName] = useState('')
 
     const { categoryLoading = false, categoryError = null } = useSelector(
-        (state: RootState) => state.crmDashboard || {},
+        (state: RootState) => state.adminDashboard || {},
     )
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -32,10 +33,7 @@ const CrmCreateCategory = () => {
 
             if (createCategory.fulfilled.match(result)) {
                 // Success - show toast message
-                toast.success('Category created successfully!', {
-                    duration: 3000,
-                    position: 'top-right',
-                })
+                toast.success('Category created successfully!')
 
                 setCategoryName('')
                 navigate(-1) // Go back to previous page
@@ -44,10 +42,7 @@ const CrmCreateCategory = () => {
             // Error handling is managed by Redux
             console.error('Failed to create category:', error)
             // Optional: Show error toast
-            toast.error('Failed to create category. Please try again.', {
-                duration: 3000,
-                position: 'top-right',
-            })
+            toast.error('Failed to create category. Please try again.')
         }
     }
 

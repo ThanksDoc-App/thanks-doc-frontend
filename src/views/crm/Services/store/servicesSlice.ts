@@ -9,6 +9,7 @@ export interface Service {
   name: string
   category: string
   price: number | string
+  
 }
 
 // Define API response shape

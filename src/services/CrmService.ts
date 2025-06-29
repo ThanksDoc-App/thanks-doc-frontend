@@ -85,6 +85,13 @@ export async function apiGetCrmMail<T, U extends Record<string, unknown>>(
 
 import BaseService from './BaseService'
 
+export async function apiGetAdminDashboard<T>() {
+    return BaseService.request<T>({
+        url: '/api/v1/dashboard/stats/admin',
+        method: 'get',
+    });
+}
+
 export async function apiCreateCategory<T, U extends Record<string, unknown>>(data: U) {
     return BaseService.request<T>({
         url: '/api/v1/category', // this will be prefixed by VITE_API_URL
@@ -110,7 +117,7 @@ export async function apiCreateService<T, U extends Record<string, unknown>>(dat
 
 export async function apiGetServices<T>() {
     return BaseService.request<T>({
-        url: '/api/v1/service', // this will be prefixed by VITE_API_URL
+        url: '/api/v1/admin?userType=doctor', 
         method: 'get',
     });
 }
@@ -125,5 +132,11 @@ export async function apiDeleteCateory<T>(id: string | number) {
     return BaseService.request<T>({
         url: `/api/v1/category/${id}`, // dynamic id in the URL
         method: 'delete',
+    });
+}
+export async function apiGetDoctors<T>() {
+    return BaseService.request<T>({
+        url: '/api/v1/admin?userType=doctor', 
+        method: 'get',
     });
 }

@@ -4,8 +4,9 @@ import base, { BaseState } from './slices/base'
 import locale, { LocaleState } from './slices/locale/localeSlice'
 import theme, { ThemeState } from './slices/theme/themeSlice'
 import categoryReducer from '../views/crm/Category/store/categorySlice'
-import servicesReducer from '../views/crm/Services/store/servicesSlice' // ✅ Add this import
+import servicesReducer from '../views/crm/Services/store/servicesSlice'
 import RtkQueryService from '@/services/RtkQueryService'
+import adminDashboardReducer, { AdminDashboardState } from '@/views/crm/CrmDashboard/store'
 
 interface Category {
   _id: string
@@ -23,15 +24,11 @@ interface CategoryState {
   deleteError: any
 }
 
-// ✅ Add ServicesState interface
 interface ServicesState {
   services: Array<{
     _id: string;
     name: string;
-    category: {
-      _id: string;
-      name: string;
-    };
+    category: string; // Change from object to string to match expected Service type
     price: string;
   }>;
   loading: boolean;
@@ -43,14 +40,14 @@ interface ServicesState {
   deleteError: string | null;
 }
 
-
 export type RootState = {
     auth: AuthState
     base: BaseState
     locale: LocaleState
     theme: ThemeState
     category: CategoryState
-    services: ServicesState  // ✅ Add this line
+    services: ServicesState
+    adminDashboard: AdminDashboardState  // ✅ Add this line
     /* eslint-disable @typescript-eslint/no-explicit-any */
     [RtkQueryService.reducerPath]: any
 }
@@ -65,7 +62,8 @@ const staticReducers = {
     locale,
     theme,
     category: categoryReducer,
-    services: servicesReducer,  // ✅ Add this line
+    services: servicesReducer,
+    adminDashboard: adminDashboardReducer,  // ✅ Add this line
     [RtkQueryService.reducerPath]: RtkQueryService.reducer,
 }
 

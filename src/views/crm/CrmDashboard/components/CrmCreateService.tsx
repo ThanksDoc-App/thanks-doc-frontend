@@ -1,25 +1,40 @@
 import { Button } from '@/components/ui'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import { useNavigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
-import type { AppDispatch, RootState } from '@/store'
+import type { RootState } from '@/store'
 import { clearServiceError, createService } from '../store'
+import { useAppDispatch } from '@/store'
+import {
+    categoryStorage,
+    type Category,
+} from '../../Category/store/categoryStorage'
+// import { categoryStorage, type Category } from '@/utils/categoryStorage'
 
 const CrmCreateService = () => {
     const navigate = useNavigate()
-    const dispatch = useDispatch<AppDispatch>()
+    const dispatch = useAppDispatch()
 
-    // Update 'crmDashboard' to the correct slice name as defined in your RootState, e.g., 'crm'
     const { serviceLoading = false, serviceError = null } = useSelector(
-        (state: RootState) => state.crmDashboard || {},
+        (state: RootState) => state.adminDashboard || {},
     )
 
     const [formData, setFormData] = useState({
         category: '',
         name: '',
+        price: '',
+        currency: 'GBP',
     })
+
+    const [categories, setCategories] = useState<Category[]>([])
+
+    // Load categories from localStorage on component mount
+    useEffect(() => {
+        const storedCategories = categoryStorage.getCategories()
+        setCategories(storedCategories)
+    }, [])
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -52,18 +67,33 @@ const CrmCreateService = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!formData.name.trim()) {
+        if (
+            !formData.name.trim() ||
+            !formData.price.trim() ||
+            !formData.category.trim()
+        ) {
+            toast.error('Please fill in all required fields')
             return
         }
 
         try {
-            const result = await dispatch(
-                createService({ name: formData.name }),
-            )
+            const serviceData = {
+                name: formData.name,
+                category: formData.category,
+                price: parseFloat(formData.price),
+                currency: formData.currency,
+            }
+
+            const result = await dispatch(createService(serviceData))
 
             if (createService.fulfilled.match(result)) {
                 toast.success('Service created successfully!')
-                setFormData({ category: '', name: '' })
+                setFormData({
+                    category: '',
+                    name: '',
+                    price: '',
+                    currency: 'GBP',
+                })
                 navigate('/app/crm/service')
             } else if (createService.rejected.match(result)) {
                 showErrorToast(result.payload || result.error)
@@ -105,36 +135,104 @@ const CrmCreateService = () => {
                             value={formData.category}
                             onChange={handleInputChange}
                             className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-1.5 outline-0"
+                            required
                         >
                             <option value="">Select a category</option>
-                            <option value="engineering">Engineering</option>
-                            <option value="design">Design</option>
-                            <option value="marketing">Marketing</option>
-                            <option value="sales">Sales</option>
-                            <option value="product">Product Management</option>
+                            {categories.length > 0 ? (
+                                categories.map((category) => (
+                                    <option
+                                        key={category._id}
+                                        value={category._id}
+                                    >
+                                        {category.name}
+                                    </option>
+                                ))
+                            ) : (
+                                <>
+                                    <option value="general">
+                                        General Practitioner
+                                    </option>
+                                    <option value="pediatrics">
+                                        Pediatrics
+                                    </option>
+                                    <option value="dermatology">
+                                        Dermatology
+                                    </option>
+                                    <option value="cardiology">
+                                        Cardiology
+                                    </option>
+                                    <option value="neurology">Neurology</option>
+                                </>
+                            )}
                         </select>
+                        {categories.length === 0 && (
+                            <p className="text-[#8c91a0] text-xs mt-1">
+                                No categories found in storage. Using default
+                                options.
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-2">
                         <label className="text-[#515B6F] font-[15px] font-[600]">
-                            Enter Job
+                            Service Name
                         </label>
                         <input
                             type="text"
                             name="name"
                             value={formData.name}
                             onChange={handleInputChange}
-                            placeholder="Enter service title"
+                            placeholder="Enter service name"
                             className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-2 outline-0"
                             required
                         />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[#515B6F] font-[15px] font-[600]">
+                            Price
+                        </label>
+                        <input
+                            type="number"
+                            name="price"
+                            value={formData.price}
+                            onChange={handleInputChange}
+                            placeholder="Enter price"
+                            className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-2 outline-0"
+                            required
+                            min="0"
+                            step="0.01"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[#515B6F] font-[15px] font-[600]">
+                            Currency
+                        </label>
+                        <select
+                            name="currency"
+                            value={formData.currency}
+                            onChange={handleInputChange}
+                            className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-1.5 outline-0"
+                            required
+                        >
+                            <option value="GBP">GBP (£)</option>
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="NGN">NGN (₦)</option>
+                        </select>
                     </div>
 
                     <Button
                         type="submit"
                         variant="solid"
                         className="w-[207px] mt-4"
-                        disabled={serviceLoading || !formData.name.trim()}
+                        disabled={
+                            serviceLoading ||
+                            !formData.name.trim() ||
+                            !formData.price.trim() ||
+                            !formData.category.trim()
+                        }
                     >
                         {serviceLoading ? 'Creating...' : 'Create a service'}
                     </Button>
