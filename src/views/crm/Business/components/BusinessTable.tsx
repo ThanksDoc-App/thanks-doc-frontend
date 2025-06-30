@@ -1,25 +1,76 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     MoreHorizontal,
     ChevronLeft,
     ChevronRight,
     ChevronDown,
 } from 'lucide-react'
-import { jobData } from '../businessData'
-
-// Sample data - replace with your actual jobData import
+// ✅ Import from your main store
+import { useAppDispatch, useAppSelector } from '@/store' // Update this path to your main store
+import {
+    fetchBusinesses,
+    selectBusinesses,
+    selectBusinessesLoading,
+    selectBusinessesError,
+} from '../store/businessSlice' // Update this path to match your businessSlice location
+import SkeletonTable from '@/components/shared/SkeletonTable'
 
 const BusinessTable = () => {
+    const navigate = useNavigate()
+    const dispatch = useAppDispatch()
+
+    // Redux state
+    const businessesData = useAppSelector(selectBusinesses)
+    const loading = useAppSelector(selectBusinessesLoading)
+    const error = useAppSelector(selectBusinessesError)
+
+    // Local state for pagination
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
     const [showDropdown, setShowDropdown] = useState(false)
 
+    // Fetch businesses on component mount
+    useEffect(() => {
+        console.log('🚀 BusinessTable mounted - dispatching fetchBusinesses')
+        dispatch(fetchBusinesses())
+    }, [dispatch])
+
+    // Debug logging
+    // useEffect(() => {
+    //     console.log('📊 Redux State Update:')
+    //     console.log('- Loading:', loading)
+    //     console.log('- Error:', error)
+    //     console.log('- Businesses Data:', businessesData)
+    //     console.log('- Businesses Length:', businessesData?.length)
+    // }, [businessesData, loading, error])
+
+    // Transform API data to match original table structure
+    const BusinessJob = businessesData.map((business, index) => ({
+        id: business._id || index,
+        name: business.name || 'N/A',
+        date: business.createdAt
+            ? new Date(business.createdAt).toLocaleDateString()
+            : 'N/A',
+        address: business.address || business.location || 'Not specified',
+        jobs: business.jobsPosted
+            ? `${business.jobsPosted} jobs`
+            : 'No jobs posted',
+    }))
+
+    // console.log('🔄 Transformed BusinessJob data:', BusinessJob)
+
     // Calculate pagination
-    const totalItems = jobData.length
+    const totalItems = BusinessJob.length
     const totalPages = Math.ceil(totalItems / itemsPerPage)
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
-    const currentData = jobData.slice(startIndex, endIndex)
+    const currentData = BusinessJob.slice(startIndex, endIndex)
+
+    // Handle business row click
+    const handleBusinessClick = (businessId: any) => {
+        navigate(`/app/crm/business/${businessId}`)
+    }
 
     // Handle page change
     const handlePageChange = (page: any) => {
@@ -71,13 +122,35 @@ const BusinessTable = () => {
         return pages
     }
 
+    // Loading state
+    if (loading && BusinessJob.length === 0) {
+        return <SkeletonTable />
+    }
+
+    // Error state
+    if (error && BusinessJob.length === 0) {
+        return (
+            <div className="w-full mx-auto bg-white">
+                <div className="flex flex-col items-center justify-center p-8">
+                    <div className="text-red-500 mb-4">Error: {error}</div>
+                    <button
+                        onClick={() => dispatch(fetchBusinesses())}
+                        className="px-4 py-2 bg-[#0F9297] text-white rounded hover:bg-[#0d7b7f]"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="w-full mx-auto bg-white">
             {/* Responsive Table Wrapper */}
             <div className="overflow-x-auto bg-white scrollbar-hidden">
                 <table className="min-w-[700px] w-full border border-[#D6DDEB]">
                     <thead className="border-b border-gray-200">
-                        <tr className="">
+                        <tr>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
                                 Business name
                             </th>
@@ -96,8 +169,11 @@ const BusinessTable = () => {
                     <tbody>
                         {currentData.map((bus, index) => (
                             <tr
-                                key={index}
-                                className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap ${
+                                key={bus.id || index}
+                                onClick={() =>
+                                    handleBusinessClick(bus.id || index)
+                                }
+                                className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
                                     (index + 1) % 2 === 0 ? 'bg-[#F8F8FD]' : ''
                                 }`}
                             >
@@ -106,7 +182,13 @@ const BusinessTable = () => {
                                 <td className="px-6 py-4">{bus.address}</td>
                                 <td className="px-6 py-4">{bus.jobs}</td>
                                 <td className="px-6 py-4">
-                                    <button className="p-1">
+                                    <button
+                                        className="p-1 hover:bg-gray-200 rounded"
+                                        onClick={(e) => {
+                                            e.stopPropagation() // Prevent row click when clicking menu
+                                            // Add your menu logic here
+                                        }}
+                                    >
                                         <MoreHorizontal className="w-5 h-5" />
                                     </button>
                                 </td>
@@ -149,7 +231,7 @@ const BusinessTable = () => {
                 </div>
 
                 {/* Right side - Page navigation */}
-                <div className="flex items-center gap-2 ">
+                <div className="flex items-center gap-2">
                     {/* Previous button */}
                     <button
                         onClick={() => handlePageChange(currentPage - 1)}

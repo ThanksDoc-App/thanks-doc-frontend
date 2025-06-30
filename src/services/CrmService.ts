@@ -117,7 +117,7 @@ export async function apiCreateService<T, U extends Record<string, unknown>>(dat
 
 export async function apiGetServices<T>() {
     return BaseService.request<T>({
-        url: '/api/v1/admin?userType=doctor', 
+        url: '/api/v1/service', 
         method: 'get',
     });
 }
@@ -137,6 +137,12 @@ export async function apiDeleteCateory<T>(id: string | number) {
 export async function apiGetDoctors<T>() {
     return BaseService.request<T>({
         url: '/api/v1/admin?userType=doctor', 
+        method: 'get',
+    });
+}
+export async function apiGetBusiness<T>() {
+    return BaseService.request<T>({
+        url: '/api/v1/admin?userType=business', 
         method: 'get',
     });
 }

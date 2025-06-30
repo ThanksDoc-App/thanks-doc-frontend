@@ -6,13 +6,15 @@ import {
     ChevronRight,
     ChevronDown,
 } from 'lucide-react'
-import { useAppDispatch, useAppSelector } from '../store' // Adjust path as needed
+// ✅ Import from your main store, not the doctor-specific store
+import { useAppDispatch, useAppSelector } from '@/store' // Update this path to your main store
 import {
     fetchDoctors,
     selectDoctors,
     selectDoctorsLoading,
     selectDoctorsError,
-} from '../store/doctorSlice' // Adjust path as needed
+} from '../store/doctorSlice' // Update this path to match your doctorSlice location
+import SkeletonTable from '@/components/shared/SkeletonTable'
 
 const DoctorTable = () => {
     const navigate = useNavigate()
@@ -34,15 +36,6 @@ const DoctorTable = () => {
         dispatch(fetchDoctors())
     }, [dispatch])
 
-    // Debug logging
-    useEffect(() => {
-        console.log('📊 Redux State Update:')
-        console.log('- Loading:', loading)
-        console.log('- Error:', error)
-        console.log('- Doctors Data:', doctorsData)
-        console.log('- Doctors Length:', doctorsData?.length)
-    }, [doctorsData, loading, error])
-
     // Transform API data to match original table structure
     const DoctorJob = doctorsData.map((doctor, index) => ({
         id: doctor._id || index,
@@ -50,11 +43,11 @@ const DoctorTable = () => {
         date: doctor.createdAt
             ? new Date(doctor.createdAt).toLocaleDateString()
             : 'N/A',
-        payement: doctor.experience ? `${doctor.experience} years exp` : 'N/A', // Using experience as payment equivalent
+        payement: doctor.experience ? `${doctor.experience} years exp` : 'N/A',
         jobs: doctor.specialization || 'Not specified',
     }))
 
-    console.log('🔄 Transformed DoctorJob data:', DoctorJob)
+    // console.log('🔄 Transformed DoctorJob data:', DoctorJob)
 
     // Calculate pagination
     const totalItems = DoctorJob.length
@@ -65,7 +58,6 @@ const DoctorTable = () => {
 
     // Handle doctor row click
     const handleDoctorClick = (doctorId: any) => {
-        // Use APP_PREFIX_PATH if available, otherwise use the direct path
         navigate(`/app/crm/doctor/${doctorId}`)
     }
 
@@ -79,7 +71,7 @@ const DoctorTable = () => {
     // Handle items per page change
     const handleItemsPerPageChange = (items: any) => {
         setItemsPerPage(items)
-        setCurrentPage(1) // Reset to first page
+        setCurrentPage(1)
         setShowDropdown(false)
     }
 
@@ -119,17 +111,12 @@ const DoctorTable = () => {
         return pages
     }
 
-    // Add loading and error display
+    // Show skeleton loader when loading
     if (loading && DoctorJob.length === 0) {
-        return (
-            <div className="w-full mx-auto bg-white">
-                <div className="flex items-center justify-center p-8">
-                    <div className="text-[#8c91a0]">Loading doctors...</div>
-                </div>
-            </div>
-        )
+        return <SkeletonTable />
     }
 
+    // Error state
     if (error && DoctorJob.length === 0) {
         return (
             <div className="w-full mx-auto bg-white">
@@ -148,28 +135,19 @@ const DoctorTable = () => {
 
     return (
         <div className="w-full mx-auto bg-white">
-            {/* Debug info - remove in production */}
-            <div className="bg-gray-100 p-2 mb-4 text-xs">
-                <div>Loading: {loading ? 'Yes' : 'No'}</div>
-                <div>Error: {error || 'None'}</div>
-                <div>API Data Count: {doctorsData?.length || 0}</div>
-                <div>Transformed Data Count: {DoctorJob.length}</div>
-                <div>Current Page Data: {currentData.length}</div>
-            </div>
-
             {/* Responsive Table Wrapper */}
             <div className="overflow-x-auto bg-white scrollbar-hidden">
                 <table className="min-w-[700px] w-full border border-[#D6DDEB]">
                     <thead className="border-b border-gray-200">
-                        <tr className="">
+                        <tr>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
-                                Doctors name{' '}
+                                Doctors name
                             </th>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
                                 Date Joined
                             </th>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
-                                Total payment{' '}
+                                Total payment
                             </th>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
                                 Jobs applied
@@ -196,7 +174,7 @@ const DoctorTable = () => {
                                     <button
                                         className="p-1 hover:bg-gray-200 rounded"
                                         onClick={(e) => {
-                                            e.stopPropagation() // Prevent row click when clicking menu
+                                            e.stopPropagation()
                                             // Add your menu logic here
                                         }}
                                     >
@@ -242,7 +220,7 @@ const DoctorTable = () => {
                 </div>
 
                 {/* Right side - Page navigation */}
-                <div className="flex items-center gap-2 ">
+                <div className="flex items-center gap-2">
                     {/* Previous button */}
                     <button
                         onClick={() => handlePageChange(currentPage - 1)}

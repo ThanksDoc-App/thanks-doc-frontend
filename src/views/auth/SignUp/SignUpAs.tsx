@@ -23,7 +23,7 @@ const SignUpAs = () => {
     return (
         <div className="relative flex items-center justify-center min-h-screen p-3">
             {/* Back Button */}
-            <div className="absolute top-10 left-5 z-10">
+            <div className="absolute top-6 left-4 mt-2 sm:left-10 z-10">
                 <Button
                     variant="plain"
                     onClick={handleBack}
