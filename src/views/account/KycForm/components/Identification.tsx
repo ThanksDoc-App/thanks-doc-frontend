@@ -494,7 +494,7 @@ const Identification = ({
                                 {values.documentType && (
                                     <div className="grid xl:grid-cols-2 gap-4">
                                         <DocumentUploadField
-                                            name={`${values.documentType}Front`}
+                                            name={`${values.documentType}Front` as keyof IdentificationType}
                                             label={`${documentTypes.find(
                                                 (d) =>
                                                     d.value ===
@@ -510,7 +510,7 @@ const Identification = ({
                                             />
                                         </DocumentUploadField>
                                         <DocumentUploadField
-                                            name={`${values.documentType}Back`}
+                                            name={`${values.documentType}Back` as keyof IdentificationType}
                                             label={`${documentTypes.find(
                                                 (d) =>
                                                     d.value ===
