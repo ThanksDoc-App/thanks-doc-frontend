@@ -176,6 +176,7 @@ const DoctorTable = () => {
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             // Add your menu logic here
+                                            // ok
                                         }}
                                     >
                                         <MoreHorizontal className="w-5 h-5" />
