@@ -19,15 +19,8 @@ import {
 } from '../store/categorySlice'
 import { useAppDispatch, useAppSelector } from '../store'
 import SkeletonTable from '@/components/shared/SkeletonTable'
-
-// Define Category type
-type Category = {
-    _id: string
-    name: string
-    createdAt?: string
-    updatedAt?: string
-    __v?: number
-}
+import { categoryStorage, type Category } from '../store/categoryStorage'
+// import { categoryStorage, type Category } from '@/utils/categoryStorage'
 
 const CategoryTable = () => {
     const dispatch = useAppDispatch()
@@ -50,6 +43,13 @@ const CategoryTable = () => {
     useEffect(() => {
         dispatch(fetchCategories())
     }, [dispatch])
+
+    // Save categories to localStorage whenever categories change
+    useEffect(() => {
+        if (categories && Array.isArray(categories) && categories.length > 0) {
+            categoryStorage.saveCategories(categories)
+        }
+    }, [categories])
 
     // Ensure categories is always an array
     const categoriesArray = Array.isArray(categories) ? categories : []
@@ -88,11 +88,11 @@ const CategoryTable = () => {
         if (selectedCategory) {
             try {
                 await dispatch(deleteCategory(selectedCategory._id)).unwrap()
+                // Remove from localStorage
+                categoryStorage.removeCategory(selectedCategory._id)
                 closeModal()
-                // Optionally show success message
                 console.log('Category deleted successfully')
             } catch (error) {
-                // Error is handled by the store
                 console.error('Delete failed:', error)
             }
         }
@@ -202,9 +202,7 @@ const CategoryTable = () => {
                                                 handleActionClick(cat, 'menu')
                                             }
                                         >
-                                            {/* <div className="absolute right-0"> */}
                                             <MoreHorizontal className="w-5 h-5" />
-                                            {/* </div> */}
                                         </button>
 
                                         {activeModal === 'menu' &&

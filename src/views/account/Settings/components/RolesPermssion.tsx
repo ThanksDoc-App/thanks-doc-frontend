@@ -9,23 +9,15 @@ const adminData = [
 
 const RolesPermission = () => {
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-    })
+    const [formData, setFormData] = useState({ name: '', email: '' })
 
     const handleInputChange = (e: any) => {
         const { name, value } = e.target
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }))
+        setFormData((prev) => ({ ...prev, [name]: value }))
     }
 
     const handleSubmit = () => {
-        // Handle form submission here
         console.log('Form data:', formData)
-        // Reset form and close modal
         setFormData({ name: '', email: '' })
         setIsModalOpen(false)
     }
@@ -36,24 +28,26 @@ const RolesPermission = () => {
     }
 
     return (
-        <div>
+        <div className="w-full">
+            {/* Add user button */}
             <div className="flex justify-end pb-6">
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="bg-[#0F9297] h-[36px] text-white rounded-md font-medium text-[13px] px-7 transition-colors hover:bg-[#0d7e83]"
+                    className="bg-[#0F9297] h-[36px] text-white rounded-md font-medium text-[13px] px-6 transition-colors hover:bg-[#0d7e83]"
                 >
                     Add user
                 </button>
             </div>
 
-            <div>
-                <table className="min-w-[700px] w-full border border-[#D6DDEB]">
+            {/* Table container (scrollable on small screens) */}
+            <div className="overflow-x-auto bg-white rounded-md border border-[#D6DDEB]">
+                <table className="min-w-[600px] w-full">
                     <thead className="border-b border-gray-200">
-                        <tr className="">
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
+                        <tr>
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
                                 Admin name
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
                                 Email address
                             </th>
                             <th className="px-6 py-4 w-12"></th>
@@ -82,12 +76,12 @@ const RolesPermission = () => {
 
             {/* Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-[#2155A329]  bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-8 w-[470px]">
+                <div className="fixed inset-0 bg-[#2155A329] bg-opacity-30 flex items-center justify-center z-50 px-4">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md sm:max-w-lg">
                         {/* Modal Header */}
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex justify-between items-center mb-5">
                             <h3 className="text-[17px] font-semibold text-[#272D37]">
-                                Add user{' '}
+                                Add user
                             </h3>
                             <button
                                 onClick={closeModal}
@@ -109,7 +103,7 @@ const RolesPermission = () => {
                                     value={formData.name}
                                     onChange={handleInputChange}
                                     placeholder="James Doe"
-                                    className="w-full px-3 py-1.5 border placeholder:text-[#272D37] border-[#D0D5DD] rounded-md text-[12px] outline-0"
+                                    className="w-full px-3 py-2 border placeholder:text-[#272D37] border-[#D0D5DD] rounded-md text-[13px] outline-0"
                                 />
                             </div>
 
@@ -123,7 +117,7 @@ const RolesPermission = () => {
                                     value={formData.email}
                                     onChange={handleInputChange}
                                     placeholder="james@thanksdoc.com"
-                                    className="w-full px-3 py-1.5 placeholder:text-[#272D37] border border-[#D0D5DD] rounded-md text-[12px] outline-0"
+                                    className="w-full px-3 py-2 placeholder:text-[#272D37] border border-[#D0D5DD] rounded-md text-[13px] outline-0"
                                 />
                             </div>
 
@@ -131,7 +125,7 @@ const RolesPermission = () => {
                             <div className="flex justify-end">
                                 <button
                                     onClick={handleSubmit}
-                                    className="bg-[#0F9297] text-white px-6 py-2 rounded-md text-[13px] font-medium hover:bg-[#0d7e83] transition-colors w-full"
+                                    className="bg-[#0F9297] text-white px-6 py-2 rounded-md text-[13px] font-medium hover:bg-[#0d7e83] transition-colors w-full sm:w-auto"
                                 >
                                     Add
                                 </button>

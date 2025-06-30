@@ -13,7 +13,7 @@ const SignUpSimple = () => {
     return (
         <div className="relative min-h-screen">
             {/* Back button */}
-            <div className="absolute top-10 z-10">
+            <div className="absolute top-6 left-4 mt-2 sm:left-10 z-10">
                 <Button
                     variant="plain"
                     onClick={handleBack}

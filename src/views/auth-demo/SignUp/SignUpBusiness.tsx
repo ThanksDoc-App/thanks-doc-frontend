@@ -14,7 +14,7 @@ const SignUpBusiness = () => {
     return (
         <div className="relative flex items-center justify-center bg-gray-50 px-4">
             {/* Back button */}
-            <div className="absolute top-6 left-6 z-10">
+            <div className="absolute top-6 left-4 mt-2 sm:left-10 z-10">
                 <Button
                     variant="plain"
                     onClick={handleBack}

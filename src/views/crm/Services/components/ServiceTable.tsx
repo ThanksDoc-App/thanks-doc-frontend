@@ -10,7 +10,7 @@ import {
     Eye,
     X,
 } from 'lucide-react'
-import { useAppDispatch, useAppSelector } from '../store'
+import { useAppDispatch, useAppSelector, RootState } from '../store'
 import {
     fetchServices,
     deleteService,
@@ -190,7 +190,14 @@ const ServiceTable: React.FC = () => {
                                     {service.category?.name}
                                 </td>
                                 <td className="px-6 py-4">
+<<<<<<< HEAD
                                     {String(service.price || '')}
+=======
+                                    <div className="flex items-center gap-1">
+                                        <div> {service.price}</div>
+                                        <div> {service.currency}</div>{' '}
+                                    </div>
+>>>>>>> 038235a1ce62b459240e526582b5511e1304fd65
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="relative">
@@ -198,7 +205,15 @@ const ServiceTable: React.FC = () => {
                                             className="p-1 hover:bg-gray-100 rounded"
                                             onClick={() =>
                                                 handleActionClick(
-                                                    service,
+                                                    {
+                                                        ...service,
+                                                        _id: String(
+                                                            service._id,
+                                                        ),
+                                                        category:
+                                                            service.category
+                                                                ._id, // ← extract string ID
+                                                    },
                                                     'menu',
                                                 )
                                             }
@@ -214,7 +229,16 @@ const ServiceTable: React.FC = () => {
                                                         <button
                                                             onClick={() =>
                                                                 handleActionClick(
-                                                                    service,
+                                                                    {
+                                                                        ...service,
+                                                                        _id: String(
+                                                                            service._id,
+                                                                        ),
+                                                                        category:
+                                                                            service
+                                                                                .category
+                                                                                ._id, // ← extract string ID
+                                                                    },
                                                                     'delete',
                                                                 )
                                                             }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     MoreHorizontal,
@@ -6,13 +6,48 @@ import {
     ChevronRight,
     ChevronDown,
 } from 'lucide-react'
-import { DoctorJob } from '../doctorData'
+// ✅ Import from your main store, not the doctor-specific store
+import { useAppDispatch, useAppSelector } from '@/store' // Update this path to your main store
+import {
+    fetchDoctors,
+    selectDoctors,
+    selectDoctorsLoading,
+    selectDoctorsError,
+} from '../store/doctorSlice' // Update this path to match your doctorSlice location
+import SkeletonTable from '@/components/shared/SkeletonTable'
 
 const DoctorTable = () => {
     const navigate = useNavigate()
+    const dispatch = useAppDispatch()
+
+    // Redux state
+    const doctorsData = useAppSelector(selectDoctors)
+    const loading = useAppSelector(selectDoctorsLoading)
+    const error = useAppSelector(selectDoctorsError)
+
+    // Local state for pagination
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
     const [showDropdown, setShowDropdown] = useState(false)
+
+    // Fetch doctors on component mount
+    useEffect(() => {
+        console.log('🚀 DoctorTable mounted - dispatching fetchDoctors')
+        dispatch(fetchDoctors())
+    }, [dispatch])
+
+    // Transform API data to match original table structure
+    const DoctorJob = doctorsData.map((doctor, index) => ({
+        id: doctor._id || index,
+        name: doctor.name || 'N/A',
+        date: doctor.createdAt
+            ? new Date(doctor.createdAt).toLocaleDateString()
+            : 'N/A',
+        payement: doctor.experience ? `${doctor.experience} years exp` : 'N/A',
+        jobs: doctor.specialization || 'Not specified',
+    }))
+
+    // console.log('🔄 Transformed DoctorJob data:', DoctorJob)
 
     // Calculate pagination
     const totalItems = DoctorJob.length
@@ -22,22 +57,21 @@ const DoctorTable = () => {
     const currentData = DoctorJob.slice(startIndex, endIndex)
 
     // Handle doctor row click
-    const handleDoctorClick = (doctorId) => {
-        // Use APP_PREFIX_PATH if available, otherwise use the direct path
+    const handleDoctorClick = (doctorId: any) => {
         navigate(`/app/crm/doctor/${doctorId}`)
     }
 
     // Handle page change
-    const handlePageChange = (page) => {
+    const handlePageChange = (page: any) => {
         if (page >= 1 && page <= totalPages) {
             setCurrentPage(page)
         }
     }
 
     // Handle items per page change
-    const handleItemsPerPageChange = (items) => {
+    const handleItemsPerPageChange = (items: any) => {
         setItemsPerPage(items)
-        setCurrentPage(1) // Reset to first page
+        setCurrentPage(1)
         setShowDropdown(false)
     }
 
@@ -77,23 +111,45 @@ const DoctorTable = () => {
         return pages
     }
 
+    // Show skeleton loader when loading
+    if (loading && DoctorJob.length === 0) {
+        return <SkeletonTable />
+    }
+
+    // Error state
+    if (error && DoctorJob.length === 0) {
+        return (
+            <div className="w-full mx-auto bg-white">
+                <div className="flex flex-col items-center justify-center p-8">
+                    <div className="text-red-500 mb-4">Error: {error}</div>
+                    <button
+                        onClick={() => dispatch(fetchDoctors())}
+                        className="px-4 py-2 bg-[#0F9297] text-white rounded hover:bg-[#0d7b7f]"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="w-full mx-auto bg-white">
             {/* Responsive Table Wrapper */}
             <div className="overflow-x-auto bg-white scrollbar-hidden">
                 <table className="min-w-[700px] w-full border border-[#D6DDEB]">
                     <thead className="border-b border-gray-200">
-                        <tr className="">
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
-                                Doctors name{' '}
+                        <tr>
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
+                                Doctors name
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
                                 Date Joined
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
-                                Total payment{' '}
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
+                                Total payment
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
                                 Jobs applied
                             </th>
                             <th className="px-6 py-4 w-12"></th>
@@ -118,7 +174,7 @@ const DoctorTable = () => {
                                     <button
                                         className="p-1 hover:bg-gray-200 rounded"
                                         onClick={(e) => {
-                                            e.stopPropagation() // Prevent row click when clicking menu
+                                            e.stopPropagation()
                                             // Add your menu logic here
                                         }}
                                     >
@@ -164,7 +220,7 @@ const DoctorTable = () => {
                 </div>
 
                 {/* Right side - Page navigation */}
-                <div className="flex items-center gap-2 ">
+                <div className="flex items-center gap-2">
                     {/* Previous button */}
                     <button
                         onClick={() => handlePageChange(currentPage - 1)}
