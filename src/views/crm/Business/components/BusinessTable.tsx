@@ -151,16 +151,16 @@ const BusinessTable = () => {
                 <table className="min-w-[700px] w-full border border-[#D6DDEB]">
                     <thead className="border-b border-gray-200">
                         <tr>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
                                 Business name
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
                                 Date Joined
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
                                 Address
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
                                 Jobs posted
                             </th>
                             <th className="px-6 py-4 w-12"></th>
