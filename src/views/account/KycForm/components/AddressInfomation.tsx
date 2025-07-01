@@ -90,7 +90,7 @@ const AddressForm = (props: AddressFormProps) => {
         <>
         <div className="md:grid grid-cols-2 gap-4">
             <FormItem
-                label="Postcode"
+                label="Search your postcode"
                 invalid={getError(zipCodeName) && getTouched(zipCodeName)}
                 errorMessage={getError(zipCodeName)}
             >

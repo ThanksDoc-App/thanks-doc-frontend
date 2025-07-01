@@ -99,7 +99,7 @@ const FinancialInformation = ({
                 <h3 className="mb-2">Bank Details</h3>
                 <p>
                     Fill in your financial information to help us speed up the
-                    verication process.
+                    verification process.
                 </p>
             </div>
             <Formik
