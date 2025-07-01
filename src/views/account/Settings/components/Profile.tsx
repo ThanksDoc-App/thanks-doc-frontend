@@ -267,57 +267,64 @@ const Profile = ({ data }: ProfileProps) => {
                                     />
                                 </FormRow>
                             )}
-                            <FormRow
-                                name="address"
-                                label="Address"
-                                {...validatorProps}
-                                border={false}
-                            >
-                                <Field
-                                    type="text"
-                                    autoComplete="off"
-                                    name="address"
-                                    placeholder="Address"
-                                    component={Input}
-                                    prefix={
-                                        <HiOutlineLocationMarker className="text-xl" />
-                                    }
-                                />
-                            </FormRow>
-                            <FormRow
-                                name="phone"
-                                label="Phone Number"
-                                {...validatorProps}
-                            >
-                                <Field
-                                    type="text"
-                                    autoComplete="off"
-                                    name="phone"
-                                    placeholder="Phone Number"
-                                    component={Input}
-                                    prefix={
-                                        <HiOutlinePhone className="text-xl" />
-                                    }
-                                />
-                            </FormRow>
-                            {signedUpAs !== 'business' && (
+                            {signedUpAs !== 'super admin' && (
                                 <FormRow
-                                    name="gmcNumber"
-                                    label="GMC Number"
+                                    name="address"
+                                    label="Address"
+                                    {...validatorProps}
+                                    border={false}
+                                >
+                                    <Field
+                                        type="text"
+                                        autoComplete="off"
+                                        name="address"
+                                        placeholder="Address"
+                                        component={Input}
+                                        prefix={
+                                            <HiOutlineLocationMarker className="text-xl" />
+                                        }
+                                    />
+                                </FormRow>
+                            )}
+
+                            {signedUpAs !== 'super admin' && (
+                                <FormRow
+                                    name="phone"
+                                    label="Phone Number"
                                     {...validatorProps}
                                 >
                                     <Field
                                         type="text"
                                         autoComplete="off"
-                                        name="gmcNumber" // ✅ Corrected
-                                        placeholder="GMC Number"
+                                        name="phone"
+                                        placeholder="Phone Number"
                                         component={Input}
                                         prefix={
-                                            <HiOutlineClipboard className="text-xl" />
+                                            <HiOutlinePhone className="text-xl" />
                                         }
                                     />
                                 </FormRow>
                             )}
+
+                            {signedUpAs !== 'business' &&
+                                signedUpAs !== 'super admin' && (
+                                    <FormRow
+                                        name="gmcNumber"
+                                        label="GMC Number"
+                                        {...validatorProps}
+                                    >
+                                        <Field
+                                            type="text"
+                                            autoComplete="off"
+                                            name="gmcNumber"
+                                            placeholder="GMC Number"
+                                            component={Input}
+                                            prefix={
+                                                <HiOutlineClipboard className="text-xl" />
+                                            }
+                                        />
+                                    </FormRow>
+                                )}
 
                             {/* <FormDesription
                                 className="mt-8"

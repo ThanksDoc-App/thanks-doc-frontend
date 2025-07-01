@@ -27,11 +27,11 @@ const dropdownItemList: DropdownList[] = [
         path: '/app/account/settings/profile',
         icon: <HiOutlineCog />,
     },
-    {
-        label: 'Activity Log',
-        path: '/app/account/activity-log',
-        icon: <FiActivity />,
-    },
+    // {
+    //     label: 'Activity Log',
+    //     path: '/app/account/activity-log',
+    //     icon: <FiActivity />,
+    // },
 ]
 
 const _UserDropdown = ({ className }: CommonProps) => {

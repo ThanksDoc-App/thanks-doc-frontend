@@ -76,8 +76,8 @@ const DoctorDetails = () => {
             </div>
 
             {/* Main Content */}
-            <div className="grid grid-cols-10 w-full gap-3 mt-5">
-                <div className="col-span-3 border border-[#D6DDEB] p-5 h-[300px]">
+            <div className="grid grid-cols-1 md:grid-cols-10 w-full gap-3 mt-5">
+                <div className="md:col-span-3 border border-[#D6DDEB] p-5 h-[300px]">
                     <div className="flex items-center gap-4">
                         {' '}
                         <div>
@@ -115,13 +115,13 @@ const DoctorDetails = () => {
                                 <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                     Email
                                 </p>
-                                <p className="text-[#25324B] text-[11.5px]">
+                                <p className="text-[#25324B] text-[11.5px] break-all">
                                     jeromeBell45@email.com
                                 </p>
                             </div>
                         </div>
                         <div className="flex gap-3 mt-3">
-                            <BsPhone />{' '}
+                            <BsPhone />
                             <div>
                                 <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                     Phone
@@ -134,19 +134,19 @@ const DoctorDetails = () => {
                     </div>
                 </div>
                 {/* Documents List */}
-                <div className="lg:col-span-7">
+                <div className="md:col-span-7">
                     <div className="space-y-3">
                         {documents.map((document) => (
                             <div
                                 key={document.id}
-                                className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:shadow-sm transition-shadow"
+                                className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-sm transition-shadow"
                             >
                                 <p className="text-sm font-medium text-gray-800 flex-1">
                                     {document.name}
                                 </p>
                                 <button
                                     onClick={() => handleViewDocument(document)}
-                                    className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+                                    className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors w-full sm:w-auto"
                                 >
                                     View
                                 </button>
@@ -159,7 +159,7 @@ const DoctorDetails = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-[#2155A329] bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-[45vw] p-5">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-[90vw] md:max-w-[45vw] md:w-[45vw] p-5 max-h-[90vh] overflow-y-auto">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-4">
                             <h3 className="text-[17px] font-semibold text-[#272D37]">
@@ -204,7 +204,7 @@ const DoctorDetails = () => {
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row h-[90px] gap-3">
                                 <button
                                     onClick={handleAccept}
                                     className="flex-1 bg-[#0F9297] h-[40px] text-white rounded-md font-medium transition-colors"

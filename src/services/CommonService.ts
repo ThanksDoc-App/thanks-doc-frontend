@@ -51,3 +51,35 @@ export async function apiChangePassword(data: {
         data,
     })
 }
+
+// Add this to your existing API endpoints
+export async function apiAddAdmin(data: {
+    email: string
+    name: string
+    password: string
+}) {
+    return ApiService.fetchData<{
+        status: boolean
+        message?: string
+    }>({
+        url: '/api/v1/admin/add-admin',
+        method: 'post',
+        data,
+    })
+}
+
+// services/CommonService.ts
+export async function apiGetAdmins() {
+    return ApiService.fetchData<{
+        data: {
+            users: {
+                _id: string
+                name: string
+                email: string
+            }[]
+        }
+    }>({
+        url: '/api/v1/admin?userType=admin',
+        method: 'get',
+    })
+}

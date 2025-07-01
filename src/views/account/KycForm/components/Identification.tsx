@@ -128,7 +128,7 @@ type IdentificationProps = {
 
 type DocumentUploadFieldProps = PropsWithChildren<{
     label: string
-    name: keyof IdentificationType
+    name: string
     touched: FormikTouched<IdentificationType>
     errors: FormikErrors<IdentificationType>
 }>

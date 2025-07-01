@@ -14,11 +14,17 @@ const CrmDashboardHeader = ({
 }: CrmDashboardHeaderProps) => {
     const navigate = useNavigate()
 
+    const localUserName = JSON.parse(
+        localStorage.getItem('userdetails') || '{}',
+    )?.data?.name
+
     return (
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
                 <h4 className="mb-1 text-lg font-semibold">
-                    Hello, {userName || 'Admin'}
+                    Hello,{' '}
+                    {(userName || 'Admin').charAt(0).toUpperCase() +
+                        (userName || 'Admin').slice(1)}
                 </h4>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end w-full md:w-auto">
