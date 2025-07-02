@@ -218,7 +218,7 @@ const CrmCreateService = () => {
                             disabled
                         >
                             <option value="GBP">GBP (£)</option>
-                        </select>
+                        </select>c
                     </div>
 
                     <Button
