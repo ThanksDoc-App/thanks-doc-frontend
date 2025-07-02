@@ -202,7 +202,7 @@ const RolesPermission = () => {
                                 />
                             </div>
 
-                            <div className="mb-6 relative">
+                            {/* <div className="mb-6 relative">
                                 <label className="block text-[12px] font-[500] text-[#344054] mb-1">
                                     Password
                                 </label>
@@ -228,7 +228,7 @@ const RolesPermission = () => {
                                         )}
                                     </button>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* Modal Footer */}
                             <div className="flex justify-end">

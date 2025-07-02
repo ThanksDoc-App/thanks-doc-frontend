@@ -213,13 +213,11 @@ const CrmCreateService = () => {
                             name="currency"
                             value={formData.currency}
                             onChange={handleInputChange}
-                            className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-1.5 outline-0"
+                            className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-1.5 outline-0 bg-gray-100 text-gray-500 cursor-not-allowed"
                             required
+                            disabled
                         >
                             <option value="GBP">GBP (£)</option>
-                            <option value="USD">USD ($)</option>
-                            <option value="EUR">EUR (€)</option>
-                            <option value="NGN">NGN (₦)</option>
                         </select>
                     </div>
 

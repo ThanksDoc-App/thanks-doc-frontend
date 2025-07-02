@@ -1,3 +1,4 @@
+// OrganizationFields.tsx
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import { FormItem } from '@/components/ui/Form'
 import Input from '@/components/ui/Input'
@@ -6,6 +7,20 @@ import CreatableSelect from 'react-select/creatable'
 import DatePicker from '@/components/ui/DatePicker'
 import InputGroup from '@/components/ui/InputGroup'
 import { Field, FormikErrors, FormikTouched, FieldProps } from 'formik'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import {
+    fetchCategories,
+    selectCategories,
+    selectCategoriesLoading,
+    selectCategoriesError,
+} from './store/categorySlice'
+import {
+    fetchServices,
+    selectServices,
+    selectServicesLoading,
+    selectServicesError,
+} from './store/servicesSlice'
 
 type Options = {
     label: string
@@ -41,11 +56,12 @@ const options2 = [
 
 type FormFieldsName = {
     category: string
+    service: string
     tags: Options
     vendor: string
     brand: string
     description: string
-    price: string
+    price: number // Changed to number to match PricingFields
     location: string
     date: string
     time: string
@@ -56,24 +72,61 @@ type OrganizationFieldsProps = {
     errors: FormikErrors<FormFieldsName>
     values: {
         category: string
+        service: string
         tags: Options
+        price: number // Added price to values
         [key: string]: unknown
     }
 }
 
-const categories = [
-    { label: 'Online Doctor', value: 'Online Doctor' },
-    { label: 'In-person Doctor', value: 'In-person Doctor' },
-    { label: 'NHS Locum GP', value: 'NHS Locum GP' },
-]
-
-const services = [
-    { label: 'Menopause Specialist', value: 'Menopause Specialist' },
-    { label: 'Private Prescriptions', value: 'Private Prescriptions' },
-]
-
 const OrganizationFields = (props: OrganizationFieldsProps) => {
-    const { values = { category: '', tags: [] }, touched, errors } = props
+    const {
+        values = { category: '', service: '', tags: [], price: 0 },
+        touched,
+        errors,
+    } = props
+
+    // Redux hooks for categories
+    const dispatch = useDispatch()
+    const categories = useSelector(selectCategories)
+    const categoriesLoading = useSelector(selectCategoriesLoading)
+    const categoriesError = useSelector(selectCategoriesError)
+
+    // Redux hooks for services
+    const services = useSelector(selectServices)
+    const servicesLoading = useSelector(selectServicesLoading)
+    const servicesError = useSelector(selectServicesError)
+
+    // Transform categories data for Select component
+    const categoryOptions = categories.map((category) => ({
+        label: category.name,
+        value: category._id,
+    }))
+
+    // Transform services data for Select component
+    const serviceOptions = services.map((service) => ({
+        label: service.name,
+        value: service._id,
+    }))
+
+    // Get selected service details for price
+    const selectedService = services.find(
+        (service) => service._id === values.service,
+    )
+
+    // Fetch categories when component mounts
+    useEffect(() => {
+        if (categories.length === 0 && !categoriesLoading) {
+            dispatch(fetchCategories())
+        }
+    }, [dispatch, categories.length, categoriesLoading])
+
+    // Fetch services when component mounts
+    useEffect(() => {
+        if (services.length === 0 && !servicesLoading) {
+            dispatch(fetchServices())
+        }
+    }, [dispatch, services.length, servicesLoading])
 
     return (
         <AdaptableCard divider isLastChild className="mb-4">
@@ -93,16 +146,27 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                                 <Select
                                     field={field}
                                     form={form}
-                                    options={categories}
-                                    value={categories.filter(
+                                    options={categoryOptions}
+                                    value={categoryOptions.filter(
                                         (category) =>
                                             category.value === values.category,
                                     )}
-                                    onChange={(option) =>
+                                    onChange={(option) => {
                                         form.setFieldValue(
                                             field.name,
                                             option?.value,
                                         )
+                                    }}
+                                    isLoading={categoriesLoading}
+                                    placeholder={
+                                        categoriesLoading
+                                            ? 'Loading categories...'
+                                            : categoriesError
+                                              ? 'Error loading categories'
+                                              : 'Select a category'
+                                    }
+                                    isDisabled={
+                                        categoriesLoading || !!categoriesError
                                     }
                                 />
                             )}
@@ -112,26 +176,45 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                 <div className="col-span-1">
                     <FormItem
                         label="Service Title"
-                        invalid={
-                            (errors.category && touched.category) as boolean
-                        }
-                        errorMessage={errors.category}
+                        invalid={(errors.service && touched.service) as boolean}
+                        errorMessage={errors.service}
                     >
                         <Field name="service">
                             {({ field, form }: FieldProps) => (
                                 <Select
                                     field={field}
                                     form={form}
-                                    options={services}
-                                    value={services.filter(
+                                    options={serviceOptions}
+                                    value={serviceOptions.filter(
                                         (service) =>
                                             service.value === values.service,
                                     )}
-                                    onChange={(option) =>
+                                    onChange={(option) => {
                                         form.setFieldValue(
                                             field.name,
                                             option?.value,
                                         )
+                                        // Update price when service is selected
+                                        const selectedSrv = services.find(
+                                            (srv) => srv._id === option?.value,
+                                        )
+                                        if (selectedSrv && selectedSrv.price) {
+                                            form.setFieldValue(
+                                                'price',
+                                                selectedSrv.price,
+                                            )
+                                        }
+                                    }}
+                                    isLoading={servicesLoading}
+                                    placeholder={
+                                        servicesLoading
+                                            ? 'Loading services...'
+                                            : servicesError
+                                              ? 'Error loading services'
+                                              : 'Select a service'
+                                    }
+                                    isDisabled={
+                                        servicesLoading || !!servicesError
                                     }
                                 />
                             )}
@@ -161,16 +244,24 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                         invalid={Boolean(errors.price && touched.price)}
                         errorMessage={errors.price}
                     >
-                        <Field
-                            type="number"
-                            name="price"
-                            placeholder="Enter price"
-                            component={Input}
-                            suffix="GBP"
-                        />
+                        <Field name="price">
+                            {({ field }: FieldProps) => (
+                                <Input
+                                    {...field}
+                                    type="number"
+                                    placeholder="Price will be set automatically"
+                                    suffix="GBP"
+                                    disabled={true}
+                                    value={
+                                        selectedService?.price ||
+                                        values.price ||
+                                        ''
+                                    }
+                                />
+                            )}
+                        </Field>
                     </FormItem>
                 </div>
-                {/* New Location Field */}
                 <div className="col-span-1">
                     <FormItem
                         label="Address"
@@ -196,7 +287,9 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                                 <DatePicker
                                     {...field}
                                     value={field.value}
-                                    onChange={(val) => form.setFieldValue(field.name, val)}
+                                    onChange={(val) =>
+                                        form.setFieldValue(field.name, val)
+                                    }
                                     placeholder="Select Date"
                                 />
                             )}
@@ -214,8 +307,16 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                                 <Select
                                     isSearchable={false}
                                     options={options2}
-                                    value={options2.find(option => option.value === field.value)}
-                                    onChange={(option) => form.setFieldValue(field.name, option?.value)}
+                                    value={options2.find(
+                                        (option) =>
+                                            option.value === field.value,
+                                    )}
+                                    onChange={(option) =>
+                                        form.setFieldValue(
+                                            field.name,
+                                            option?.value,
+                                        )
+                                    }
                                     placeholder="Select Time"
                                 />
                             )}

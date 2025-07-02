@@ -14,8 +14,8 @@ const JobHistory = () => {
         // >
         <div>
             <div className="flex flex-col lg:flex-row justify-between mb-4">
-                <h3 className="mb-4 lg:mb-0">Job History1112</h3>
-                <JobHistoryTool />
+                <h3 className="mb-4 lg:mb-0">Job History</h3>
+                {/* <JobHistoryTool /> */}
             </div>
             <JobHistoryTable />
         </div>
