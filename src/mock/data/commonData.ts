@@ -110,6 +110,13 @@ export const searchQueryPoolData = [
         categoryTitle: 'Apps',
     },
     {
+        title: 'CRM Dashboard',
+        url: '/app/crm/create-category',
+        icon: 'crm',
+        category: 'CRM',
+        categoryTitle: 'Apps',
+    },
+    {
         title: 'Calendar',
         url: '/app/crm/calendar',
         icon: 'crm',

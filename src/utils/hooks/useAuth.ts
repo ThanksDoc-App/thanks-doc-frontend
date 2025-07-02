@@ -16,12 +16,7 @@ type Status = true | false
 
 function getAuthenticatedEntryPath(apiResponse: any): string {
     let role = apiResponse?.data?.data?.role || apiResponse?.data?.role
-
-    // Normalize 'super admin' to 'admin'
-    if (role === 'super admin') {
-        role = 'admin'
-    }
-
+    if (role === 'super admin') role = 'admin'
     return ROLE_BASED_PATHS[role as keyof typeof ROLE_BASED_PATHS] || appConfig.unAuthenticatedEntryPath
 }
 
@@ -33,12 +28,12 @@ function useAuth() {
 
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-    // 🔐 Auto logout after 30 minutes of inactivity
     useEffect(() => {
         if (token && signedIn) {
             const EVENTS = ['mousemove', 'keydown', 'scroll', 'click']
             const resetTimer = () => {
                 if (timeoutRef.current) clearTimeout(timeoutRef.current)
+                localStorage.setItem('lastActive', Date.now().toString())
                 timeoutRef.current = setTimeout(() => {
                     console.log('User inactive for 30 minutes. Logging out...')
                     handleSignOut()
@@ -56,73 +51,42 @@ function useAuth() {
         }
     }, [token, signedIn])
 
-    const signIn = async (
-        values: SignInCredential
-    ): Promise<{
-        status: Status
-        message: string
-        data: any
-    } | undefined> => {
+    useEffect(() => {
+        if (token && signedIn) {
+            localStorage.setItem('lastActive', Date.now().toString())
+        }
+    }, [])
+
+    const signIn = async (values: SignInCredential) => {
         try {
             const resp = await apiSignIn(values)
-
             if (resp.data) {
                 localStorage.setItem('userdetails', JSON.stringify(resp.data))
+                localStorage.setItem('lastActive', Date.now().toString())
 
-                const token =
-                    resp.data.data?.token ||
-                    resp.data.data?.accessToken ||
-                    resp.data.token
-
+                const token = resp.data.data?.token || resp.data.data?.accessToken || resp.data.token
                 dispatch(signInSuccess(token))
 
                 const userData = resp.data.data?.user || resp.data.user
                 if (userData) {
-                    dispatch(
-                        setUser(
-                            userData || {
-                                avatar: '',
-                                userName: 'Anonymous',
-                                authority: ['DOCTOR'],
-                                email: '',
-                            }
-                        )
-                    )
+                    dispatch(setUser(userData || {
+                        avatar: '',
+                        userName: 'Anonymous',
+                        authority: ['DOCTOR'],
+                        email: '',
+                    }))
                 }
 
                 if (token) {
                     await new Promise((resolve) => setTimeout(resolve, 100))
-
                     const authenticatedEntryPath = getAuthenticatedEntryPath(resp.data)
-
-                    if (authenticatedEntryPath) {
-                        navigate(authenticatedEntryPath)
-                    } else {
-                        return {
-                            status: false,
-                            message: `Unrecognized role. Please contact support.`,
-                            data: resp.data,
-                        }
-                    }
-
-                    return {
-                        status: true,
-                        message: 'Sign in successful',
-                        data: resp.data,
-                    }
+                    navigate(authenticatedEntryPath)
+                    return { status: true, message: 'Sign in successful', data: resp.data }
                 } else {
-                    return {
-                        status: false,
-                        message: resp.data.message || 'Missing token',
-                        data: {},
-                    }
+                    return { status: false, message: 'Missing token', data: {} }
                 }
             } else {
-                return {
-                    status: false,
-                    message: 'Invalid response from server',
-                    data: {},
-                }
+                return { status: false, message: 'Invalid response from server', data: {} }
             }
         } catch (errors: any) {
             return {
@@ -139,33 +103,18 @@ function useAuth() {
             if (resp.data) {
                 const { token } = resp.data
                 dispatch(signInSuccess(token))
-
                 if (resp.data.user) {
-                    dispatch(
-                        setUser(
-                            resp.data.user || {
-                                avatar: '',
-                                userName: 'Anonymous',
-                                authority: ['Doctor'],
-                                email: '',
-                            }
-                        )
-                    )
+                    dispatch(setUser(resp.data.user))
                 }
 
+                localStorage.setItem('lastActive', Date.now().toString())
                 await new Promise((resolve) => setTimeout(resolve, 100))
                 const authenticatedEntryPath = getAuthenticatedEntryPath(resp)
                 navigate(authenticatedEntryPath)
 
-                return {
-                    status: true,
-                    message: 'Sign up successful',
-                }
+                return { status: true, message: 'Sign up successful' }
             } else {
-                return {
-                    status: false,
-                    message: 'Invalid response from server',
-                }
+                return { status: false, message: 'Invalid response from server' }
             }
         } catch (errors: any) {
             return {
@@ -177,15 +126,9 @@ function useAuth() {
 
     const handleSignOut = () => {
         dispatch(signOutSuccess())
-        dispatch(
-            setUser({
-                avatar: '',
-                userName: '',
-                email: '',
-                authority: [],
-            })
-        )
+        dispatch(setUser({ avatar: '', userName: '', email: '', authority: [] }))
         localStorage.removeItem('userdetails')
+        localStorage.removeItem('lastActive')
         navigate(appConfig.unAuthenticatedEntryPath)
     }
 

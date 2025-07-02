@@ -82,3 +82,67 @@ export async function apiGetCrmMail<T, U extends Record<string, unknown>>(
         params,
     })
 }
+
+import BaseService from './BaseService'
+
+export async function apiGetAdminDashboard<T>() {
+    return BaseService.request<T>({
+        url: '/api/v1/dashboard/stats/admin',
+        method: 'get',
+    });
+}
+
+export async function apiCreateCategory<T, U extends Record<string, unknown>>(data: U) {
+    return BaseService.request<T>({
+        url: '/api/v1/category', // this will be prefixed by VITE_API_URL
+        method: 'post',
+        data,
+    })
+}
+
+export async function apiGetCategories<T>() {
+    return BaseService.request<T>({
+        url: '/api/v1/category',
+        method: 'get',
+    });
+}
+
+export async function apiCreateService<T, U extends Record<string, unknown>>(data: U) {
+    return BaseService.request<T>({
+        url: '/api/v1/service', // this will be prefixed by VITE_API_URL
+        method: 'post',
+        data,
+    })
+}
+
+export async function apiGetServices<T>() {
+    return BaseService.request<T>({
+        url: '/api/v1/service', 
+        method: 'get',
+    });
+}
+
+export async function apiDeleteService<T>(id: string | number) {
+    return BaseService.request<T>({
+        url: `/api/v1/service/${id}`, // dynamic id in the URL
+        method: 'delete',
+    });
+}
+export async function apiDeleteCateory<T>(id: string | number) {
+    return BaseService.request<T>({
+        url: `/api/v1/category/${id}`, // dynamic id in the URL
+        method: 'delete',
+    });
+}
+export async function apiGetDoctors<T>() {
+    return BaseService.request<T>({
+        url: '/api/v1/admin?userType=doctor', 
+        method: 'get',
+    });
+}
+export async function apiGetBusiness<T>() {
+    return BaseService.request<T>({
+        url: '/api/v1/admin?userType=business', 
+        method: 'get',
+    });
+}

@@ -36,6 +36,7 @@ export type ProfileFormModel = {
     lang: string
     syncData: boolean
     gmcNumber?: number
+    specialty?: string // <-- Add specialty
 }
 
 type ProfileProps = {
@@ -52,8 +53,6 @@ const { Control } = components
 
 const validationSchema = Yup.object().shape({
     name: Yup.string()
-        .min(3, 'Too Short!')
-        .max(12, 'Too Long!')
         .required('User Name Required'),
     email: Yup.string().email('Invalid email').required('Email Required'),
     title: Yup.string(),
@@ -61,6 +60,7 @@ const validationSchema = Yup.object().shape({
     lang: Yup.string(),
     timeZone: Yup.string(),
     syncData: Yup.bool(),
+    specialty: Yup.string(), // <-- Add specialty (not required)
 })
 
 const langOptions: LanguageOption[] = [
@@ -68,6 +68,16 @@ const langOptions: LanguageOption[] = [
     { value: 'ch', label: '中文', imgPath: '/img/countries/cn.png' },
     { value: 'jp', label: '日本语', imgPath: '/img/countries/jp.png' },
     { value: 'fr', label: 'French', imgPath: '/img/countries/fr.png' },
+]
+
+// Add specialty options
+const specialtyOptions = [
+    { label: 'General Practitioner', value: 'general_practitioner' },
+    { label: 'Cardiologist', value: 'cardiologist' },
+    { label: 'Dermatologist', value: 'dermatologist' },
+    { label: 'Pediatrician', value: 'pediatrician' },
+    { label: 'Psychiatrist', value: 'psychiatrist' },
+    { label: 'Other', value: 'other' },
 ]
 
 const CustomSelectOption = ({
@@ -141,6 +151,7 @@ const Profile = ({ data }: ProfileProps) => {
         timeZone: '',
         lang: '',
         syncData: false,
+         specialty: userDetails?.data?.specialty || '', // <-- Add specialty
     }
 
     const initialData = {
@@ -192,6 +203,7 @@ const Profile = ({ data }: ProfileProps) => {
                                 name="avatar"
                                 label="Profile Picture"
                                 {...validatorProps}
+                                border={false}
                             >
                                 <Field name="avatar">
                                     {({ field, form }: FieldProps) => {
@@ -269,7 +281,7 @@ const Profile = ({ data }: ProfileProps) => {
                             )}
                             <FormRow
                                 name="address"
-                                label="Address"
+                                label="Your Postcode"
                                 {...validatorProps}
                                 border={false}
                             >
@@ -285,9 +297,34 @@ const Profile = ({ data }: ProfileProps) => {
                                 />
                             </FormRow>
                             <FormRow
+                            name="specialty"
+                            label="Specialty"
+                            touched={touched}
+                            errors={errors}
+                            border={false}
+                            >
+                            <Field name="specialty">
+                                {({ field, form }: FieldProps) => (
+                                    <Select
+                                        placeholder="Select specialty"
+                                        field={field}
+                                        form={form}
+                                        options={specialtyOptions}
+                                        value={specialtyOptions.find(
+                                            (option) => option.value === values.specialty
+                                        )}
+                                        onChange={(option) =>
+                                            form.setFieldValue(field.name, option?.value)
+                                        }
+                                    />
+                                )}
+                            </Field>
+                            </FormRow>
+                            <FormRow
                                 name="phone"
                                 label="Phone Number"
                                 {...validatorProps}
+                                border={false}
                             >
                                 <Field
                                     type="text"
@@ -319,66 +356,6 @@ const Profile = ({ data }: ProfileProps) => {
                                 </FormRow>
                             )}
 
-                            {/* <FormDesription
-                                className="mt-8"
-                                title="Preferences"
-                                desc="Your personalized preference displayed in your account"
-                            />
-                            <FormRow
-                                name="lang"
-                                label="Language"
-                                {...validatorProps}
-                            >
-                                <Field name="lang">
-                                    {({ field, form }: FieldProps) => (
-                                        <Select<LanguageOption>
-                                            field={field}
-                                            form={form}
-                                            options={langOptions}
-                                            components={{
-                                                Option: CustomSelectOption,
-                                                Control: CustomControl,
-                                            }}
-                                            value={langOptions.filter(
-                                                (option) =>
-                                                    option.value ===
-                                                    values?.lang,
-                                            )}
-                                            onChange={(option) =>
-                                                form.setFieldValue(
-                                                    field.name,
-                                                    option?.value,
-                                                )
-                                            }
-                                        />
-                                    )}
-                                </Field>
-                            </FormRow>
-                            <FormRow
-                                name="timeZone"
-                                label="Time Zone"
-                                {...validatorProps}
-                            >
-                                <Field
-                                    readOnly
-                                    type="text"
-                                    autoComplete="off"
-                                    name="timeZone"
-                                    placeholder="Time Zone"
-                                    component={Input}
-                                    prefix={
-                                        <HiOutlineGlobeAlt className="text-xl" />
-                                    }
-                                />
-                            </FormRow>
-                            <FormRow
-                                name="syncData"
-                                label="Sync Data"
-                                {...validatorProps}
-                                border={false}
-                            >
-                                <Field name="syncData" component={Switcher} />
-                            </FormRow> */}
                             <div className="mt-4 ltr:text-right">
                                 <Button
                                     className="ltr:mr-2 rtl:ml-2"

@@ -87,7 +87,7 @@ const Notification = forwardRef<HTMLDivElement, NotificationProps>(
                             <div
                                 className={classNames(
                                     'notification-title',
-                                    children && 'mb-1',
+                                    !!children ? 'mb-1' : undefined,
                                 )}
                             >
                                 {title}

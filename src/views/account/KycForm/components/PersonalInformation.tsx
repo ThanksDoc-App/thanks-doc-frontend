@@ -98,6 +98,13 @@ const PhoneControl = (props: SingleValueProps<CountryOption>) => {
     )
 }
 
+const specialtyOptions = [
+    { label: 'General Practitioner', value: 'general_practitioner' },
+    { label: 'Cardiologist', value: 'cardiologist' },
+    { label: 'Dermatologist', value: 'dermatologist' },
+    { label: 'Pediatrician', value: 'pediatrician' },
+]
+
 const validationSchema = Yup.object().shape({
     firstName: Yup.string(), // remove .required('First name is required')
     lastName: Yup.string(),
@@ -108,6 +115,7 @@ const validationSchema = Yup.object().shape({
     gender: Yup.string(),
     maritalStatus: Yup.string(),
     dialCode: Yup.string(),
+     specialty: Yup.string(), // <-- add this line
 })
 
 const PersonalInformation = ({
@@ -122,6 +130,7 @@ const PersonalInformation = ({
         dob: '',
         gender: '',
         maritalStatus: '',
+        specialty: '', // <-- add this line
     },
     onNextChange,
     currentStepStatus,
@@ -154,114 +163,7 @@ const PersonalInformation = ({
                     return (
                         <Form>
                             <FormContainer>
-                                {/* <div className="md:grid grid-cols-2 gap-4">
-                                    <FormItem
-                                        label="First Name"
-                                        invalid={
-                                            errors.firstName &&
-                                            touched.firstName
-                                        }
-                                        errorMessage={errors.firstName}
-                                    >
-                                        <Field
-                                            type="text"
-                                            autoComplete="off"
-                                            name="firstName"
-                                            placeholder="First Name"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                    <FormItem
-                                        label="Last Name"
-                                        invalid={
-                                            errors.lastName && touched.lastName
-                                        }
-                                        errorMessage={errors.lastName}
-                                    >
-                                        <Field
-                                            type="text"
-                                            autoComplete="off"
-                                            name="lastName"
-                                            placeholder="Last Name"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                </div> */}
                                 {/* <FormItem
-                                    label="Email"
-                                    invalid={errors.email && touched.email}
-                                    errorMessage={errors.email}
-                                >
-                                    <Field
-                                        type="email"
-                                        autoComplete="off"
-                                        name="email"
-                                        placeholder="Email"
-                                        component={Input}
-                                    />
-                                </FormItem> */}
-                                <div className="md:grid grid-cols-2 gap-4">
-                                    <FormItem
-                                        label="Gender"
-                                        invalid={
-                                            errors.gender && touched.gender
-                                        }
-                                        errorMessage={errors.gender}
-                                    >
-                                        <Field name="gender">
-                                            {({ field, form }: FieldProps) => (
-                                                <Select
-                                                    placeholder="Gender"
-                                                    field={field}
-                                                    form={form}
-                                                    options={genderOptions}
-                                                    value={genderOptions.filter(
-                                                        (gender) =>
-                                                            gender.value ===
-                                                            values.gender,
-                                                    )}
-                                                    onChange={(gender) =>
-                                                        form.setFieldValue(
-                                                            field.name,
-                                                            gender?.value,
-                                                        )
-                                                    }
-                                                />
-                                            )}
-                                        </Field>
-                                    </FormItem>
-                                    <FormItem
-                                        label="Marital Status"
-                                        invalid={
-                                            errors.maritalStatus &&
-                                            touched.maritalStatus
-                                        }
-                                        errorMessage={errors.maritalStatus}
-                                    >
-                                        <Field name="maritalStatus">
-                                            {({ field, form }: FieldProps) => (
-                                                <Select
-                                                    placeholder="Marital Status"
-                                                    field={field}
-                                                    form={form}
-                                                    options={statusOptions}
-                                                    value={statusOptions.filter(
-                                                        (status) =>
-                                                            status.value ===
-                                                            values.maritalStatus,
-                                                    )}
-                                                    onChange={(status) =>
-                                                        form.setFieldValue(
-                                                            field.name,
-                                                            status?.value,
-                                                        )
-                                                    }
-                                                />
-                                            )}
-                                        </Field>
-                                    </FormItem>
-                                </div>
-                                <FormItem
                                     label="Nationality"
                                     invalid={
                                         errors.nationality &&
@@ -290,6 +192,33 @@ const PersonalInformation = ({
                                             />
                                         )}
                                     </Field>
+                                </FormItem> */}
+                                <FormItem
+                                    label="Specialty"
+                                    invalid={errors.specialty && touched.specialty}
+                                    errorMessage={errors.specialty}
+                                >
+                                    <Field name="specialty">
+                                        {({ field, form }: FieldProps) => (
+                                            <Select
+                                                placeholder="Select specialty"
+                                                field={field}
+                                                form={form}
+                                                options={specialtyOptions}
+                                                value={specialtyOptions.find(
+                                                    (option) =>
+                                                        option.value ===
+                                                        values.specialty,
+                                                )}
+                                                onChange={(option) =>
+                                                    form.setFieldValue(
+                                                        field.name,
+                                                        option?.value,
+                                                    )
+                                                }
+                                            />
+                                        )}
+                                    </Field>
                                 </FormItem>
                                 <div className="md:grid grid-cols-2 gap-4">
                                     <FormItem
@@ -303,36 +232,6 @@ const PersonalInformation = ({
                                         errorMessage="Please enter your phone number"
                                     >
                                         <InputGroup>
-                                            <Field name="dialCode">
-                                                {({
-                                                    field,
-                                                    form,
-                                                }: FieldProps) => (
-                                                    <Select<CountryOption>
-                                                        className="min-w-[130px]"
-                                                        placeholder="Dial Code"
-                                                        components={{
-                                                            Option: PhoneSelectOption,
-                                                            SingleValue:
-                                                                PhoneControl,
-                                                        }}
-                                                        field={field}
-                                                        form={form}
-                                                        options={countryList}
-                                                        value={countryList.filter(
-                                                            (country) =>
-                                                                country.value ===
-                                                                values.dialCode,
-                                                        )}
-                                                        onChange={(country) =>
-                                                            form.setFieldValue(
-                                                                field.name,
-                                                                country?.value,
-                                                            )
-                                                        }
-                                                    />
-                                                )}
-                                            </Field>
                                             <Field name="phoneNumber">
                                                 {({
                                                     field,

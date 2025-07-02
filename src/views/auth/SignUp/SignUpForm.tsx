@@ -145,6 +145,7 @@ const SignUpForm = (props: SignUpFormProps) => {
         try {
             const requestBody = {
                 name: userName,
+                contactName: userName,
                 email,
                 password,
                 signedUpAs: selectedRole,

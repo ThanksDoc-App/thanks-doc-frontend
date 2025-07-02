@@ -46,6 +46,7 @@ const NotificationSetting = lazy(
 )
 const Integration = lazy(() => import('./components/Integration'))
 const Billing = lazy(() => import('./components/Billing'))
+const RolesPermission = lazy(() => import('./components/RolesPermssion'))
 
 const { TabNav, TabList } = Tabs
 
@@ -59,6 +60,7 @@ const settingsMenu: Record<
     profile: { label: 'Profile', path: 'profile' },
     integration: { label: 'Documents', path: 'integration' },
     billing: { label: 'Account Details', path: 'billing' },
+    rolesPermission: { label: 'Roles & Permission', path: 'rolesPermission' },
     password: { label: 'Password', path: 'password' },
 }
 
@@ -105,12 +107,19 @@ const Settings = () => {
 
     // Filter tabs based on signedUpAs
     const filteredTabs = Object.keys(settingsMenu).filter((key) => {
+        // Hide integration and billing from business and super admin
         if (
-            signedUpAs === 'business' &&
+            (signedUpAs === 'business' || signedUpAs === 'super admin') &&
             (key === 'integration' || key === 'billing')
         ) {
             return false
         }
+
+        // Show rolesPermission only to super admin
+        if (key === 'rolesPermission' && signedUpAs !== 'super admin') {
+            return false
+        }
+
         return true
     })
 
@@ -140,6 +149,9 @@ const Settings = () => {
                                 }
                             />
                         )}
+                        {currentTab === 'rolesPermission' && (
+                            <RolesPermission />
+                        )}
                         {currentTab === 'password' && (
                             <Password data={data.loginHistory} />
                         )}
@@ -147,9 +159,11 @@ const Settings = () => {
                             <NotificationSetting data={data.notification} />
                         )}
                         {currentTab === 'integration' &&
-                            signedUpAs !== 'business' && <Integration />}
+                            signedUpAs !== 'business' &&
+                            signedUpAs !== 'super admin' && <Integration />}
                         {currentTab === 'billing' &&
-                            signedUpAs !== 'business' && <Billing />}
+                            signedUpAs !== 'business' &&
+                            signedUpAs !== 'super admin' && <Billing />}
                     </Suspense>
                 </div>
             </AdaptableCard>
