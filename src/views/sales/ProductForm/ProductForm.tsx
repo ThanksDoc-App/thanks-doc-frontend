@@ -196,9 +196,9 @@ const ProductForm = forwardRef<FormikRef, ProductForm>((props, ref) => {
                                     <ProductImages values={values} />
                                 </div> */}
                             </div>
-                            <StickyFooter
-                                className="-mx-8 px-8 flex items-center justify-between py-4"
-                                stickyClass="border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                            {/* <StickyFooter
+                            // className="-mx-8 px-8 flex items-center justify-between py-4"
+                            // stickyClass="border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                             >
                                 <div>
                                     {type === 'edit' && (
@@ -207,7 +207,7 @@ const ProductForm = forwardRef<FormikRef, ProductForm>((props, ref) => {
                                         />
                                     )}
                                 </div>
-                                <div className="flex gap-3 md:flex-row md:items-center">
+                                {/* <div className="flex gap-3 md:flex-row md:items-center">
                                     <Button
                                         size="sm"
                                         type="button"
@@ -224,8 +224,8 @@ const ProductForm = forwardRef<FormikRef, ProductForm>((props, ref) => {
                                     >
                                         Save
                                     </Button>
-                                </div>
-                            </StickyFooter>
+                                </div> 
+                            </StickyFooter> */}
                         </FormContainer>
                     </Form>
                 )}

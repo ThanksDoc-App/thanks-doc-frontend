@@ -7,6 +7,7 @@ import categoryReducer from '../views/crm/Category/store/categorySlice'
 import servicesReducer from '../views/crm/Services/store/servicesSlice'
 import doctorReducer from '../views/crm/Doctor/store/doctorSlice'  // ✅ Import your doctorReducer
 import businessReducer from '../views/crm/Business/store/businessSlice'  // ✅ Import your businessReducer
+import jobHistoryReducer from '../views/project/JobHistory/store/jobHistorySlice'  
 import RtkQueryService from '@/services/RtkQueryService'
 import adminDashboardReducer, { AdminDashboardState } from '@/views/crm/CrmDashboard/store'
 
@@ -78,6 +79,25 @@ interface BusinessState {
   error: string | null;
 }
 
+// ✅ Job History state interface
+interface JobHistoryState {
+  data: Array<{
+    _id: string;
+    title: string;
+    company?: string;
+    location?: string;
+    description?: string;
+    salary?: string;
+    type?: string;
+    status?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    __v?: number;
+  }>;
+  loading: boolean;
+  error: string | null;
+}
+
 interface ServicesState {
   services: Array<{
     _id: string;
@@ -104,6 +124,7 @@ export type RootState = {
     adminDashboard: AdminDashboardState
     doctor: DoctorState  // ✅ Doctor state
     business: BusinessState  // ✅ Business state
+    jobHistory: JobHistoryState  // ✅ Job History state
     /* eslint-disable @typescript-eslint/no-explicit-any */
     [RtkQueryService.reducerPath]: any
 }
@@ -121,6 +142,7 @@ const staticReducers = {
     services: servicesReducer,
     doctor: doctorReducer,  // ✅ Add the doctorReducer
     business: businessReducer,  // ✅ Add the businessReducer
+    jobHistory: jobHistoryReducer,  // ✅ Add the jobHistoryReducer
     adminDashboard: adminDashboardReducer,
     [RtkQueryService.reducerPath]: RtkQueryService.reducer,
 }

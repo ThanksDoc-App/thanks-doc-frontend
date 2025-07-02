@@ -142,6 +142,14 @@ const appsRoute: Routes = [
         authority: [ADMIN, USER],
     },
     {
+        key: 'appsSales.history',
+        path: `${APP_PREFIX_PATH}/sales/history`,
+        component: lazy(
+            () => import('@/views/sales/SalesHistory/SalesHistory'),
+        ),
+        authority: [ADMIN, USER],
+    },
+    {
         key: 'appsSales.productList',
         path: `${APP_PREFIX_PATH}/sales/product-list`,
         component: lazy(() => import('@/views/sales/ProductList')),

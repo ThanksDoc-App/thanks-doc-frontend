@@ -23,8 +23,8 @@ const CrmDashboardHeader = ({
             <div>
                 <h4 className="mb-1 text-lg font-semibold">
                     Hello,{' '}
-                    {(userName || 'Admin').charAt(0).toUpperCase() +
-                        (userName || 'Admin').slice(1)}
+                    {(localUserName || 'Admin').charAt(0).toUpperCase() +
+                        (localUserName || 'Admin').slice(1)}
                 </h4>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end w-full md:w-auto">
