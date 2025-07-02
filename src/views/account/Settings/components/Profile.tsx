@@ -280,7 +280,7 @@ const Profile = ({ data }: ProfileProps) => {
                             )}
                             <FormRow
                                 name="address"
-                                label="Address"
+                                label="Your Postcode"
                                 {...validatorProps}
                                 border={false}
                             >
@@ -296,9 +296,39 @@ const Profile = ({ data }: ProfileProps) => {
                                 />
                             </FormRow>
                             <FormRow
+                                name="specialty"
+                                label="Specialty"
+                                touched={touched}
+                                errors={errors}
+                                border={false}
+                            >
+                                <Field name="specialty">
+                                    {({ field, form }: FieldProps) => (
+                                        <Select
+                                            placeholder="Select specialty"
+                                            field={field}
+                                            form={form}
+                                            options={specialtyOptions}
+                                            value={specialtyOptions.find(
+                                                (option) =>
+                                                    option.value ===
+                                                    values.specialty,
+                                            )}
+                                            onChange={(option) =>
+                                                form.setFieldValue(
+                                                    field.name,
+                                                    option?.value,
+                                                )
+                                            }
+                                        />
+                                    )}
+                                </Field>
+                            </FormRow>
+                            <FormRow
                                 name="phone"
                                 label="Phone Number"
                                 {...validatorProps}
+                                border={false}
                             >
                                 <Field
                                     type="text"
