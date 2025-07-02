@@ -21,8 +21,8 @@ injectReducer('accountDetailForm', reducer)
 const PersonalInformation = lazy(
     () => import('./components/PersonalInformation'),
 )
-const Identification = lazy(() => import('./components/Identification'))
 const AddressInfomation = lazy(() => import('./components/AddressInfomation'))
+const Identification = lazy(() => import('./components/Identification'))
 const FinancialInformation = lazy(
     () => import('./components/FinancialInformation'),
 )
@@ -48,8 +48,8 @@ const DetailForm = () => {
     const handleNextChange = (
         values:
             | PersonalInformationType
-            | IdentificationType
             | Address
+            | IdentificationType
             | FinancialInformationType,
         name: string,
     ) => {
@@ -94,40 +94,40 @@ const DetailForm = () => {
                                 : 'lg:col-span-5'
                         }
                     >
-                        <Suspense fallback={<></>}>
-                            {currentStep === 0 && (
-                                <PersonalInformation
-                                    data={formData.personalInformation}
-                                    currentStepStatus={currentStepStatus}
-                                    onNextChange={handleNextChange}
-                                />
-                            )}
-                            {currentStep === 1 && (
-                                <Identification
-                                    data={formData.identification}
-                                    currentStepStatus={currentStepStatus}
-                                    onNextChange={handleNextChange}
-                                    onBackChange={handleBackChange}
-                                />
-                            )}
-                            {currentStep === 2 && (
-                                <AddressInfomation
-                                    data={formData.addressInformation}
-                                    currentStepStatus={currentStepStatus}
-                                    onNextChange={handleNextChange}
-                                    onBackChange={handleBackChange}
-                                />
-                            )}
-                            {currentStep === 3 && (
-                                <FinancialInformation
-                                    data={formData.financialInformation}
-                                    currentStepStatus={currentStepStatus}
-                                    onNextChange={handleNextChange}
-                                    onBackChange={handleBackChange}
-                                />
-                            )}
-                            {currentStep === 4 && <AccountReview />}
-                        </Suspense>
+                    <Suspense fallback={<></>}>
+                        {currentStep === 0 && (
+                            <PersonalInformation
+                                data={formData.personalInformation}
+                                currentStepStatus={currentStepStatus}
+                                onNextChange={handleNextChange}
+                            />
+                        )}
+                        {currentStep === 1 && (
+                            <AddressInfomation
+                                data={formData.addressInformation}
+                                currentStepStatus={currentStepStatus}
+                                onNextChange={handleNextChange}
+                                onBackChange={handleBackChange}
+                            />
+                        )}
+                        {currentStep === 2 && (
+                            <Identification
+                                data={formData.identification}
+                                currentStepStatus={currentStepStatus}
+                                onNextChange={handleNextChange}
+                                onBackChange={handleBackChange}
+                            />
+                        )}
+                        {currentStep === 3 && (
+                            <FinancialInformation
+                                data={formData.financialInformation}
+                                currentStepStatus={currentStepStatus}
+                                onNextChange={handleNextChange}
+                                onBackChange={handleBackChange}
+                            />
+                        )}
+                        {currentStep === 4 && <AccountReview />}
+                    </Suspense>
                     </div>
                 </div>
             </AdaptableCard>

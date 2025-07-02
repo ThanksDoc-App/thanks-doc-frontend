@@ -36,6 +36,7 @@ export type ProfileFormModel = {
     lang: string
     syncData: boolean
     gmcNumber?: number
+    specialty?: string // <-- Add specialty
 }
 
 type ProfileProps = {
@@ -51,16 +52,14 @@ type LanguageOption = {
 const { Control } = components
 
 const validationSchema = Yup.object().shape({
-    name: Yup.string()
-        .min(3, 'Too Short!')
-        .max(12, 'Too Long!')
-        .required('User Name Required'),
+    name: Yup.string().required('User Name Required'),
     email: Yup.string().email('Invalid email').required('Email Required'),
     title: Yup.string(),
     avatar: Yup.string(),
     lang: Yup.string(),
     timeZone: Yup.string(),
     syncData: Yup.bool(),
+    specialty: Yup.string(), // <-- Add specialty (not required)
 })
 
 const langOptions: LanguageOption[] = [
@@ -68,6 +67,16 @@ const langOptions: LanguageOption[] = [
     { value: 'ch', label: '中文', imgPath: '/img/countries/cn.png' },
     { value: 'jp', label: '日本语', imgPath: '/img/countries/jp.png' },
     { value: 'fr', label: 'French', imgPath: '/img/countries/fr.png' },
+]
+
+// Add specialty options
+const specialtyOptions = [
+    { label: 'General Practitioner', value: 'general_practitioner' },
+    { label: 'Cardiologist', value: 'cardiologist' },
+    { label: 'Dermatologist', value: 'dermatologist' },
+    { label: 'Pediatrician', value: 'pediatrician' },
+    { label: 'Psychiatrist', value: 'psychiatrist' },
+    { label: 'Other', value: 'other' },
 ]
 
 const CustomSelectOption = ({
@@ -141,6 +150,7 @@ const Profile = ({ data }: ProfileProps) => {
         timeZone: '',
         lang: '',
         syncData: false,
+        specialty: userDetails?.data?.specialty || '', // <-- Add specialty
     }
 
     const initialData = {
@@ -192,6 +202,7 @@ const Profile = ({ data }: ProfileProps) => {
                                 name="avatar"
                                 label="Profile Picture"
                                 {...validatorProps}
+                                border={false}
                             >
                                 <Field name="avatar">
                                     {({ field, form }: FieldProps) => {
@@ -267,125 +278,58 @@ const Profile = ({ data }: ProfileProps) => {
                                     />
                                 </FormRow>
                             )}
-                            {signedUpAs !== 'super admin' && (
-                                <FormRow
-                                    name="address"
-                                    label="Address"
-                                    {...validatorProps}
-                                    border={false}
-                                >
-                                    <Field
-                                        type="text"
-                                        autoComplete="off"
-                                        name="address"
-                                        placeholder="Address"
-                                        component={Input}
-                                        prefix={
-                                            <HiOutlineLocationMarker className="text-xl" />
-                                        }
-                                    />
-                                </FormRow>
-                            )}
-
-                            {signedUpAs !== 'super admin' && (
-                                <FormRow
-                                    name="phone"
-                                    label="Phone Number"
-                                    {...validatorProps}
-                                >
-                                    <Field
-                                        type="text"
-                                        autoComplete="off"
-                                        name="phone"
-                                        placeholder="Phone Number"
-                                        component={Input}
-                                        prefix={
-                                            <HiOutlinePhone className="text-xl" />
-                                        }
-                                    />
-                                </FormRow>
-                            )}
-
-                            {signedUpAs !== 'business' &&
-                                signedUpAs !== 'super admin' && (
-                                    <FormRow
-                                        name="gmcNumber"
-                                        label="GMC Number"
-                                        {...validatorProps}
-                                    >
-                                        <Field
-                                            type="text"
-                                            autoComplete="off"
-                                            name="gmcNumber"
-                                            placeholder="GMC Number"
-                                            component={Input}
-                                            prefix={
-                                                <HiOutlineClipboard className="text-xl" />
-                                            }
-                                        />
-                                    </FormRow>
-                                )}
-
-                            {/* <FormDesription
-                                className="mt-8"
-                                title="Preferences"
-                                desc="Your personalized preference displayed in your account"
-                            />
                             <FormRow
-                                name="lang"
-                                label="Language"
+                                name="address"
+                                label="Address"
                                 {...validatorProps}
-                            >
-                                <Field name="lang">
-                                    {({ field, form }: FieldProps) => (
-                                        <Select<LanguageOption>
-                                            field={field}
-                                            form={form}
-                                            options={langOptions}
-                                            components={{
-                                                Option: CustomSelectOption,
-                                                Control: CustomControl,
-                                            }}
-                                            value={langOptions.filter(
-                                                (option) =>
-                                                    option.value ===
-                                                    values?.lang,
-                                            )}
-                                            onChange={(option) =>
-                                                form.setFieldValue(
-                                                    field.name,
-                                                    option?.value,
-                                                )
-                                            }
-                                        />
-                                    )}
-                                </Field>
-                            </FormRow>
-                            <FormRow
-                                name="timeZone"
-                                label="Time Zone"
-                                {...validatorProps}
+                                border={false}
                             >
                                 <Field
-                                    readOnly
                                     type="text"
                                     autoComplete="off"
-                                    name="timeZone"
-                                    placeholder="Time Zone"
+                                    name="address"
+                                    placeholder="Address"
                                     component={Input}
                                     prefix={
-                                        <HiOutlineGlobeAlt className="text-xl" />
+                                        <HiOutlineLocationMarker className="text-xl" />
                                     }
                                 />
                             </FormRow>
                             <FormRow
-                                name="syncData"
-                                label="Sync Data"
+                                name="phone"
+                                label="Phone Number"
                                 {...validatorProps}
-                                border={false}
                             >
-                                <Field name="syncData" component={Switcher} />
-                            </FormRow> */}
+                                <Field
+                                    type="text"
+                                    autoComplete="off"
+                                    name="phone"
+                                    placeholder="Phone Number"
+                                    component={Input}
+                                    prefix={
+                                        <HiOutlinePhone className="text-xl" />
+                                    }
+                                />
+                            </FormRow>
+                            {signedUpAs !== 'business' && (
+                                <FormRow
+                                    name="gmcNumber"
+                                    label="GMC Number"
+                                    {...validatorProps}
+                                >
+                                    <Field
+                                        type="text"
+                                        autoComplete="off"
+                                        name="gmcNumber" // ✅ Corrected
+                                        placeholder="GMC Number"
+                                        component={Input}
+                                        prefix={
+                                            <HiOutlineClipboard className="text-xl" />
+                                        }
+                                    />
+                                </FormRow>
+                            )}
+
                             <div className="mt-4 ltr:text-right">
                                 <Button
                                     className="ltr:mr-2 rtl:ml-2"

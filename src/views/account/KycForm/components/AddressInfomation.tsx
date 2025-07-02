@@ -37,25 +37,23 @@ type AddressFormProps = {
 }
 
 const validationSchema = Yup.object().shape({
-    country: Yup.string().required('Please select country'),
-    addressLine1: Yup.string().required('Please enter your address'),
+    country: Yup.string(), // removed .required
+    addressLine1: Yup.string(),
     addressLine2: Yup.string(),
-    city: Yup.string().required('Please enter your city'),
-    state: Yup.string().required('Please enter your state'),
-    zipCode: Yup.string().required('Please enter zip code'),
+    city: Yup.string(),
+    state: Yup.string(), // removed .required
+    zipCode: Yup.string(),
     sameCorrespondenceAddress: Yup.bool(),
     correspondenceAddress: Yup.object().when('sameCorrespondenceAddress', {
         is: false,
         then: (schema) =>
             schema.shape({
-                country: Yup.string().required('Please select country'),
-                addressLine1: Yup.string().required(
-                    'Please enter your address',
-                ),
+                country: Yup.string(),
+                addressLine1: Yup.string(),
                 addressLine2: Yup.string(),
-                city: Yup.string().required('Please enter your city'),
-                state: Yup.string().required('Please enter your state'),
-                zipCode: Yup.string().required('Please enter zip code'),
+                city: Yup.string(),
+                state: Yup.string(),
+                zipCode: Yup.string(),
             }),
         otherwise: (schema) => schema,
     }),
@@ -90,29 +88,34 @@ const AddressForm = (props: AddressFormProps) => {
 
     return (
         <>
+        <div className="md:grid grid-cols-2 gap-4">
+            <FormItem
+                label="Search your postcode"
+                invalid={getError(zipCodeName) && getTouched(zipCodeName)}
+                errorMessage={getError(zipCodeName)}
+            >
+                <div className="flex gap-2">
+                    <Field
+                        type="text"
+                        autoComplete="off"
+                        name={zipCodeName}
+                        placeholder="Find a Postcode"
+                        component={Input}
+                    />
+                    <Button
+                        type="button"
+                        className="shrink-0"
+                        onClick={() => {
+                            // Add your postcode lookup logic here
+                            alert('Find a Postcode feature coming soon!')
+                        }}
+                    >
+                        Find address
+                    </Button>
+                </div>
+            </FormItem>
+        </div>
             <div className="md:grid grid-cols-2 gap-4">
-                <FormItem
-                    label="Country"
-                    invalid={getError(countryName) && getTouched(countryName)}
-                    errorMessage={getError(countryName)}
-                >
-                    <Field name={countryName}>
-                        {({ field, form }: FieldProps) => (
-                            <Select
-                                placeholder="Country"
-                                field={field}
-                                form={form}
-                                options={countryList}
-                                value={countryList.filter(
-                                    (c) => c.value === get(values, countryName),
-                                )}
-                                onChange={(c) =>
-                                    form.setFieldValue(field.name, c?.value)
-                                }
-                            />
-                        )}
-                    </Field>
-                </FormItem>
                 <FormItem
                     label="Address Line 1"
                     invalid={
@@ -129,9 +132,7 @@ const AddressForm = (props: AddressFormProps) => {
                         component={Input}
                     />
                 </FormItem>
-            </div>
-            <div className="md:grid grid-cols-2 gap-4">
-                <FormItem
+                    <FormItem
                     label="Address Line 2"
                     invalid={
                         getError(addressLine2Name) &&
@@ -147,6 +148,8 @@ const AddressForm = (props: AddressFormProps) => {
                         component={Input}
                     />
                 </FormItem>
+            </div>
+            <div className="md:grid grid-cols-2 gap-4">
                 <FormItem
                     label="City"
                     invalid={getError(cityName) && getTouched(cityName)}
@@ -160,23 +163,8 @@ const AddressForm = (props: AddressFormProps) => {
                         component={Input}
                     />
                 </FormItem>
-            </div>
-            <div className="md:grid grid-cols-2 gap-4">
                 <FormItem
-                    label="State"
-                    invalid={getError(stateName) && getTouched(stateName)}
-                    errorMessage={getError(stateName)}
-                >
-                    <Field
-                        type="text"
-                        autoComplete="off"
-                        name={stateName}
-                        placeholder="State"
-                        component={Input}
-                    />
-                </FormItem>
-                <FormItem
-                    label="Zip Code"
+                    label="Postcode"
                     invalid={getError(zipCodeName) && getTouched(zipCodeName)}
                     errorMessage={getError(zipCodeName)}
                 >
@@ -184,7 +172,7 @@ const AddressForm = (props: AddressFormProps) => {
                         type="text"
                         autoComplete="off"
                         name={zipCodeName}
-                        placeholder="Zip Code"
+                        placeholder="Enter a Postcode"
                         component={Input}
                     />
                 </FormItem>
@@ -261,7 +249,7 @@ const AddressInfomation = ({
                                     zipCodeName="zipCode"
                                     {...formProps}
                                 />
-                                <FormItem>
+                                {/* <FormItem>
                                     <Field name="sameCorrespondenceAddress">
                                         {({ field, form }: FieldProps) => (
                                             <Checkbox
@@ -280,7 +268,7 @@ const AddressInfomation = ({
                                             </Checkbox>
                                         )}
                                     </Field>
-                                </FormItem>
+                                </FormItem> */}
                                 {!values.sameCorrespondenceAddress && (
                                     <>
                                         <h5 className="mb-4">

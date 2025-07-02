@@ -145,23 +145,14 @@ const documentTypes = settingIntergrationData.available.map((item) => ({
 // Generate validation schema dynamically
 const generateValidationSchema = () => {
     const schema: any = {
-        documentType: Yup.string().required('Please select a document type'),
+        documentType: Yup.string(), // not required
+        expiryDate: Yup.string(),   // not required
     }
 
     documentTypes.forEach((doc) => {
         const fieldName = doc.value
-        schema[`${fieldName}Front`] = Yup.string().when('documentType', {
-            is: fieldName,
-            then: Yup.string().required(
-                `Please upload your ${doc.label} front`,
-            ),
-            otherwise: Yup.string(),
-        })
-        schema[`${fieldName}Back`] = Yup.string().when('documentType', {
-            is: fieldName,
-            then: Yup.string().required(`Please upload your ${doc.label} back`),
-            otherwise: Yup.string(),
-        })
+        schema[`${fieldName}Front`] = Yup.string() // <-- not required
+        schema[`${fieldName}Back`] = Yup.string()  // <-- not required
     })
 
     return Yup.object().shape(schema)
@@ -494,7 +485,7 @@ const Identification = ({
                                 {values.documentType && (
                                     <div className="grid xl:grid-cols-2 gap-4">
                                         <DocumentUploadField
-                                            name={`${values.documentType}Front`}
+                                            name={`${values.documentType}Front` as keyof IdentificationType}
                                             label={`${documentTypes.find(
                                                 (d) =>
                                                     d.value ===
@@ -510,7 +501,7 @@ const Identification = ({
                                             />
                                         </DocumentUploadField>
                                         <DocumentUploadField
-                                            name={`${values.documentType}Back`}
+                                            name={`${values.documentType}Back` as keyof IdentificationType}
                                             label={`${documentTypes.find(
                                                 (d) =>
                                                     d.value ===
