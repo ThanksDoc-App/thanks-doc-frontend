@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import servicesReducer from './servicesSlice';
 import categoryReducer from './categorySlice';
+import jobReducer from './JobsSlice';
 
 // Configure the store
 export const store = configureStore({
     reducer: {
         services: servicesReducer,
         category: categoryReducer,
+        job: jobReducer,
         // Add other reducers here as needed
     },
     middleware: (getDefaultMiddleware) =>

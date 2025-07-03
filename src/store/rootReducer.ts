@@ -8,6 +8,8 @@ import servicesReducer from '../views/crm/Services/store/servicesSlice'
 import doctorReducer from '../views/crm/Doctor/store/doctorSlice'  // ✅ Import your doctorReducer
 import businessReducer from '../views/crm/Business/store/businessSlice'  // ✅ Import your businessReducer
 import jobHistoryReducer from '../views/project/JobHistory/store/jobHistorySlice'  
+import jobReducer from '../views/sales/ProductForm/store/JobsSlice'  // ✅ Import your jobReducer
+import settingsReducer from '../views/account/Settings/store/SettingsSlice'  // ✅ Import your settingsReducer
 import RtkQueryService from '@/services/RtkQueryService'
 import adminDashboardReducer, { AdminDashboardState } from '@/views/crm/CrmDashboard/store'
 
@@ -98,6 +100,40 @@ interface JobHistoryState {
   error: string | null;
 }
 
+// ✅ Job state interface
+interface Location {
+  country: string;
+  city: string;
+  state: string;
+  address1: string;
+  address2?: string;
+  zipCode: string;
+}
+
+interface Job {
+  _id: string;
+  name: string;
+  service: string;
+  category: string;
+  description: string;
+  location: Location;
+  amount: number;
+  currency: string;
+  time: string;
+  date: string;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+}
+
+interface JobState {
+  data: Job[];
+  loading: boolean;
+  error: string | null;
+  createLoading: boolean;
+  createError: string | null;
+}
+
 interface ServicesState {
   services: Array<{
     _id: string;
@@ -114,6 +150,14 @@ interface ServicesState {
   deleteError: string | null;
 }
 
+// ✅ Settings state interface
+interface SettingsState {
+  updateUserLoading: boolean
+  updateUserSuccess: boolean
+  updateUserError: string | null
+  userData: any
+}
+
 export type RootState = {
     auth: AuthState
     base: BaseState
@@ -125,6 +169,8 @@ export type RootState = {
     doctor: DoctorState  // ✅ Doctor state
     business: BusinessState  // ✅ Business state
     jobHistory: JobHistoryState  // ✅ Job History state
+    job: JobState  // ✅ Job state
+    settings: SettingsState  // ✅ Settings state
     /* eslint-disable @typescript-eslint/no-explicit-any */
     [RtkQueryService.reducerPath]: any
 }
@@ -143,6 +189,8 @@ const staticReducers = {
     doctor: doctorReducer,  // ✅ Add the doctorReducer
     business: businessReducer,  // ✅ Add the businessReducer
     jobHistory: jobHistoryReducer,  // ✅ Add the jobHistoryReducer
+    job: jobReducer,  // ✅ Add the jobReducer
+    settings: settingsReducer,  // ✅ Add the settingsReducer
     adminDashboard: adminDashboardReducer,
     [RtkQueryService.reducerPath]: RtkQueryService.reducer,
 }

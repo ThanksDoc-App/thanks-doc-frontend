@@ -146,3 +146,11 @@ export async function apiGetBusiness<T>() {
         method: 'get',
     });
 }
+
+export async function apiCreateJob<T, U extends Record<string, unknown>>(data: U) {
+    return BaseService.request<T>({
+        url: '/api/v1/job/create',
+        method: 'post',
+        data,
+    });
+}

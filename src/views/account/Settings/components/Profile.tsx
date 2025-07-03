@@ -25,6 +25,18 @@ import {
 import * as Yup from 'yup'
 import type { OptionProps, ControlProps } from 'react-select'
 import type { FormikProps, FieldInputProps, FieldProps } from 'formik'
+import { useDispatch, useSelector } from 'react-redux'
+import { updateUserProfile } from '../store/SettingsSlice'
+import { RootState } from '@/store'
+import { useEffect } from 'react'
+// Add categories imports
+import {
+    fetchCategories,
+    selectCategories,
+    selectCategoriesLoading,
+    selectCategoriesError,
+} from '../../../sales/ProductForm/store/categorySlice'
+import { useAppDispatch, useAppSelector } from '@/store'
 
 export type ProfileFormModel = {
     name: string
@@ -36,7 +48,7 @@ export type ProfileFormModel = {
     lang: string
     syncData: boolean
     gmcNumber?: number
-    specialty?: string // <-- Add specialty
+    specialty?: string
 }
 
 type ProfileProps = {
@@ -59,7 +71,7 @@ const validationSchema = Yup.object().shape({
     lang: Yup.string(),
     timeZone: Yup.string(),
     syncData: Yup.bool(),
-    specialty: Yup.string(), // <-- Add specialty (not required)
+    specialty: Yup.string(),
 })
 
 const langOptions: LanguageOption[] = [
@@ -67,16 +79,6 @@ const langOptions: LanguageOption[] = [
     { value: 'ch', label: '中文', imgPath: '/img/countries/cn.png' },
     { value: 'jp', label: '日本语', imgPath: '/img/countries/jp.png' },
     { value: 'fr', label: 'French', imgPath: '/img/countries/fr.png' },
-]
-
-// Add specialty options
-const specialtyOptions = [
-    { label: 'General Practitioner', value: 'general_practitioner' },
-    { label: 'Cardiologist', value: 'cardiologist' },
-    { label: 'Dermatologist', value: 'dermatologist' },
-    { label: 'Pediatrician', value: 'pediatrician' },
-    { label: 'Psychiatrist', value: 'psychiatrist' },
-    { label: 'Other', value: 'other' },
 ]
 
 const CustomSelectOption = ({
@@ -103,43 +105,31 @@ const CustomSelectOption = ({
     )
 }
 
-// const CustomControl = ({
-//     children,
-//     ...props
-// }: ControlProps<LanguageOption>) => {
-//     const selected = props.getValue()[0]
-//     return (
-//         <Control {...props}>
-//             {selected && (
-//                 <Avatar
-//                     className="ltr:ml-4 rtl:mr-4"
-//                     shape="circle"
-//                     size={18}
-//                     src={selected.imgPath}
-//                 />
-//             )}
-//             {children}
-//         </Control>
-//     )
-// }
-
 const Profile = ({ data }: ProfileProps) => {
+    const dispatch = useAppDispatch()
+    const { updateUserLoading, updateUserSuccess, updateUserError } =
+        useSelector((state: RootState) => state.settings)
+
+    // Add category selectors
+    const categories = useAppSelector(selectCategories)
+    const categoriesLoading = useAppSelector(selectCategoriesLoading)
+    const categoriesError = useAppSelector(selectCategoriesError)
+
     const userDetails = JSON.parse(localStorage.getItem('userdetails') || '{}')
     const signedUpAs = userDetails?.data?.signedUpAs
 
-    // OLD: Static initial values
-    // const data = {
-    //     name: '',
-    //     email: '',
-    //     phone: '',
-    //     address: '',
-    //     avatar: '',
-    //     timeZone: '',
-    //     lang: '',
-    //     syncData: false,
-    // }
+    // Fetch categories on component mount
+    useEffect(() => {
+        dispatch(fetchCategories())
+    }, [dispatch])
 
-    // ✅ NEW: Use localStorage values as default, override with props if passed
+    // Transform categories data for Select component
+    const specialtyOptions = categories.map((category) => ({
+        label: category.name, // Display name
+        value: category._id, // Category ID
+    }))
+
+    // Default data with localStorage values
     const defaultData: ProfileFormModel = {
         name: userDetails?.data?.name || '',
         email: userDetails?.data?.email || '',
@@ -150,13 +140,27 @@ const Profile = ({ data }: ProfileProps) => {
         timeZone: '',
         lang: '',
         syncData: false,
-        specialty: userDetails?.data?.specialty || '', // <-- Add specialty
+        specialty:
+            userDetails?.data?.specialty || userDetails?.data?.category || '',
     }
 
     const initialData = {
         ...defaultData,
         ...data,
     }
+
+    // Handle categories error
+    useEffect(() => {
+        if (categoriesError) {
+            toast.push(
+                <Notification
+                    title="Failed to load specialties"
+                    type="danger"
+                />,
+                { placement: 'top-center' },
+            )
+        }
+    }, [categoriesError])
 
     const onSetFormFile = (
         form: FormikProps<ProfileFormModel>,
@@ -171,9 +175,48 @@ const Profile = ({ data }: ProfileProps) => {
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
         console.log('values', values)
-        toast.push(<Notification title={'Profile updated'} type="success" />, {
-            placement: 'top-center',
-        })
+
+        const userDetails = JSON.parse(
+            localStorage.getItem('userdetails') || '{}',
+        )
+        const signedUpAs = userDetails?.data?.signedUpAs
+
+        let updatePayload: any
+
+        if (signedUpAs === 'doctor') {
+            updatePayload = {
+                name: values.name,
+                phone: values.phone,
+                gmcNumber: values.gmcNumber?.toString() || '',
+                location: {
+                    address1: values.address,
+                },
+                category: values.specialty || '', // ✅ Category for doctors
+            }
+        } else if (signedUpAs === 'business') {
+            updatePayload = {
+                businessName: values.name,
+                phone: values.phone,
+                location: {
+                    address1: values.address,
+                },
+                category: values.specialty || '', // ✅ Category for business
+            }
+        } else {
+            // admin or other cases
+            updatePayload = {
+                name: values.name,
+                email: values.email,
+                phone: values.phone,
+                location: {
+                    address1: values.address,
+                },
+                category: values.specialty || '', // ✅ Category for admin/others
+            }
+        }
+
+        // Dispatch the Redux action
+        dispatch(updateUserProfile(updatePayload))
         setSubmitting(false)
     }
 
@@ -190,6 +233,37 @@ const Profile = ({ data }: ProfileProps) => {
             }}
         >
             {({ values, touched, errors, isSubmitting, resetForm }) => {
+                // Handle success and error notifications with status check
+                useEffect(() => {
+                    if (
+                        updateUserSuccess &&
+                        updateUserSuccess.status === true
+                    ) {
+                        toast.push(
+                            <Notification
+                                title={'Profile updated successfully'}
+                                type="success"
+                            />,
+                            {
+                                placement: 'top-center',
+                            },
+                        )
+                        // Clear/reset the form fields
+                        resetForm()
+                    }
+                    if (updateUserError) {
+                        toast.push(
+                            <Notification
+                                title={updateUserError}
+                                type="danger"
+                            />,
+                            {
+                                placement: 'top-center',
+                            },
+                        )
+                    }
+                }, [updateUserSuccess, updateUserError, resetForm])
+
                 const validatorProps = { touched, errors }
                 return (
                     <Form>
@@ -309,6 +383,7 @@ const Profile = ({ data }: ProfileProps) => {
                                             field={field}
                                             form={form}
                                             options={specialtyOptions}
+                                            isLoading={categoriesLoading}
                                             value={specialtyOptions.find(
                                                 (option) =>
                                                     option.value ===
@@ -350,7 +425,7 @@ const Profile = ({ data }: ProfileProps) => {
                                     <Field
                                         type="text"
                                         autoComplete="off"
-                                        name="gmcNumber" // ✅ Corrected
+                                        name="gmcNumber"
                                         placeholder="GMC Number"
                                         component={Input}
                                         prefix={
@@ -370,10 +445,12 @@ const Profile = ({ data }: ProfileProps) => {
                                 </Button>
                                 <Button
                                     variant="solid"
-                                    loading={isSubmitting}
+                                    loading={isSubmitting || updateUserLoading}
                                     type="submit"
                                 >
-                                    {isSubmitting ? 'Updating' : 'Update'}
+                                    {isSubmitting || updateUserLoading
+                                        ? 'Updating'
+                                        : 'Update'}
                                 </Button>
                             </div>
                         </FormContainer>

@@ -1,17 +1,30 @@
 import { useState, ComponentType } from 'react'
 import { Field, FieldProps, FieldInputProps, useFormikContext } from 'formik'
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
+import { useDispatch, useSelector } from 'react-redux'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import { FormItem } from '@/components/ui/Form'
 import Input, { InputProps } from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
+import {
+    createJob,
+    selectCreateJobLoading,
+    selectCreateJobError,
+} from './store/JobsSlice'
 
 type FormFieldsName = {
     stock: number
     price: number
     bulkDiscountPrice: number
     taxRate: number
+    category: string
+    service: string
+    description: string
+    location: string
+    date: string
+    time: string
+    name: string
 }
 
 const PriceInput = (props: InputProps) => {
@@ -41,17 +54,77 @@ const PricingFields = () => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
 
     // Get live form state
-    const { values, touched, errors, setFieldValue } =
+    const { values, touched, errors, setFieldValue, resetForm } =
         useFormikContext<FormFieldsName>()
 
-    const handlePayForService = (e: React.MouseEvent) => {
+    // Redux hooks
+    const dispatch = useDispatch()
+    const createJobLoading = useSelector(selectCreateJobLoading)
+    const createJobError = useSelector(selectCreateJobError)
+
+    // Check if all required fields are filled
+    const isFormValid = () => {
+        const requiredFields = [
+            'category',
+            'service',
+            'description',
+            'location',
+            'date',
+            'time',
+            'price',
+        ]
+        const missingFields = requiredFields.filter((field) => !values[field])
+        const priceValue = Number(values.price)
+
+        return (
+            missingFields.length === 0 && !isNaN(priceValue) && priceValue > 0
+        )
+    }
+
+    const handlePayForService = async (e: React.MouseEvent) => {
         e.preventDefault()
-        setIsPaymentModalOpen(true)
+
+        if (!isFormValid()) {
+            return
+        }
+
+        try {
+            // Create job data in the format expected by the API
+            const jobData = {
+                name: values.name || 'Job Service', // Provide default name if not set
+                service: values.service,
+                category: values.category,
+                description: values.description,
+                location: values.location, // Use the actual location value from form
+                amount: Number(values.price) || 0, // Ensure amount is a proper number
+                currency: 'GBP',
+                time: values.time,
+                date: values.date,
+            }
+
+            console.log('Creating job with data:', jobData)
+
+            // Dispatch the createJob action
+            const resultAction = await dispatch(createJob(jobData))
+
+            if (createJob.fulfilled.match(resultAction)) {
+                console.log('Job created successfully:', resultAction.payload)
+                setIsPaymentModalOpen(true)
+            } else {
+                console.error('Failed to create job:', resultAction.payload)
+            }
+        } catch (error) {
+            console.error('Error creating job:', error)
+        }
     }
 
     const handleConfirmPayment = () => {
         console.log('Processing payment for:', values.price)
         setIsPaymentModalOpen(false)
+
+        // Reset form fields after successful payment
+        resetForm()
+
         // Add payment processing logic here
     }
 
@@ -91,11 +164,19 @@ const PricingFields = () => {
                             type="button"
                             className="w-full text-blue-500"
                             onClick={handlePayForService}
+                            disabled={createJobLoading || !isFormValid()}
                         >
-                            Pay for Service
+                            {createJobLoading
+                                ? 'Creating Job...'
+                                : 'Pay for Service'}
                         </Button>
                     </div>
                 </div>
+                {createJobError && (
+                    <div className="mt-2 text-red-500 text-sm">
+                        Error: {createJobError}
+                    </div>
+                )}
             </AdaptableCard>
 
             {/* Payment Modal */}

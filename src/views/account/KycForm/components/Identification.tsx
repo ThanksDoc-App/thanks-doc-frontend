@@ -2,6 +2,7 @@ import Segment from '@/components/ui/Segment'
 import Upload from '@/components/ui/Upload'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
+import Input from '@/components/ui/Input'
 import { FormItem, FormContainer } from '@/components/ui/Form'
 import DoubleSidedImage from '@/components/shared/DoubleSidedImage'
 import SegmentItemOption from '@/components/shared/SegmentItemOption'
@@ -68,13 +69,7 @@ export const settingIntergrationData = {
             type: 'Approved',
             active: false,
         },
-        {
-            name: 'Mandatory Training Certificates',
-            desc: 'Mandatory Training Certificates',
-            img: '/img/thumbs/file.png',
-            type: 'Approved',
-            active: false,
-        },
+
         {
             name: 'Current Performers List',
             desc: 'Current Performers List',
@@ -90,22 +85,8 @@ export const settingIntergrationData = {
             active: false,
         },
         {
-            name: 'Certificate for Completion of Training (CCT)',
-            desc: 'Certificates',
-            img: '/img/thumbs/file.png',
-            type: 'Approved',
-            active: false,
-        },
-        {
-            name: 'Basic Life Support (BLS) Certificate',
-            desc: 'Basic Life Support (BLS) Certificate',
-            img: '/img/thumbs/file.png',
-            type: 'Approved',
-            active: false,
-        },
-        {
-            name: 'Level 3 Adult & Child Safeguarding',
-            desc: 'Level 3 Adult & Child Safeguarding',
+            name: 'Mandatory Training Certificates',
+            desc: 'Mandatory Training Certificates',
             img: '/img/thumbs/file.png',
             type: 'Approved',
             active: false,
@@ -142,17 +123,37 @@ const documentTypes = settingIntergrationData.available.map((item) => ({
     disabled: false,
 }))
 
+// Define document types that require name/email instead of file upload
+const referenceDocumentTypes = [
+    'professionalreferences1', // Added Professional References 1
+    'professionalreferences2',
+    'appraisalrevalidationevidence',
+]
+
+// Define document types that require title field instead of expiry date
+const titleDocumentTypes = ['mandatorytrainingcertificates']
+
 // Generate validation schema dynamically
 const generateValidationSchema = () => {
     const schema: any = {
         documentType: Yup.string(), // not required
-        expiryDate: Yup.string(),   // not required
+        expiryDate: Yup.string(), // not required
+        titleField: Yup.string(), // not required
     }
 
     documentTypes.forEach((doc) => {
         const fieldName = doc.value
-        schema[`${fieldName}Front`] = Yup.string() // <-- not required
-        schema[`${fieldName}Back`] = Yup.string()  // <-- not required
+        if (referenceDocumentTypes.includes(fieldName)) {
+            // For reference documents, add fullName and email fields
+            schema[`${fieldName}FullName`] = Yup.string()
+            schema[`${fieldName}Email`] = Yup.string().email(
+                'Invalid email format',
+            )
+        } else {
+            // For regular documents, add front and back fields
+            schema[`${fieldName}Front`] = Yup.string()
+            schema[`${fieldName}Back`] = Yup.string()
+        }
     })
 
     return Yup.object().shape(schema)
@@ -164,11 +165,19 @@ const validationSchema = generateValidationSchema()
 const documentUploadDescription = settingIntergrationData.available.reduce(
     (acc, item) => {
         const key = item.name.toLowerCase().replace(/\s+/g, '')
-        acc[key] = [
-            `Uploaded ${item.name} image must be clearly visible & complete`,
-            `${item.name} must be in valid period`,
-            `Provided ${item.name} must include all required information`,
-        ]
+        if (referenceDocumentTypes.includes(key)) {
+            acc[key] = [
+                `Provide accurate contact information for ${item.name}`,
+                `Ensure the full name matches official records`,
+                `Email address must be valid and active`,
+            ]
+        } else {
+            acc[key] = [
+                `Uploaded ${item.name} image must be clearly visible & complete`,
+                `${item.name} must be in valid period`,
+                `Provided ${item.name} must include all required information`,
+            ]
+        }
         return acc
     },
     {} as Record<string, string[]>,
@@ -232,12 +241,73 @@ const DocumentUploadField = (props: DocumentUploadFieldProps) => {
     )
 }
 
+const ReferenceInputFields = ({
+    documentType,
+    touched,
+    errors,
+}: {
+    documentType: string
+    touched: FormikTouched<IdentificationType>
+    errors: FormikErrors<IdentificationType>
+}) => {
+    const documentLabel =
+        documentTypes.find((d) => d.value === documentType)?.label || ''
+
+    return (
+        <div className="grid xl:grid-cols-2 gap-4">
+            <FormItem
+                label={`${documentLabel} - Full Name`}
+                invalid={
+                    errors[`${documentType}FullName`] &&
+                    touched[`${documentType}FullName`]
+                }
+                errorMessage={errors[`${documentType}FullName`]}
+            >
+                <Field name={`${documentType}FullName`}>
+                    {({ field }: FieldProps) => (
+                        <Input
+                            {...field}
+                            placeholder="Enter full name"
+                            autoComplete="off"
+                        />
+                    )}
+                </Field>
+            </FormItem>
+
+            <FormItem
+                label={`${documentLabel} - Email Address`}
+                invalid={
+                    errors[`${documentType}Email`] &&
+                    touched[`${documentType}Email`]
+                }
+                errorMessage={errors[`${documentType}Email`]}
+            >
+                <Field name={`${documentType}Email`}>
+                    {({ field }: FieldProps) => (
+                        <Input
+                            {...field}
+                            type="email"
+                            placeholder="Enter email address"
+                            autoComplete="off"
+                        />
+                    )}
+                </Field>
+            </FormItem>
+        </div>
+    )
+}
+
 const Identification = ({
     data = {
         documentType: '',
         ...documentTypes.reduce((acc, doc) => {
-            acc[`${doc.value}Front`] = ''
-            acc[`${doc.value}Back`] = ''
+            if (referenceDocumentTypes.includes(doc.value)) {
+                acc[`${doc.value}FullName`] = ''
+                acc[`${doc.value}Email`] = ''
+            } else {
+                acc[`${doc.value}Front`] = ''
+                acc[`${doc.value}Back`] = ''
+            }
             return acc
         }, {} as any),
     },
@@ -277,6 +347,14 @@ const Identification = ({
 
     const onBack = () => {
         onBackChange?.()
+    }
+
+    const isReferenceDocument = (documentType: string) => {
+        return referenceDocumentTypes.includes(documentType)
+    }
+
+    const isTitleDocument = (documentType: string) => {
+        return titleDocumentTypes.includes(documentType)
     }
 
     return (
@@ -437,87 +515,117 @@ const Identification = ({
                                         )}
                                     </Field>
                                 </FormItem>
-                                <div className="mb-6">
-                                    <h6>
-                                        In order to complete upload and avoid
-                                        delays when verifying account, please
-                                        make sure below:
-                                    </h6>
-                                    <ul className="mt-4">
-                                        {values.documentType &&
-                                            documentUploadDescription[
-                                                values.documentType
-                                            ]?.map((desc, index) => (
-                                                <li
-                                                    key={desc + index}
-                                                    className="mb-2 flex items-center"
-                                                >
-                                                    <Badge
-                                                        className="rtl:ml-3 ltr:mr-3"
-                                                        innerClass={bgTheme}
-                                                    />
-                                                    <span>{desc}</span>
-                                                </li>
-                                            ))}
-                                    </ul>
-                                </div>
 
-                                <FormItem
-                                    label="Document Expiry Date"
-                                    className="mb-6"
-                                >
-                                    <Field name="expiryDate">
-                                        {({ field, form }: FieldProps) => (
-                                            <DatePicker
-                                                {...field}
-                                                value={field.value || null}
-                                                onChange={(date) =>
-                                                    form.setFieldValue(
-                                                        field.name,
-                                                        date,
-                                                    )
-                                                }
-                                                placeholder="Select expiry date"
-                                            />
-                                        )}
-                                    </Field>
-                                </FormItem>
-                                {values.documentType && (
-                                    <div className="grid xl:grid-cols-2 gap-4">
-                                        <DocumentUploadField
-                                            name={`${values.documentType}Front` as keyof IdentificationType}
-                                            label={`${documentTypes.find(
-                                                (d) =>
-                                                    d.value ===
-                                                    values.documentType,
-                                            )?.label} Front`}
-                                            {...validatedProps}
-                                        >
-                                            <DoubleSidedImage
-                                                className="mx-auto mb-3"
-                                                src="/img/thumbs/id-card-front.png"
-                                                darkModeSrc="/img/thumbs/id-card-front-dark.png"
-                                                alt=""
-                                            />
-                                        </DocumentUploadField>
-                                        <DocumentUploadField
-                                            name={`${values.documentType}Back` as keyof IdentificationType}
-                                            label={`${documentTypes.find(
-                                                (d) =>
-                                                    d.value ===
-                                                    values.documentType,
-                                            )?.label} Back`}
-                                            {...validatedProps}
-                                        >
-                                            <DoubleSidedImage
-                                                className="mx-auto mb-3"
-                                                src="/img/thumbs/id-card-back.png"
-                                                darkModeSrc="/img/thumbs/id-card-back-dark.png"
-                                                alt=""
-                                            />
-                                        </DocumentUploadField>
-                                    </div>
-                                )}
+                                {/* Conditional rendering based on document type */}
+                                {values.documentType &&
+                                    !isReferenceDocument(
+                                        values.documentType,
+                                    ) && (
+                                        <>
+                                            {/* Show title field for title documents, expiry date for others */}
+                                            {isTitleDocument(
+                                                values.documentType,
+                                            ) ? (
+                                                <FormItem
+                                                    label="Document Title"
+                                                    className="mb-6"
+                                                >
+                                                    <Field name="titleField">
+                                                        {({
+                                                            field,
+                                                        }: FieldProps) => (
+                                                            <Input
+                                                                {...field}
+                                                                placeholder="Enter document title"
+                                                                autoComplete="off"
+                                                            />
+                                                        )}
+                                                    </Field>
+                                                </FormItem>
+                                            ) : (
+                                                <FormItem
+                                                    label="Document Expiry Date"
+                                                    className="mb-6"
+                                                >
+                                                    <Field name="expiryDate">
+                                                        {({
+                                                            field,
+                                                            form,
+                                                        }: FieldProps) => (
+                                                            <DatePicker
+                                                                {...field}
+                                                                value={
+                                                                    field.value ||
+                                                                    null
+                                                                }
+                                                                onChange={(
+                                                                    date,
+                                                                ) =>
+                                                                    form.setFieldValue(
+                                                                        field.name,
+                                                                        date,
+                                                                    )
+                                                                }
+                                                                placeholder="Select expiry date"
+                                                            />
+                                                        )}
+                                                    </Field>
+                                                </FormItem>
+                                            )}
+
+                                            <div className="grid xl:grid-cols-2 gap-4">
+                                                <DocumentUploadField
+                                                    name={
+                                                        `${values.documentType}Front` as keyof IdentificationType
+                                                    }
+                                                    label={`${documentTypes.find(
+                                                        (d) =>
+                                                            d.value ===
+                                                            values.documentType,
+                                                    )?.label} Front`}
+                                                    {...validatedProps}
+                                                >
+                                                    <DoubleSidedImage
+                                                        className="mx-auto mb-3"
+                                                        src="/img/thumbs/id-card-front.png"
+                                                        darkModeSrc="/img/thumbs/id-card-front-dark.png"
+                                                        alt=""
+                                                    />
+                                                </DocumentUploadField>
+                                                <DocumentUploadField
+                                                    name={
+                                                        `${values.documentType}Back` as keyof IdentificationType
+                                                    }
+                                                    label={`${documentTypes.find(
+                                                        (d) =>
+                                                            d.value ===
+                                                            values.documentType,
+                                                    )?.label} Back`}
+                                                    {...validatedProps}
+                                                >
+                                                    <DoubleSidedImage
+                                                        className="mx-auto mb-3"
+                                                        src="/img/thumbs/id-card-back.png"
+                                                        darkModeSrc="/img/thumbs/id-card-back-dark.png"
+                                                        alt=""
+                                                    />
+                                                </DocumentUploadField>
+                                            </div>
+                                        </>
+                                    )}
+
+                                {/* Reference document fields */}
+                                {values.documentType &&
+                                    isReferenceDocument(
+                                        values.documentType,
+                                    ) && (
+                                        <ReferenceInputFields
+                                            documentType={values.documentType}
+                                            touched={touched}
+                                            errors={errors}
+                                        />
+                                    )}
+
                                 <div className="flex justify-end gap-2">
                                     <Button type="button" onClick={onBack}>
                                         Back

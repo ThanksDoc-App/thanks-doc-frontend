@@ -14,17 +14,8 @@ const JobHistory = () => {
         // >
         <div>
             <div className="flex flex-col lg:flex-row justify-between mb-4">
-<<<<<<< HEAD
-                <h3 className="mb-4 lg:mb-0">Job History</h3>
-                <JobHistoryTool
-                    searchTerm={''}
-                    onSearchChange={() => {}}
-                    onFilterClick={() => {}}
-                />
-=======
-                <h3 className="mb-4 lg:mb-0">Job History    </h3>
+                <h3 className="mb-4 lg:mb-0">Job History </h3>
                 {/* <JobHistoryTool /> */}
->>>>>>> origin/israel
             </div>
             <JobHistoryTable />
         </div>

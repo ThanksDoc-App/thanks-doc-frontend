@@ -83,3 +83,56 @@ export async function apiGetAdmins() {
         method: 'get',
     })
 }
+
+// Update user profile endpoint
+export async function apiUpdateUser(data: {
+    name: string
+    businessName: string
+    phone: string
+    gmcNumber: string
+    rating: number
+    gender: string
+    location: {
+        country: string
+        city: string
+        state: string
+        address1: string
+        address2: string
+        zipCode: string
+    }
+    maritalStatus: string
+    countryCode: string
+    dateOfBirth: string
+    bio: string
+    website: string
+    category: string
+    isCorrespondenceAddressSame: boolean
+    correspondenceAddress: {
+        country: string
+        city: string
+        state: string
+        address1: string
+        address2: string
+        zipCode: string
+    }
+    identityImages: {
+        cover: {
+            url: string
+            public_id: string
+        }
+        back: {
+            url: string
+            public_id: string
+        }
+    }
+}) {
+    return ApiService.fetchData<{
+        status: boolean
+        message?: string
+        data?: any
+    }>({
+        url: '/api/v1/user',
+        method: 'patch',
+        data,
+    })
+}

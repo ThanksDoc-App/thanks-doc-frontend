@@ -21,6 +21,11 @@ import {
     selectServicesLoading,
     selectServicesError,
 } from './store/servicesSlice'
+import {
+    createJob,
+    selectCreateJobLoading,
+    selectCreateJobError,
+} from './store/JobsSlice'
 
 type Options = {
     label: string
@@ -96,6 +101,10 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
     const services = useSelector(selectServices)
     const servicesLoading = useSelector(selectServicesLoading)
     const servicesError = useSelector(selectServicesError)
+
+    // Redux hooks for job creation
+    const createJobLoading = useSelector(selectCreateJobLoading)
+    const createJobError = useSelector(selectCreateJobError)
 
     // Transform categories data for Select component
     const categoryOptions = categories.map((category) => ({

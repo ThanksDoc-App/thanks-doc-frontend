@@ -1,168 +1,39 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     ChevronLeft,
     ChevronRight,
     ChevronDown,
     MoreHorizontal,
 } from 'lucide-react'
-
-const salesData = [
-    {
-        id: 1,
-        jobs: 'Surgery',
-        status: 'Active',
-        date: '2023-05-23',
-        amount: '$7,000',
-        doctor: 'Dr. Khalifa Bello',
-    },
-    {
-        id: 2,
-        jobs: 'Dentist',
-        status: 'Closed',
-        date: '2023-06-15',
-        amount: '$4,500',
-        doctor: 'Dr. Seyi Adeniyi',
-    },
-    {
-        id: 3,
-        jobs: 'Cardiology',
-        status: 'Active',
-        date: '2023-07-10',
-        amount: '$8,200',
-        doctor: 'Dr. Alice Johnson',
-    },
-    {
-        id: 4,
-        jobs: 'Neurology',
-        status: 'Closed',
-        date: '2023-08-01',
-        amount: '$9,000',
-        doctor: 'Dr. Michael Smith',
-    },
-    {
-        id: 5,
-        jobs: 'Orthopedics',
-        status: 'Active',
-        date: '2023-09-14',
-        amount: '$5,600',
-        doctor: 'Dr. Emma Brown',
-    },
-    {
-        id: 6,
-        jobs: 'Pediatrics',
-        status: 'Closed',
-        date: '2023-10-22',
-        amount: '$3,400',
-        doctor: 'Dr. Daniel Lee',
-    },
-    {
-        id: 7,
-        jobs: 'Oncology',
-        status: 'Active',
-        date: '2023-11-30',
-        amount: '$10,500',
-        doctor: 'Dr. Sophia Martinez',
-    },
-    {
-        id: 8,
-        jobs: 'Dermatology',
-        status: 'Closed',
-        date: '2023-12-05',
-        amount: '$2,800',
-        doctor: 'Dr. William Anderson',
-    },
-    {
-        id: 9,
-        jobs: 'Psychiatry',
-        status: 'Active',
-        date: '2024-01-18',
-        amount: '$6,200',
-        doctor: 'Dr. Olivia Taylor',
-    },
-    {
-        id: 10,
-        jobs: 'Radiology',
-        status: 'Closed',
-        date: '2024-02-27',
-        amount: '$7,800',
-        doctor: 'Dr. James Wilson',
-    },
-    {
-        id: 11,
-        jobs: 'Anesthesiology',
-        status: 'Active',
-        date: '2024-03-10',
-        amount: '$5,900',
-        doctor: 'Dr. Mia Thompson',
-    },
-    {
-        id: 12,
-        jobs: 'Gastroenterology',
-        status: 'Closed',
-        date: '2024-04-12',
-        amount: '$6,700',
-        doctor: 'Dr. Benjamin White',
-    },
-    {
-        id: 13,
-        jobs: 'Nephrology',
-        status: 'Active',
-        date: '2024-05-20',
-        amount: '$9,100',
-        doctor: 'Dr. Charlotte Harris',
-    },
-    {
-        id: 14,
-        jobs: 'Urology',
-        status: 'Closed',
-        date: '2024-06-01',
-        amount: '$4,900',
-        doctor: 'Dr. Lucas Martin',
-    },
-    {
-        id: 15,
-        jobs: 'Ophthalmology',
-        status: 'Active',
-        date: '2024-07-08',
-        amount: '$3,300',
-        doctor: 'Dr. Amelia Clark',
-    },
-    {
-        id: 16,
-        jobs: 'ENT',
-        status: 'Closed',
-        date: '2024-08-22',
-        amount: '$2,500',
-        doctor: 'Dr. Henry Lewis',
-    },
-    {
-        id: 17,
-        jobs: 'Rheumatology',
-        status: 'Active',
-        date: '2024-09-30',
-        amount: '$6,600',
-        doctor: 'Dr. Grace Walker',
-    },
-    {
-        id: 18,
-        jobs: 'Pathology',
-        status: 'Closed',
-        date: '2024-10-10',
-        amount: '$7,300',
-        doctor: 'Dr. Ethan Hall',
-    },
-]
+import { useAppDispatch, useAppSelector } from '@/store'
+import {
+    fetchJobHistory,
+    selectJobHistory,
+    selectJobHistoryLoading,
+    selectJobHistoryError,
+} from '../store/jobHistorySlice' // Adjust import path based on your file structure
 
 const SalesHistory = () => {
+    const dispatch = useAppDispatch()
+    const jobs = useAppSelector(selectJobHistory)
+    const loading = useAppSelector(selectJobHistoryLoading)
+    const error = useAppSelector(selectJobHistoryError)
+
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(5)
     const [showDropdown, setShowDropdown] = useState(false)
 
-    const totalItems = salesData.length
+    // Fetch jobs from Redux on component mount
+    useEffect(() => {
+        dispatch(fetchJobHistory())
+    }, [dispatch])
+
+    // Use Redux data instead of empty salesData
+    const totalItems = jobs.length
     const totalPages = Math.ceil(totalItems / itemsPerPage)
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
-    const currentData = salesData.slice(startIndex, endIndex)
+    const currentData = jobs.slice(startIndex, endIndex)
 
     const handlePageChange = (page: number) => {
         if (page >= 1 && page <= totalPages) {
@@ -178,9 +49,9 @@ const SalesHistory = () => {
 
     const getStatusBadge = (status: string) => {
         const baseClasses = 'px-3 py-1.5 rounded-full text-[12px] font-semibold'
-        if (status === 'Active')
+        if (status === 'Active' || status === 'active')
             return `${baseClasses} text-[#FF9500] border border-[#FF9500]`
-        if (status === 'Closed')
+        if (status === 'Closed' || status === 'closed')
             return `${baseClasses} text-[#FF6550] border border-[#FF6550]`
         return `${baseClasses} text-gray-500 border border-gray-300`
     }
@@ -210,6 +81,36 @@ const SalesHistory = () => {
         return pages
     }
 
+    // Format date helper
+    const formatDate = (dateString: string) => {
+        if (!dateString) return 'N/A'
+        return new Date(dateString).toLocaleDateString()
+    }
+
+    // Show loading state
+    if (loading) {
+        return (
+            <div className="w-full bg-white rounded-lg p-8 text-center">
+                <div className="text-gray-500">Loading jobs...</div>
+            </div>
+        )
+    }
+
+    // Show error state
+    if (error) {
+        return (
+            <div className="w-full bg-white rounded-lg p-8 text-center">
+                <div className="text-red-500">Error: {error}</div>
+                <button
+                    onClick={() => dispatch(fetchJobHistory())}
+                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                    Retry
+                </button>
+            </div>
+        )
+    }
+
     return (
         <div className="w-full bg-white rounded-lg">
             {/* Table */}
@@ -230,37 +131,61 @@ const SalesHistory = () => {
                                 Amount
                             </th>
                             <th className="px-6 py-4 text-left text-sm font-medium text-[#6b6d74]">
-                                Doctor in charge{' '}
+                                Doctor in charge
                             </th>
                             <th className="px-6 py-4 w-12"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        {currentData.map((item, index) => (
-                            <tr
-                                key={item.id}
-                                className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap ${
-                                    index % 2 === 1 ? 'bg-[#F8F8FD]' : ''
-                                }`}
-                            >
-                                <td className="px-6 py-4">{item.jobs}</td>
-                                <td className="px-6 py-4">
-                                    <span
-                                        className={getStatusBadge(item.status)}
-                                    >
-                                        {item.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">{item.date}</td>
-                                <td className="px-6 py-4">{item.amount}</td>
-                                <td className="px-6 py-4">{item.doctor}</td>
-                                <td className="px-6 py-4">
-                                    <button className="p-1">
-                                        <MoreHorizontal className="w-5 h-5" />
-                                    </button>
+                        {currentData.length === 0 ? (
+                            <tr>
+                                <td
+                                    colSpan={6}
+                                    className="px-6 py-8 text-center text-gray-500"
+                                >
+                                    No jobs found
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            currentData.map((item: any, index: any) => (
+                                <tr
+                                    key={item._id || index}
+                                    className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap ${
+                                        index % 2 === 1 ? 'bg-[#F8F8FD]' : ''
+                                    }`}
+                                >
+                                    <td className="px-6 py-4">{item.name}</td>
+                                    <td className="px-6 py-4">
+                                        <span
+                                            className={getStatusBadge(
+                                                item.status || 'N/A',
+                                            )}
+                                        >
+                                            {item.status || 'N/A'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {formatDate(item.createdAt)}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center justify-center gap-0.5">
+                                            <p> {item?.amount}</p>{' '}
+                                            <p> {item?.currency}</p>{' '}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {item.doctor?.name ||
+                                            item.doctor ||
+                                            'N/A'}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <button className="p-1">
+                                            <MoreHorizontal className="w-5 h-5" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -335,7 +260,9 @@ const SalesHistory = () => {
 
                     <button
                         onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
+                        disabled={
+                            currentPage === totalPages || totalPages === 0
+                        }
                         className="p-2 text-[#8c91a0] hover:text-[#25324B] disabled:opacity-50"
                     >
                         <ChevronRight className="w-4 h-4" />

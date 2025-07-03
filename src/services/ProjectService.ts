@@ -47,7 +47,7 @@ export async function apiGetScrumBoardtTicketDetail() {
 // ✅ New GET endpoint
 export async function apiGetJobBrowse() {
     return ApiService.fetchData({
-        url: '/api/v1/job/browse',
+        url: '/api/v1/job/mine',
         method: 'get',
     })
 }

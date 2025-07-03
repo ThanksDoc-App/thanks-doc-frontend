@@ -106,7 +106,7 @@ const specialtyOptions = [
 ]
 
 const validationSchema = Yup.object().shape({
-    firstName: Yup.string(), // remove .required('First name is required')
+    firstName: Yup.string(),
     lastName: Yup.string(),
     email: Yup.string(),
     nationality: Yup.string(),
@@ -115,7 +115,7 @@ const validationSchema = Yup.object().shape({
     gender: Yup.string(),
     maritalStatus: Yup.string(),
     dialCode: Yup.string(),
-     specialty: Yup.string(), // <-- add this line
+    specialty: Yup.string(),
 })
 
 const PersonalInformation = ({
@@ -130,18 +130,11 @@ const PersonalInformation = ({
         dob: '',
         gender: '',
         maritalStatus: '',
-        specialty: '', // <-- add this line
+        specialty: '',
     },
     onNextChange,
     currentStepStatus,
 }: PersonalInformationProps) => {
-    const onNext = (
-        values: FormModel,
-        setSubmitting: (isSubmitting: boolean) => void,
-    ) => {
-        onNextChange?.(values, 'personalInformation', setSubmitting)
-    }
-
     return (
         <>
             <div className="mb-8">
@@ -155,47 +148,23 @@ const PersonalInformation = ({
                 onSubmit={(values, { setSubmitting }) => {
                     setSubmitting(true)
                     setTimeout(() => {
-                        onNext(values, setSubmitting)
+                        onNextChange?.(
+                            values,
+                            'personalInformation',
+                            setSubmitting,
+                        )
                     }, 1000)
                 }}
             >
-                {({ values, touched, errors, isSubmitting }) => {
+                {({ values, touched, errors, isSubmitting, setSubmitting }) => {
                     return (
                         <Form>
                             <FormContainer>
-                                {/* <FormItem
-                                    label="Nationality"
-                                    invalid={
-                                        errors.nationality &&
-                                        touched.nationality
-                                    }
-                                    errorMessage={errors.nationality}
-                                >
-                                    <Field name="nationality">
-                                        {({ field, form }: FieldProps) => (
-                                            <Select
-                                                placeholder="Nationality"
-                                                field={field}
-                                                form={form}
-                                                options={countryList}
-                                                value={countryList.filter(
-                                                    (country) =>
-                                                        country.value ===
-                                                        values.nationality,
-                                                )}
-                                                onChange={(country) =>
-                                                    form.setFieldValue(
-                                                        field.name,
-                                                        country?.value,
-                                                    )
-                                                }
-                                            />
-                                        )}
-                                    </Field>
-                                </FormItem> */}
                                 <FormItem
                                     label="Specialty"
-                                    invalid={errors.specialty && touched.specialty}
+                                    invalid={
+                                        errors.specialty && touched.specialty
+                                    }
                                     errorMessage={errors.specialty}
                                 >
                                     <Field name="specialty">
@@ -284,6 +253,18 @@ const PersonalInformation = ({
                                     </FormItem>
                                 </div>
                                 <div className="flex justify-end gap-2">
+                                    <Button
+                                        type="button"
+                                        onClick={() =>
+                                            onNextChange?.(
+                                                values,
+                                                'personalInformation',
+                                                setSubmitting,
+                                            )
+                                        }
+                                    >
+                                        Next
+                                    </Button>
                                     <Button
                                         loading={isSubmitting}
                                         variant="solid"

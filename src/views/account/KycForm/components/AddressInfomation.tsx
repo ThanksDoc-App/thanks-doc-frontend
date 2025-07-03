@@ -37,11 +37,11 @@ type AddressFormProps = {
 }
 
 const validationSchema = Yup.object().shape({
-    country: Yup.string(), // removed .required
+    country: Yup.string(),
     addressLine1: Yup.string(),
     addressLine2: Yup.string(),
     city: Yup.string(),
-    state: Yup.string(), // removed .required
+    state: Yup.string(),
     zipCode: Yup.string(),
     sameCorrespondenceAddress: Yup.bool(),
     correspondenceAddress: Yup.object().when('sameCorrespondenceAddress', {
@@ -72,49 +72,50 @@ const AddressForm = (props: AddressFormProps) => {
         zipCodeName,
     } = props
 
-    const getError = useCallback(
-        (name: string) => {
-            return get(errors, name)
-        },
-        [errors],
-    )
+    const getError = useCallback((name: string) => get(errors, name), [errors])
 
     const getTouched = useCallback(
-        (name: string) => {
-            return get(touched, name)
-        },
+        (name: string) => get(touched, name),
         [touched],
     )
 
     return (
         <>
-        <div className="md:grid grid-cols-2 gap-4">
-            <FormItem
-                label="Search your postcode"
-                invalid={getError(zipCodeName) && getTouched(zipCodeName)}
-                errorMessage={getError(zipCodeName)}
-            >
-                <div className="flex gap-2">
-                    <Field
-                        type="text"
-                        autoComplete="off"
-                        name={zipCodeName}
-                        placeholder="Find a Postcode"
-                        component={Input}
-                    />
-                    <Button
-                        type="button"
-                        className="shrink-0"
-                        onClick={() => {
-                            // Add your postcode lookup logic here
-                            alert('Find a Postcode feature coming soon!')
-                        }}
-                    >
-                        Find address
-                    </Button>
-                </div>
-            </FormItem>
-        </div>
+            {/* <div className="md:grid grid-cols-2 gap-4"> */}
+            {/* <div>
+                <FormItem
+                    label="Search your postcode"
+                    invalid={getError(zipCodeName) && getTouched(zipCodeName)}
+                    errorMessage={getError(zipCodeName)}
+                >
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                        <Field
+                            type="text"
+                            autoComplete="off"
+                            name={zipCodeName}
+                            placeholder="Find a Postcode"
+                            component={Input}
+                            className="flex-1"
+                        />
+                        <Button
+                            type="button"
+                            className="flex-1"
+                            onClick={() => {
+                                alert('Find a Postcode feature coming soon!')
+                            }}
+                        >
+                            Find address
+                        </Button>
+                        <Field
+                            name="addressSelect"
+                            component={Select}
+                            options={[]} // Empty select
+                            className="flex-1"
+                        />
+                    </div>
+                </FormItem>
+            </div> */}
+
             <div className="md:grid grid-cols-2 gap-4">
                 <FormItem
                     label="Address Line 1"
@@ -132,7 +133,7 @@ const AddressForm = (props: AddressFormProps) => {
                         component={Input}
                     />
                 </FormItem>
-                    <FormItem
+                <FormItem
                     label="Address Line 2"
                     invalid={
                         getError(addressLine2Name) &&
@@ -149,6 +150,7 @@ const AddressForm = (props: AddressFormProps) => {
                     />
                 </FormItem>
             </div>
+
             <div className="md:grid grid-cols-2 gap-4">
                 <FormItem
                     label="City"
@@ -219,8 +221,8 @@ const AddressInfomation = ({
             <div className="mb-8">
                 <h3 className="mb-2">Address Information</h3>
                 <p>
-                    Enter your address information help us to speed up the
-                    verication process.
+                    Enter your address information to help us speed up the
+                    verification process.
                 </p>
             </div>
             <Formik
@@ -249,26 +251,7 @@ const AddressInfomation = ({
                                     zipCodeName="zipCode"
                                     {...formProps}
                                 />
-                                {/* <FormItem>
-                                    <Field name="sameCorrespondenceAddress">
-                                        {({ field, form }: FieldProps) => (
-                                            <Checkbox
-                                                checked={
-                                                    values.sameCorrespondenceAddress
-                                                }
-                                                onChange={(val) =>
-                                                    form.setFieldValue(
-                                                        field.name,
-                                                        val,
-                                                    )
-                                                }
-                                            >
-                                                Correspondence address is same
-                                                as above
-                                            </Checkbox>
-                                        )}
-                                    </Field>
-                                </FormItem> */}
+
                                 {!values.sameCorrespondenceAddress && (
                                     <>
                                         <h5 className="mb-4">
@@ -285,6 +268,7 @@ const AddressInfomation = ({
                                         />
                                     </>
                                 )}
+
                                 <div className="flex justify-end gap-2">
                                     <Button type="button" onClick={onBack}>
                                         Back
