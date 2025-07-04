@@ -26,9 +26,13 @@ import * as Yup from 'yup'
 import type { OptionProps, ControlProps } from 'react-select'
 import type { FormikProps, FieldInputProps, FieldProps } from 'formik'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateUserProfile } from '../store/SettingsSlice'
+import {
+    updateUserProfile,
+    changeProfileImage,
+    getUserProfile,
+} from '../store/SettingsSlice'
 import { RootState } from '@/store'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 // Add categories imports
 import {
     fetchCategories,
@@ -47,7 +51,7 @@ export type ProfileFormModel = {
     timeZone: string
     lang: string
     syncData: boolean
-    gmcNumber?: number
+    gmcNumber?: string
     specialty?: string
 }
 
@@ -107,16 +111,37 @@ const CustomSelectOption = ({
 
 const Profile = ({ data }: ProfileProps) => {
     const dispatch = useAppDispatch()
-    const { updateUserLoading, updateUserSuccess, updateUserError } =
-        useSelector((state: RootState) => state.settings)
+
+    const {
+        updateUserLoading,
+        updateUserSuccess,
+        updateUserError,
+        profileImageLoading,
+        profileImageSuccess,
+        profileImageError,
+        profileImageData,
+        // ✅ Add profile data selectors
+        getProfileLoading,
+        getProfileSuccess,
+        getProfileError,
+        profileData,
+    } = useSelector((state: RootState) => state.settings)
 
     // Add category selectors
     const categories = useAppSelector(selectCategories)
     const categoriesLoading = useAppSelector(selectCategoriesLoading)
     const categoriesError = useAppSelector(selectCategoriesError)
 
-    const userDetails = JSON.parse(localStorage.getItem('userdetails') || '{}')
-    const signedUpAs = userDetails?.data?.signedUpAs
+    // State to store the selected image file
+    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(
+        null,
+    )
+
+    // ✅ Fetch profile data on component mount
+    useEffect(() => {
+        console.log('🚀 Profile component mounted - triggering getUserProfile')
+        dispatch(getUserProfile())
+    }, [dispatch])
 
     // Fetch categories on component mount
     useEffect(() => {
@@ -129,19 +154,19 @@ const Profile = ({ data }: ProfileProps) => {
         value: category._id, // Category ID
     }))
 
-    // Default data with localStorage values
+    // ✅ Use API data instead of localStorage
+    // ✅ Use API data instead of localStorage
     const defaultData: ProfileFormModel = {
-        name: userDetails?.data?.name || '',
-        email: userDetails?.data?.email || '',
-        phone: userDetails?.data?.phone || '',
-        address: userDetails?.data?.address || '',
-        avatar: userDetails?.data?.profile_image || '',
-        gmcNumber: userDetails?.data?.gmcNumber || '',
+        name: profileData?.data?.name || '', // ✅ Name prefilled
+        email: profileData?.data?.email || '', // ✅ Email prefilled
+        phone: profileData?.data?.phone || '', // ✅ Phone prefilled
+        address: profileData?.location?.address1 || '', // ✅ Address prefilled
+        avatar: profileData?.data?.profileImage?.url || '', // ✅ Profile image prefilled
+        gmcNumber: profileData?.data?.gmcNumber || '', // ✅ GMC Number prefilled
         timeZone: '',
         lang: '',
         syncData: false,
-        specialty:
-            userDetails?.data?.specialty || userDetails?.data?.category || '',
+        specialty: profileData?.data?.category?._id || '', // ✅ Specialty prefilled
     }
 
     const initialData = {
@@ -162,62 +187,145 @@ const Profile = ({ data }: ProfileProps) => {
         }
     }, [categoriesError])
 
+    // Handle profile fetch error
+    useEffect(() => {
+        if (getProfileError) {
+            toast.push(<Notification title={getProfileError} type="danger" />, {
+                placement: 'top-center',
+            })
+        }
+    }, [getProfileError])
+
+    // Handle profile image upload success/error
+    useEffect(() => {
+        if (profileImageSuccess && profileImageData) {
+            toast.push(
+                <Notification
+                    title="Profile image updated successfully"
+                    type="success"
+                />,
+                { placement: 'top-center' },
+            )
+        }
+        if (profileImageError) {
+            toast.push(
+                <Notification title={profileImageError} type="danger" />,
+                { placement: 'top-center' },
+            )
+        }
+    }, [profileImageSuccess, profileImageError, profileImageData])
+
     const onSetFormFile = (
         form: FormikProps<ProfileFormModel>,
         field: FieldInputProps<ProfileFormModel>,
         file: File[],
     ) => {
-        form.setFieldValue(field.name, URL.createObjectURL(file[0]))
+        if (file.length > 0) {
+            // Store the selected file for later upload
+            setSelectedImageFile(file[0])
+
+            // Update the form field with the local URL for immediate preview
+            form.setFieldValue(field.name, URL.createObjectURL(file[0]))
+        } else {
+            // Clear the selected file if no file is selected
+            setSelectedImageFile(null)
+        }
     }
 
-    const onFormSubmit = (
+    const onFormSubmit = async (
         values: ProfileFormModel,
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
-        console.log('values', values)
+        console.log('Form values:', values)
 
-        const userDetails = JSON.parse(
-            localStorage.getItem('userdetails') || '{}',
-        )
-        const signedUpAs = userDetails?.data?.signedUpAs
+        try {
+            // First, upload the profile image if a new one is selected
+            if (selectedImageFile) {
+                const formData = new FormData()
+                formData.append('image', selectedImageFile)
 
-        let updatePayload: any
+                // Dispatch the profile image upload action and wait for it
+                await dispatch(changeProfileImage(formData)).unwrap()
+            }
 
-        if (signedUpAs === 'doctor') {
-            updatePayload = {
-                name: values.name,
-                phone: values.phone,
-                gmcNumber: values.gmcNumber?.toString() || '',
-                location: {
-                    address1: values.address,
-                },
-                category: values.specialty || '', // ✅ Category for doctors
+            // ✅ Use API data instead of localStorage
+            const signedUpAs = profileData?.signedUpAs
+
+            let updatePayload: any
+
+            if (signedUpAs === 'doctor') {
+                updatePayload = {
+                    name: values.name,
+                    phone: values.phone,
+                    gmcNumber: values.gmcNumber?.toString() || '',
+                    location: {
+                        address1: values.address,
+                    },
+                    category: values.specialty || '',
+                }
+            } else if (signedUpAs === 'business') {
+                updatePayload = {
+                    businessName: values.name,
+                    phone: values.phone,
+                    location: {
+                        address1: values.address,
+                    },
+                    category: values.specialty || '',
+                }
+            } else {
+                // admin or other cases
+                updatePayload = {
+                    name: values.name,
+                    email: values.email,
+                    phone: values.phone,
+                    location: {
+                        address1: values.address,
+                    },
+                    category: values.specialty || '',
+                }
             }
-        } else if (signedUpAs === 'business') {
-            updatePayload = {
-                businessName: values.name,
-                phone: values.phone,
-                location: {
-                    address1: values.address,
-                },
-                category: values.specialty || '', // ✅ Category for business
-            }
-        } else {
-            // admin or other cases
-            updatePayload = {
-                name: values.name,
-                email: values.email,
-                phone: values.phone,
-                location: {
-                    address1: values.address,
-                },
-                category: values.specialty || '', // ✅ Category for admin/others
-            }
+
+            // Dispatch the Redux action for profile update
+            await dispatch(updateUserProfile(updatePayload)).unwrap()
+
+            // Clear the selected image file after successful submission
+            setSelectedImageFile(null)
+
+            // ✅ Refresh profile data after successful update
+            dispatch(getUserProfile())
+        } catch (error) {
+            console.error('Error updating profile:', error)
+            toast.push(
+                <Notification title="Failed to update profile" type="danger" />,
+                { placement: 'top-center' },
+            )
+        } finally {
+            setSubmitting(false)
         }
+    }
 
-        // Dispatch the Redux action
-        dispatch(updateUserProfile(updatePayload))
-        setSubmitting(false)
+    // ✅ Show loading state while fetching profile
+    if (getProfileLoading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2">Loading profile...</span>
+            </div>
+        )
+    }
+
+    // ✅ Show error state if profile fetch failed
+    if (getProfileError && !profileData) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="text-center">
+                    <p className="text-red-500 mb-4">Failed to load profile</p>
+                    <Button onClick={() => dispatch(getUserProfile())}>
+                        Retry
+                    </Button>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -227,12 +335,17 @@ const Profile = ({ data }: ProfileProps) => {
             validationSchema={validationSchema}
             onSubmit={(values, { setSubmitting }) => {
                 setSubmitting(true)
-                setTimeout(() => {
-                    onFormSubmit(values, setSubmitting)
-                }, 1000)
+                onFormSubmit(values, setSubmitting)
             }}
         >
-            {({ values, touched, errors, isSubmitting, resetForm }) => {
+            {({
+                values,
+                touched,
+                errors,
+                isSubmitting,
+                resetForm,
+                setFieldValue,
+            }) => {
                 // Handle success and error notifications with status check
                 useEffect(() => {
                     if (
@@ -248,8 +361,6 @@ const Profile = ({ data }: ProfileProps) => {
                                 placement: 'top-center',
                             },
                         )
-                        // Clear/reset the form fields
-                        resetForm()
                     }
                     if (updateUserError) {
                         toast.push(
@@ -262,9 +373,22 @@ const Profile = ({ data }: ProfileProps) => {
                             },
                         )
                     }
-                }, [updateUserSuccess, updateUserError, resetForm])
+                }, [updateUserSuccess, updateUserError])
+
+                // Update avatar field when profile image upload is successful
+                useEffect(() => {
+                    if (profileImageSuccess && profileImageData?.url) {
+                        setFieldValue('avatar', profileImageData.url)
+                    }
+                }, [profileImageSuccess, profileImageData, setFieldValue])
 
                 const validatorProps = { touched, errors }
+                const isLoading =
+                    isSubmitting || updateUserLoading || profileImageLoading
+
+                // ✅ Get signedUpAs from API data
+                const signedUpAs = profileData?.data?.signedUpAs
+
                 return (
                     <Form>
                         <FormContainer>
@@ -284,33 +408,41 @@ const Profile = ({ data }: ProfileProps) => {
                                             ? { src: field.value }
                                             : {}
                                         return (
-                                            <Upload
-                                                className="cursor-pointer"
-                                                showList={false}
-                                                uploadLimit={1}
-                                                onChange={(files) =>
-                                                    onSetFormFile(
-                                                        form,
-                                                        field,
-                                                        files,
-                                                    )
-                                                }
-                                                onFileRemove={(files) =>
-                                                    onSetFormFile(
-                                                        form,
-                                                        field,
-                                                        files,
-                                                    )
-                                                }
-                                            >
-                                                <Avatar
-                                                    className="border-2 border-white dark:border-gray-800 shadow-lg"
-                                                    size={60}
-                                                    shape="circle"
-                                                    icon={<HiOutlineUser />}
-                                                    {...avatarProps}
-                                                />
-                                            </Upload>
+                                            <div className="relative">
+                                                <Upload
+                                                    className="cursor-pointer"
+                                                    showList={false}
+                                                    uploadLimit={1}
+                                                    onChange={(files) =>
+                                                        onSetFormFile(
+                                                            form,
+                                                            field,
+                                                            files,
+                                                        )
+                                                    }
+                                                    onFileRemove={(files) =>
+                                                        onSetFormFile(
+                                                            form,
+                                                            field,
+                                                            files,
+                                                        )
+                                                    }
+                                                    disabled={isLoading}
+                                                >
+                                                    <Avatar
+                                                        className="border-2 border-white dark:border-gray-800 shadow-lg"
+                                                        size={60}
+                                                        shape="circle"
+                                                        icon={<HiOutlineUser />}
+                                                        {...avatarProps}
+                                                    />
+                                                </Upload>
+                                                {profileImageLoading && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         )
                                     }}
                                 </Field>
@@ -439,18 +571,21 @@ const Profile = ({ data }: ProfileProps) => {
                                 <Button
                                     className="ltr:mr-2 rtl:ml-2"
                                     type="button"
-                                    onClick={() => resetForm()}
+                                    onClick={() => {
+                                        resetForm()
+                                        setSelectedImageFile(null)
+                                    }}
+                                    disabled={isLoading}
                                 >
                                     Reset
                                 </Button>
                                 <Button
                                     variant="solid"
-                                    loading={isSubmitting || updateUserLoading}
+                                    loading={isLoading}
                                     type="submit"
+                                    disabled={isLoading}
                                 >
-                                    {isSubmitting || updateUserLoading
-                                        ? 'Updating'
-                                        : 'Update'}
+                                    {isLoading ? 'Updating...' : 'Update'}
                                 </Button>
                             </div>
                         </FormContainer>

@@ -150,12 +150,25 @@ interface ServicesState {
   deleteError: string | null;
 }
 
-// ✅ Settings state interface
+// ✅ Updated Settings state interface with profile image upload and get profile functionality
 interface SettingsState {
   updateUserLoading: boolean
   updateUserSuccess: boolean
   updateUserError: string | null
   userData: any
+  // Profile image upload states
+  profileImageLoading: boolean
+  profileImageSuccess: boolean
+  profileImageError: string | null
+  profileImageData: {
+    url: string
+    public_id: string
+  } | null
+  // Get profile states
+  getProfileLoading: boolean
+  getProfileSuccess: boolean
+  getProfileError: string | null
+  profileData: any
 }
 
 export type RootState = {
@@ -170,7 +183,7 @@ export type RootState = {
     business: BusinessState  // ✅ Business state
     jobHistory: JobHistoryState  // ✅ Job History state
     job: JobState  // ✅ Job state
-    settings: SettingsState  // ✅ Settings state
+    settings: SettingsState  // ✅ Settings state with profile image and get profile functionality
     /* eslint-disable @typescript-eslint/no-explicit-any */
     [RtkQueryService.reducerPath]: any
 }

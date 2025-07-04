@@ -54,7 +54,7 @@ const PricingFields = () => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
 
     // Get live form state
-    const { values, touched, errors, setFieldValue, resetForm } =
+    const { values, touched, errors, setFieldValue } =
         useFormikContext<FormFieldsName>()
 
     // Redux hooks
@@ -95,7 +95,14 @@ const PricingFields = () => {
                 service: values.service,
                 category: values.category,
                 description: values.description,
-                location: values.location, // Use the actual location value from form
+                location: {
+                    country: 'UK', // Default values - you might want to make these configurable
+                    city: 'London',
+                    state: 'England',
+                    address1: values.location,
+                    address2: '',
+                    zipCode: '00000',
+                },
                 amount: Number(values.price) || 0, // Ensure amount is a proper number
                 currency: 'GBP',
                 time: values.time,
@@ -121,10 +128,6 @@ const PricingFields = () => {
     const handleConfirmPayment = () => {
         console.log('Processing payment for:', values.price)
         setIsPaymentModalOpen(false)
-
-        // Reset form fields after successful payment
-        resetForm()
-
         // Add payment processing logic here
     }
 
