@@ -27,11 +27,12 @@ const appsRoute: Routes = [
         },
     },
     {
-        key: 'appsProject.issue',
-        path: `${APP_PREFIX_PATH}/project/issue`,
+        key: 'appsProject.job-details',
+        path: `${APP_PREFIX_PATH}/project/job-details/:id`, // Changed {id} to :id
         component: lazy(() => import('@/views/project/Issue')),
         authority: [ADMIN, USER],
     },
+
     {
         key: 'appsProject.history',
         path: `${APP_PREFIX_PATH}/project/history`,

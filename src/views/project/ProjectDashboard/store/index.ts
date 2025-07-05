@@ -15,8 +15,7 @@ const reducer = combineReducers({
 export const useAppSelector: TypedUseSelectorHook<
     RootState & {
         [SLICE_NAME]: {
-            data: ProjectDashboardState,
-            loading?: any
+            data: ProjectDashboardState
         }
     }
 > = useSelector

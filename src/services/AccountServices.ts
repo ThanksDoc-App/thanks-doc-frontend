@@ -43,9 +43,11 @@ export async function apiGetAccountLogData<
     })
 }
 
-export async function apiGetAccountFormData<T>() {
+export async function apiGetAccountFormData<T>(data: Partial<T>) {
     return ApiService.fetchData<T>({
-        url: '/account/form',
-        method: 'get',
-    })
+        url: '/api/v1/user',
+        method: 'patch',
+        data,
+    });
 }
+

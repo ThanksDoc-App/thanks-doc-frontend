@@ -3,6 +3,8 @@ import InputGroup from '@/components/ui/InputGroup'
 import Button from '@/components/ui/Button'
 import DatePicker from '@/components/ui/DatePicker'
 import Select from '@/components/ui/Select'
+import Notification from '@/components/ui/Notification'
+import toast from '@/components/ui/toast'
 import { FormItem, FormContainer } from '@/components/ui/Form'
 import { Field, Form, Formik } from 'formik'
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
@@ -16,6 +18,17 @@ import type { FieldInputProps, FieldProps } from 'formik'
 import type { PersonalInformation as PersonalInformationType } from '../store'
 import type { ComponentType } from 'react'
 import type { InputProps } from '@/components/ui/Input'
+import { useEffect } from 'react'
+// Add categories imports
+import {
+    fetchCategories,
+    selectCategories,
+    selectCategoriesLoading,
+    selectCategoriesError,
+} from '../../../sales/ProductForm/store/categorySlice'
+// Add KYC form imports
+import { updateForm } from '../store/kycFormSlice'
+import { useAppDispatch, useAppSelector } from '@/store'
 
 type CountryOption = {
     label: string
@@ -98,13 +111,6 @@ const PhoneControl = (props: SingleValueProps<CountryOption>) => {
     )
 }
 
-const specialtyOptions = [
-    { label: 'General Practitioner', value: 'general_practitioner' },
-    { label: 'Cardiologist', value: 'cardiologist' },
-    { label: 'Dermatologist', value: 'dermatologist' },
-    { label: 'Pediatrician', value: 'pediatrician' },
-]
-
 const validationSchema = Yup.object().shape({
     firstName: Yup.string(),
     lastName: Yup.string(),
@@ -135,6 +141,37 @@ const PersonalInformation = ({
     onNextChange,
     currentStepStatus,
 }: PersonalInformationProps) => {
+    const dispatch = useAppDispatch()
+
+    // Add category selectors
+    const categories = useAppSelector(selectCategories)
+    const categoriesLoading = useAppSelector(selectCategoriesLoading)
+    const categoriesError = useAppSelector(selectCategoriesError)
+
+    // Fetch categories on component mount
+    useEffect(() => {
+        dispatch(fetchCategories())
+    }, [dispatch])
+
+    // Transform categories data for Select component
+    const specialtyOptions = categories.map((category) => ({
+        label: category.name, // Display name
+        value: category._id, // Category ID
+    }))
+
+    // Handle categories error
+    useEffect(() => {
+        if (categoriesError) {
+            toast.push(
+                <Notification
+                    title="Failed to load specialties"
+                    type="danger"
+                />,
+                { placement: 'top-center' },
+            )
+        }
+    }, [categoriesError])
+
     return (
         <>
             <div className="mb-8">
@@ -145,15 +182,45 @@ const PersonalInformation = ({
                 initialValues={data}
                 enableReinitialize={true}
                 validationSchema={validationSchema}
-                onSubmit={(values, { setSubmitting }) => {
+                onSubmit={async (values, { setSubmitting }) => {
                     setSubmitting(true)
-                    setTimeout(() => {
-                        onNextChange?.(
-                            values,
-                            'personalInformation',
-                            setSubmitting,
+                    try {
+                        // Transform the data to match API expectations
+                        const apiData = {
+                            ...values,
+                            category: values.specialty, // Map specialty to category
+                            // Remove specialty field to avoid confusion
+                            specialty: undefined,
+                        }
+
+                        // Call the KYC endpoint
+                        await dispatch(updateForm(apiData)).unwrap()
+
+                        toast.push(
+                            <Notification
+                                title="Information saved successfully"
+                                type="success"
+                            />,
+                            { placement: 'top-center' },
                         )
-                    }, 1000)
+
+                        setTimeout(() => {
+                            onNextChange?.(
+                                values,
+                                'personalInformation',
+                                setSubmitting,
+                            )
+                        }, 1000)
+                    } catch (error) {
+                        toast.push(
+                            <Notification
+                                title="Failed to save information"
+                                type="danger"
+                            />,
+                            { placement: 'top-center' },
+                        )
+                        setSubmitting(false)
+                    }
                 }}
             >
                 {({ values, touched, errors, isSubmitting, setSubmitting }) => {
@@ -174,6 +241,7 @@ const PersonalInformation = ({
                                                 field={field}
                                                 form={form}
                                                 options={specialtyOptions}
+                                                isLoading={categoriesLoading}
                                                 value={specialtyOptions.find(
                                                     (option) =>
                                                         option.value ===

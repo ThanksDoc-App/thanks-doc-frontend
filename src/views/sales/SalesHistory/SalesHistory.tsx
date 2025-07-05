@@ -6,7 +6,7 @@ const SalesHistory = () => {
         <div>
             <div>
                 <div className="flex flex-col lg:flex-row justify-between mb-4">
-                    <h3 className="mb-4 lg:mb-0">Job History </h3>
+                    <h3 className="mb-4 lg:mb-0">Job Listing </h3>
                     {/* <JobHistoryTool /> */}
                 </div>
                 <SalesHistoryTable />

@@ -49,7 +49,7 @@ const SalesHistory = () => {
 
     const getStatusBadge = (status: string) => {
         const baseClasses = 'px-3 py-1.5 rounded-full text-[12px] font-semibold'
-        if (status === 'Active' || status === 'active')
+        if (status === 'Accepted' || status === 'accepted')
             return `${baseClasses} text-[#FF9500] border border-[#FF9500]`
         if (status === 'Closed' || status === 'closed')
             return `${baseClasses} text-[#FF6550] border border-[#FF6550]`

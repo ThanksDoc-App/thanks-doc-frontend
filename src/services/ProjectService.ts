@@ -2,7 +2,7 @@ import ApiService from './ApiService'
 
 export async function apiGetProjectDashboardData() {
     return ApiService.fetchData({
-        url: '/api/v1/dashboard/stats/my-doctor',
+        url: '/api/v1/job/browse',
         method: 'get',
     })
 }
@@ -37,14 +37,29 @@ export async function apiGetScrumBoardtMembers() {
     })
 }
 
-export async function apiGetScrumBoardtTicketDetail() {
+export async function apiGetScrumBoardtTicketDetail(id: string) {
     return ApiService.fetchData({
-        url: '/project/scrum-board/tickets/detail',
+        url: `/api/v1/job/${id}`,
+        method: 'get',
+    })
+}
+export async function apiAcceptJob(id: string) {
+    return ApiService.fetchData({
+        url: `/api/v1/job/${id}/accept-job`,
+        method: 'post',
+    });
+}
+
+
+
+// ✅ New GET endpoint
+export async function apiGetAcceptedJobs() {
+    return ApiService.fetchData({
+        url: '/api/v1/job/accepted-jobs',
         method: 'get',
     })
 }
 
-// ✅ New GET endpoint
 export async function apiGetJobBrowse() {
     return ApiService.fetchData({
         url: '/api/v1/job/mine',

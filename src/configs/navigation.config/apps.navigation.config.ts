@@ -136,8 +136,18 @@ const baseConfig: NavigationTree[] = [
                         icon: 'crm',
                         type: NAV_ITEM_TYPE_ITEM,
                         authority: [ADMIN],
-                        subMenu: [],
-                    },
+                        subMenu: [],},
+                   {
+    key: 'appsProject.job-details',
+    path: `${APP_PREFIX_PATH}/project/job-details/:id`, // Changed {id} to :id
+    title: 'Issue',
+    translateKey: 'nav.appsProject.job-details',
+    icon: '',
+    type: NAV_ITEM_TYPE_ITEM,
+    authority: [ADMIN, USER],
+    subMenu: [],
+},
+
                 ],
             },
             {

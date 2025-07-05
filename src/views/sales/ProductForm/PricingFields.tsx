@@ -6,7 +6,6 @@ import AdaptableCard from '@/components/shared/AdaptableCard'
 import { FormItem } from '@/components/ui/Form'
 import Input, { InputProps } from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
-import Dialog from '@/components/ui/Dialog'
 import {
     createJob,
     selectCreateJobLoading,
@@ -91,19 +90,19 @@ const PricingFields = () => {
         try {
             // Create job data in the format expected by the API
             const jobData = {
-                name: values.name || 'Job Service', // Provide default name if not set
+                name: values.name || 'Job Service',
                 service: values.service,
                 category: values.category,
                 description: values.description,
                 location: {
-                    country: 'UK', // Default values - you might want to make these configurable
+                    country: 'UK',
                     city: 'London',
                     state: 'England',
                     address1: values.location,
                     address2: '',
                     zipCode: '00000',
                 },
-                amount: Number(values.price) || 0, // Ensure amount is a proper number
+                amount: Number(values.price) || 0,
                 currency: 'GBP',
                 time: values.time,
                 date: values.date,
@@ -129,6 +128,10 @@ const PricingFields = () => {
         console.log('Processing payment for:', values.price)
         setIsPaymentModalOpen(false)
         // Add payment processing logic here
+    }
+
+    const closeModal = () => {
+        setIsPaymentModalOpen(false)
     }
 
     return (
@@ -182,36 +185,43 @@ const PricingFields = () => {
                 )}
             </AdaptableCard>
 
-            {/* Payment Modal */}
-            <Dialog
-                isOpen={isPaymentModalOpen}
-                onClose={() => setIsPaymentModalOpen(false)}
-                onRequestClose={() => setIsPaymentModalOpen(false)}
-            >
-                <div className="">
-                    <h4 className="text-lg font-semibold mb-2">
-                        Pay for the service{' '}
-                    </h4>
-                    <hr className="mb-4" />
-                    <div className="flex items-center flex-col justify-center gap-4">
-                        <p className="text-[#515B6F] text-[15px] font-[600]">
-                            Service completed, proceed to pay
-                        </p>
-                        <p className="text-2xl font-bold text-[#202430] text-[30px]">
-                            {Number(values.price || 0).toFixed(2)} GBP
-                        </p>
-                        <div>
-                            <Button
-                                variant="solid"
-                                onClick={handleConfirmPayment}
-                                className="w-[450px] mb-3"
-                            >
-                                Continue
-                            </Button>
+            {/* Custom Payment Modal - Keeping your original styling */}
+            {isPaymentModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center ">
+                    {/* Backdrop - keeping original background */}
+                    <div
+                        className="fixed inset-0 bg-[#2155A329] bg-opacity-50"
+                        onClick={closeModal}
+                    />
+
+                    {/* Modal Content - keeping your original dimensions */}
+                    <div className="relative bg-white rounded-lg shadow-xl">
+                        <div className="p-6">
+                            <h4 className="text-lg font-semibold mb-2">
+                                Pay for the service
+                            </h4>
+                            <hr className="mb-4" />
+                            <div className="flex items-center flex-col justify-center gap-4">
+                                <p className="text-[#515B6F] text-[15px] font-[600]">
+                                    Service completed, proceed to pay
+                                </p>
+                                <p className="text-2xl font-bold text-[#202430] text-[30px]">
+                                    {Number(values.price || 0).toFixed(2)} GBP
+                                </p>
+                                <div>
+                                    <Button
+                                        variant="solid"
+                                        onClick={handleConfirmPayment}
+                                        className="w-[450px] mb-3"
+                                    >
+                                        Continue
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </Dialog>
+            )}
         </>
     )
 }

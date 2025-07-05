@@ -77,7 +77,7 @@ const DoctorDetails = () => {
 
             {/* Main Content */}
             <div className="grid grid-cols-1 md:grid-cols-10 w-full gap-3 mt-5">
-                <div className="md:col-span-3 border border-[#D6DDEB] p-5 h-[300px]">
+                <div className="md:col-span-3 border border-[#D6DDEB] p-5 h-fit">
                     <div className="flex items-center gap-4">
                         {' '}
                         <div>
@@ -105,7 +105,7 @@ const DoctorDetails = () => {
                     <p className="text-[#0F9297] text-[11px] font-[400] mt-2 border-b border-[#D6DDEB] py-3">
                         Paediatrician
                     </p>
-                    <div className="mt-3">
+                    <div className="border-b border-[#D6DDEB] py-3">
                         <p className="text-[#25324B] text-[14px] font-[600] mb-2">
                             Contact
                         </p>
@@ -128,6 +128,44 @@ const DoctorDetails = () => {
                                 </p>
                                 <p className="text-[#25324B] text-[11.5px]">
                                     +44 1245 5721 1353{' '}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="mt-3">
+                        <p className="text-[#25324B] text-[14px] font-[600] mb-2">
+                            Bank Details{' '}
+                        </p>
+                        <div className="flex gap-3">
+                            <BsPhone />
+                            <div>
+                                <p className="text-[#7C8493] text-[11.5px] font-[400]">
+                                    Sort Code
+                                </p>
+                                <p className="text-[#25324B] text-[11.5px]">
+                                    22-33-44{' '}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-3">
+                            <BsPhone />
+                            <div>
+                                <p className="text-[#7C8493] text-[11.5px] font-[400]">
+                                    Account Number{' '}
+                                </p>
+                                <p className="text-[#25324B] text-[11.5px]">
+                                    245572135{' '}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-3">
+                            <BsPhone />
+                            <div>
+                                <p className="text-[#7C8493] text-[11.5px] font-[400]">
+                                    Account Name{' '}
+                                </p>
+                                <p className="text-[#25324B] text-[11.5px]">
+                                    Jermoe Bell{' '}
                                 </p>
                             </div>
                         </div>

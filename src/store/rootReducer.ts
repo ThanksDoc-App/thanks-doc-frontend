@@ -10,6 +10,8 @@ import businessReducer from '../views/crm/Business/store/businessSlice'  // ✅ 
 import jobHistoryReducer from '../views/project/JobHistory/store/jobHistorySlice'  
 import jobReducer from '../views/sales/ProductForm/store/JobsSlice'  // ✅ Import your jobReducer
 import settingsReducer from '../views/account/Settings/store/SettingsSlice'  // ✅ Import your settingsReducer
+import projectDashboardReducer, { ProjectDashboardState } from '../views/project/ProjectDashboard/store/projectDashboardSlice'  // ✅ Import project dashboard reducer
+import kycFormReducer, { KycFormState } from '../views/account/KycForm/store/kycFormSlice'  // ✅ Import KYC form reducer
 import RtkQueryService from '@/services/RtkQueryService'
 import adminDashboardReducer, { AdminDashboardState } from '@/views/crm/CrmDashboard/store'
 
@@ -184,6 +186,8 @@ export type RootState = {
     jobHistory: JobHistoryState  // ✅ Job History state
     job: JobState  // ✅ Job state
     settings: SettingsState  // ✅ Settings state with profile image and get profile functionality
+    projectDashboard: ProjectDashboardState  // ✅ Project Dashboard state
+    accountDetailForm: KycFormState  // ✅ KYC Form state
     /* eslint-disable @typescript-eslint/no-explicit-any */
     [RtkQueryService.reducerPath]: any
 }
@@ -204,6 +208,8 @@ const staticReducers = {
     jobHistory: jobHistoryReducer,  // ✅ Add the jobHistoryReducer
     job: jobReducer,  // ✅ Add the jobReducer
     settings: settingsReducer,  // ✅ Add the settingsReducer
+    projectDashboard: projectDashboardReducer,  // ✅ Add the projectDashboardReducer
+    accountDetailForm: kycFormReducer,  // ✅ Add the kycFormReducer
     adminDashboard: adminDashboardReducer,
     [RtkQueryService.reducerPath]: RtkQueryService.reducer,
 }

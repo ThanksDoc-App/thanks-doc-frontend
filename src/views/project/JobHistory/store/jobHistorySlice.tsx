@@ -1,4 +1,4 @@
-import { apiGetJobBrowse } from '@/services/ProjectService'
+import { apiGetAcceptedJobs } from '@/services/ProjectService'
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
 interface Job {
@@ -34,7 +34,7 @@ export const fetchJobHistory = createAsyncThunk(
     'jobHistory/fetchJobHistory',
     async (_, thunkAPI) => {
         try {
-            const response = await apiGetJobBrowse<any>()
+            const response = await apiGetAcceptedJobs<any>()
             console.log(response, 'full job browse response')
             console.log(response.data, 'response.data')
             console.log(response.data.data, 'response.data.data')
