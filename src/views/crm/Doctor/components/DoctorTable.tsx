@@ -6,21 +6,20 @@ import {
     ChevronRight,
     ChevronDown,
 } from 'lucide-react'
-// ✅ Import from your main store, not the doctor-specific store
-import { useAppDispatch, useAppSelector } from '@/store' // Update this path to your main store
+import { useAppDispatch, useAppSelector } from '@/store'
 import {
     fetchDoctors,
     selectDoctors,
     selectDoctorsLoading,
     selectDoctorsError,
-} from '../store/doctorSlice' // Update this path to match your doctorSlice location
+} from '../store/doctorSlice'
 import SkeletonTable from '@/components/shared/SkeletonTable'
 
 const DoctorTable = () => {
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
 
-    // Redux state
+    // Redux state - using your selectors
     const doctorsData = useAppSelector(selectDoctors)
     const loading = useAppSelector(selectDoctorsLoading)
     const error = useAppSelector(selectDoctorsError)
@@ -36,40 +35,58 @@ const DoctorTable = () => {
         dispatch(fetchDoctors())
     }, [dispatch])
 
-    // Transform API data to match original table structure
-    const DoctorJob = doctorsData.map((doctor, index) => ({
-        id: doctor._id || index,
-        name: doctor.name || 'N/A',
-        date: doctor.createdAt
-            ? new Date(doctor.createdAt).toLocaleDateString()
-            : 'N/A',
-        payement: doctor.experience ? `${doctor.experience} years exp` : 'N/A',
-        jobs: doctor.specialization || 'Not specified',
-    }))
+    // Helper function to safely extract string values
+    const safeString = (value: any): string => {
+        if (value === null || value === undefined) return 'N/A'
+        if (typeof value === 'string') return value
+        if (typeof value === 'number') return value.toString()
+        return String(value)
+    }
 
-    // console.log('🔄 Transformed DoctorJob data:', DoctorJob)
+    // Transform API data to match table structure
+    const transformedDoctors = React.useMemo(() => {
+        if (!doctorsData || !Array.isArray(doctorsData)) {
+            return []
+        }
+
+        return doctorsData.map((doctor, index) => ({
+            id: doctor._id || index,
+            name: safeString(doctor.name),
+            date: doctor.createdAt
+                ? new Date(doctor.createdAt).toLocaleDateString()
+                : 'N/A',
+            payment: doctor.experience
+                ? `${doctor.experience} years exp`
+                : 'N/A',
+            jobs: safeString(doctor.specialization || 'Not specified'),
+            // Keep reference to full doctor object
+            fullData: doctor,
+        }))
+    }, [doctorsData])
 
     // Calculate pagination
-    const totalItems = DoctorJob.length
+    const totalItems = transformedDoctors.length
     const totalPages = Math.ceil(totalItems / itemsPerPage)
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
-    const currentData = DoctorJob.slice(startIndex, endIndex)
+    const currentData = transformedDoctors.slice(startIndex, endIndex)
 
-    // Handle doctor row click
-    const handleDoctorClick = (doctorId: any) => {
-        navigate(`/app/crm/doctor/${doctorId}`)
+    // Handle doctor row click - pass full doctor data
+    const handleDoctorClick = (doctorData: any) => {
+        navigate(`/app/crm/doctor/${doctorData.id}`, {
+            state: { doctorData: doctorData.fullData },
+        })
     }
 
     // Handle page change
-    const handlePageChange = (page: any) => {
+    const handlePageChange = (page: number) => {
         if (page >= 1 && page <= totalPages) {
             setCurrentPage(page)
         }
     }
 
     // Handle items per page change
-    const handleItemsPerPageChange = (items: any) => {
+    const handleItemsPerPageChange = (items: number) => {
         setItemsPerPage(items)
         setCurrentPage(1)
         setShowDropdown(false)
@@ -77,7 +94,7 @@ const DoctorTable = () => {
 
     // Generate page numbers to display
     const getPageNumbers = () => {
-        const pages = []
+        const pages: (number | string)[] = []
         const maxVisiblePages = 5
 
         if (totalPages <= maxVisiblePages) {
@@ -111,13 +128,13 @@ const DoctorTable = () => {
         return pages
     }
 
-    // Show skeleton loader when loading
-    if (loading && DoctorJob.length === 0) {
+    // Loading state
+    if (loading && transformedDoctors.length === 0) {
         return <SkeletonTable />
     }
 
     // Error state
-    if (error && DoctorJob.length === 0) {
+    if (error && transformedDoctors.length === 0) {
         return (
             <div className="w-full mx-auto bg-white">
                 <div className="flex flex-col items-center justify-center p-8">
@@ -141,16 +158,16 @@ const DoctorTable = () => {
                     <thead className="border-b border-gray-200">
                         <tr>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
-                                Doctors name
+                                Doctor Name
                             </th>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
                                 Date Joined
                             </th>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
-                                Total payment
+                                Experience
                             </th>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
-                                Jobs applied
+                                Specialization
                             </th>
                             <th className="px-6 py-4 w-12"></th>
                         </tr>
@@ -159,16 +176,14 @@ const DoctorTable = () => {
                         {currentData.map((doc, index) => (
                             <tr
                                 key={doc.id || index}
-                                onClick={() =>
-                                    handleDoctorClick(doc.id || index)
-                                }
+                                onClick={() => handleDoctorClick(doc)}
                                 className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
                                     (index + 1) % 2 === 0 ? 'bg-[#F8F8FD]' : ''
                                 }`}
                             >
                                 <td className="px-6 py-4">{doc.name}</td>
                                 <td className="px-6 py-4">{doc.date}</td>
-                                <td className="px-6 py-4">{doc.payement}</td>
+                                <td className="px-6 py-4">{doc.payment}</td>
                                 <td className="px-6 py-4">{doc.jobs}</td>
                                 <td className="px-6 py-4">
                                     <button
@@ -176,7 +191,6 @@ const DoctorTable = () => {
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             // Add your menu logic here
-                                            // ok
                                         }}
                                     >
                                         <MoreHorizontal className="w-5 h-5" />
@@ -241,7 +255,9 @@ const DoctorTable = () => {
                                     </span>
                                 ) : (
                                     <button
-                                        onClick={() => handlePageChange(page)}
+                                        onClick={() =>
+                                            handlePageChange(page as number)
+                                        }
                                         className={`px-3 py-1 text-[13px] rounded ${
                                             currentPage === page
                                                 ? 'bg-[#0F9297] text-white'

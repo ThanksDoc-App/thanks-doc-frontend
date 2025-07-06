@@ -16,6 +16,46 @@ import {
 } from '../store/businessSlice' // Update this path to match your businessSlice location
 import SkeletonTable from '@/components/shared/SkeletonTable'
 
+// ✅ Error Boundary Component
+class TableErrorBoundary extends React.Component<
+    { children: React.ReactNode },
+    { hasError: boolean; error: Error | null }
+> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props)
+        this.state = { hasError: false, error: null }
+    }
+
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error }
+    }
+
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error('Table rendering error:', error, errorInfo)
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="p-4 text-red-500 bg-red-50 rounded">
+                    <h3>Something went wrong with the table rendering.</h3>
+                    <p className="text-sm mt-2">{this.state.error?.message}</p>
+                    <button
+                        onClick={() =>
+                            this.setState({ hasError: false, error: null })
+                        }
+                        className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            )
+        }
+
+        return this.props.children
+    }
+}
+
 const BusinessTable = () => {
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
@@ -36,29 +76,115 @@ const BusinessTable = () => {
         dispatch(fetchBusinesses())
     }, [dispatch])
 
-    // Debug logging
-    // useEffect(() => {
-    //     console.log('📊 Redux State Update:')
-    //     console.log('- Loading:', loading)
-    //     console.log('- Error:', error)
-    //     console.log('- Businesses Data:', businessesData)
-    //     console.log('- Businesses Length:', businessesData?.length)
-    // }, [businessesData, loading, error])
+    // ✅ Debug logging to understand data structure
+    useEffect(() => {
+        console.log('📊 Raw businesses data:', businessesData)
+        if (businessesData && businessesData.length > 0) {
+            console.log('📊 First business object:', businessesData[0])
+            console.log('📊 Address field:', businessesData[0].address)
+            console.log('📊 Location field:', businessesData[0].location)
+        }
+    }, [businessesData])
 
-    // Transform API data to match original table structure
-    const BusinessJob = businessesData.map((business, index) => ({
-        id: business._id || index,
-        name: business.name || 'N/A',
-        date: business.createdAt
-            ? new Date(business.createdAt).toLocaleDateString()
-            : 'N/A',
-        address: business.address || business.location || 'Not specified',
-        jobs: business.jobsPosted
-            ? `${business.jobsPosted} jobs`
-            : 'No jobs posted',
-    }))
+    // ✅ Helper function to safely extract address
+    const extractAddress = (business: any): string => {
+        // Handle address field
+        if (business.address) {
+            if (typeof business.address === 'string') {
+                return business.address
+            }
+            if (typeof business.address === 'object' && business.address) {
+                return (
+                    business.address.address1 ||
+                    business.address.street ||
+                    business.address.city ||
+                    business.address.full ||
+                    'Address not specified'
+                )
+            }
+        }
 
-    // console.log('🔄 Transformed BusinessJob data:', BusinessJob)
+        // Handle location field
+        if (business.location) {
+            if (typeof business.location === 'string') {
+                return business.location
+            }
+            if (typeof business.location === 'object' && business.location) {
+                return (
+                    business.location.address1 ||
+                    business.location.street ||
+                    business.location.city ||
+                    business.location.full ||
+                    'Location not specified'
+                )
+            }
+        }
+
+        return 'Not specified'
+    }
+
+    // ✅ Helper function to safely convert values to strings
+    const safeString = (value: any): string => {
+        if (value === null || value === undefined) {
+            return 'N/A'
+        }
+        if (typeof value === 'string') {
+            return value
+        }
+        if (typeof value === 'number') {
+            return value.toString()
+        }
+        if (typeof value === 'object') {
+            // If it's an object, try to extract meaningful data
+            if (value.name) return value.name
+            if (value.title) return value.title
+            if (value.value) return value.value
+            return 'N/A'
+        }
+        return String(value)
+    }
+
+    // ✅ Transform API data to match original table structure with proper error handling
+    const BusinessJob = React.useMemo(() => {
+        if (!businessesData || !Array.isArray(businessesData)) {
+            return []
+        }
+
+        return businessesData.map((business, index) => {
+            try {
+                return {
+                    id: business._id || business.id || index,
+                    name: safeString(business.name || business.businessName),
+                    date: business.createdAt
+                        ? new Date(business.createdAt).toLocaleDateString()
+                        : business.dateJoined
+                          ? new Date(business.dateJoined).toLocaleDateString()
+                          : 'N/A',
+                    address: extractAddress(business),
+                    jobs: business.jobsPosted
+                        ? `${business.jobsPosted} jobs`
+                        : business.totalJobs
+                          ? `${business.totalJobs} jobs`
+                          : 'No jobs posted',
+                }
+            } catch (err) {
+                console.error(
+                    'Error transforming business data:',
+                    err,
+                    business,
+                )
+                return {
+                    id: index,
+                    name: 'Error loading business',
+                    date: 'N/A',
+                    address: 'N/A',
+                    jobs: 'N/A',
+                }
+            }
+        })
+    }, [businessesData])
+
+    console.log('🔄 Transformed BusinessJob data:', BusinessJob)
 
     // Calculate pagination
     const totalItems = BusinessJob.length
@@ -177,10 +303,19 @@ const BusinessTable = () => {
                                     (index + 1) % 2 === 0 ? 'bg-[#F8F8FD]' : ''
                                 }`}
                             >
-                                <td className="px-6 py-4">{bus.name}</td>
-                                <td className="px-6 py-4">{bus.date}</td>
-                                <td className="px-6 py-4">{bus.address}</td>
-                                <td className="px-6 py-4">{bus.jobs}</td>
+                                {/* ✅ Safe string rendering with fallbacks */}
+                                <td className="px-6 py-4">
+                                    {safeString(bus.name)}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {safeString(bus.date)}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {safeString(bus.address)}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {safeString(bus.jobs)}
+                                </td>
                                 <td className="px-6 py-4">
                                     <button
                                         className="p-1 hover:bg-gray-200 rounded"
@@ -279,4 +414,13 @@ const BusinessTable = () => {
     )
 }
 
-export default BusinessTable
+// ✅ Wrapped component with error boundary
+const WrappedBusinessTable = () => {
+    return (
+        <TableErrorBoundary>
+            <BusinessTable />
+        </TableErrorBoundary>
+    )
+}
+
+export default WrappedBusinessTable

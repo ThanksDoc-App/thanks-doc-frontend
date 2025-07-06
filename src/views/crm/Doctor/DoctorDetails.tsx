@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { Star, Mail, Phone, X, FileText, Download, Eye } from 'lucide-react'
+import { X } from 'lucide-react'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import { FaStar } from 'react-icons/fa'
 import { CiMail } from 'react-icons/ci'
 import { BsPhone } from 'react-icons/bs'
 import { IoIosArrowForward } from 'react-icons/io'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
+import { useAppSelector } from '@/store'
+import { selectDoctors } from './store/doctorSlice'
 
 const documents = [
     {
@@ -22,25 +24,36 @@ const documents = [
     { id: 8, name: 'Medical Indemnity Insurance', type: 'PDF' },
 ]
 
+interface DocumentItem {
+    id: number
+    name: string
+    type: string
+}
+
 const DoctorDetails = () => {
-    const [doctor, setDoctor] = useState(null)
+    const [doctor, setDoctor] = useState<any>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedDocument, setSelectedDocument] =
         useState<DocumentItem | null>(null)
 
     const navigate = useNavigate()
+    const location = useLocation()
+    const { id } = useParams<{ id: string }>()
 
-    // const handleBack = () => {
-    //     navigate(-1)
-    // }
+    const doctorsData = useAppSelector(selectDoctors)
 
-    interface DocumentItem {
-        id: number
-        name: string
-        type: string
-    }
-
-    interface SelectedDocument extends DocumentItem {}
+    useEffect(() => {
+        if (location.state?.doctorData) {
+            setDoctor(location.state.doctorData)
+            console.log('Doctor data:', location.state.doctorData)
+        } else if (id && doctorsData.length > 0) {
+            const foundDoctor = doctorsData.find((doc) => doc._id === id)
+            if (foundDoctor) {
+                setDoctor(foundDoctor)
+                console.log('Doctor data from store:', foundDoctor)
+            }
+        }
+    }, [location.state, id, doctorsData])
 
     const handleViewDocument = (document: DocumentItem): void => {
         setSelectedDocument(document)
@@ -62,6 +75,18 @@ const DoctorDetails = () => {
         handleCloseModal()
     }
 
+    if (!doctor) {
+        return (
+            <div className="p-4">
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-gray-500">
+                        Loading doctor details...
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="p-4">
             {/* Header */}
@@ -79,31 +104,33 @@ const DoctorDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-10 w-full gap-3 mt-5">
                 <div className="md:col-span-3 border border-[#D6DDEB] p-5 h-fit">
                     <div className="flex items-center gap-4">
-                        {' '}
                         <div>
                             <img
-                                src="/public/img/avatars/Avatar.png"
+                                src={
+                                    doctor.profileImage ||
+                                    '/public/img/avatars/Avatar.png'
+                                }
                                 alt=""
-                                className="w-[65px] h-[65px] object-contain"
+                                className="w-[65px] h-[65px] object-cover rounded-full"
                             />
                         </div>
                         <div className="flex flex-col gap-0.5">
                             <p className="text-[#25324B] text-[18px] font-bold">
-                                Dr Jerome Bell
+                                {doctor.name}
                             </p>
                             <p className="text-[#7C8493] text-[12px]">
-                                Medical Doctor
+                                {doctor.role}
                             </p>
                             <div className="flex items-center gap-1">
                                 <FaStar color="#FFB836" />
                                 <p className="text-[12px] font-[500] text-[#25324B]">
-                                    4.0
+                                    {doctor.rating}
                                 </p>
                             </div>
                         </div>
                     </div>
                     <p className="text-[#0F9297] text-[11px] font-[400] mt-2 border-b border-[#D6DDEB] py-3">
-                        Paediatrician
+                        {doctor.specialization}
                     </p>
                     <div className="border-b border-[#D6DDEB] py-3">
                         <p className="text-[#25324B] text-[14px] font-[600] mb-2">
@@ -116,7 +143,7 @@ const DoctorDetails = () => {
                                     Email
                                 </p>
                                 <p className="text-[#25324B] text-[11.5px] break-all">
-                                    jeromeBell45@email.com
+                                    {doctor.email}
                                 </p>
                             </div>
                         </div>
@@ -127,7 +154,18 @@ const DoctorDetails = () => {
                                     Phone
                                 </p>
                                 <p className="text-[#25324B] text-[11.5px]">
-                                    +44 1245 5721 1353{' '}
+                                    {doctor.phone || 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-3">
+                            <BsPhone />
+                            <div>
+                                <p className="text-[#7C8493] text-[11.5px] font-[400]">
+                                    GMC Number
+                                </p>
+                                <p className="text-[#25324B] text-[11.5px]">
+                                    {doctor.gmcNumber}
                                 </p>
                             </div>
                         </div>
@@ -171,6 +209,7 @@ const DoctorDetails = () => {
                         </div>
                     </div>
                 </div>
+
                 {/* Documents List */}
                 <div className="md:col-span-7">
                     <div className="space-y-3">
@@ -198,7 +237,6 @@ const DoctorDetails = () => {
             {isModalOpen && (
                 <div className="fixed inset-0 bg-[#2155A329] bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-[90vw] md:max-w-[45vw] md:w-[45vw] p-5 max-h-[90vh] overflow-y-auto">
-                        {/* Modal Header */}
                         <div className="flex items-center justify-between p-4">
                             <h3 className="text-[17px] font-semibold text-[#272D37]">
                                 View Document
@@ -211,7 +249,6 @@ const DoctorDetails = () => {
                             </button>
                         </div>
 
-                        {/* Modal Body */}
                         <div className="p-6 mt-[-20px]">
                             <div className="mb-4">
                                 <label className="block text-[13px] font-medium text-[#344054] mb-2">
@@ -227,7 +264,6 @@ const DoctorDetails = () => {
 
                             <div className="flex items-center justify-between px-3 py-4 border border-gray-200 mb-6 w-fit">
                                 <div className="flex items-center gap-4 ">
-                                    {/* <FileText className="w-5 h-5 text-red-500" /> */}
                                     <span className="text-sm font-bold text-[#000000]">
                                         {selectedDocument?.type}
                                     </span>
@@ -241,7 +277,6 @@ const DoctorDetails = () => {
                                 </div>
                             </div>
 
-                            {/* Action Buttons */}
                             <div className="flex flex-col sm:flex-row h-[90px] gap-3">
                                 <button
                                     onClick={handleAccept}
