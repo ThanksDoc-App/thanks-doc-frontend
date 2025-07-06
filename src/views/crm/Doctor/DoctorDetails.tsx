@@ -119,7 +119,8 @@ const DoctorDetails = () => {
                                 {doctor.name}
                             </p>
                             <p className="text-[#7C8493] text-[12px]">
-                                {doctor.role}
+                                {doctor.role.charAt(0).toUpperCase() +
+                                    doctor.role.slice(1)}
                             </p>
                             <div className="flex items-center gap-1">
                                 <FaStar color="#FFB836" />
