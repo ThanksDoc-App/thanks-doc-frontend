@@ -148,7 +148,7 @@ const CreditCardForm = ({
                 </FormItem>
                 <div className="grid grid-cols-2 gap-4">
                     <FormItem
-                        label="Sort Code / Routing Number"
+                        label="Sort Code"
                         invalid={!!errors.sortCode}
                         errorMessage={errors.sortCode}
                     >
@@ -159,7 +159,7 @@ const CreditCardForm = ({
                             onChange={(e) =>
                                 handleInputChange('sortCode', e.target.value)
                             }
-                            placeholder="e.g., 12-34-56 or 123456789"
+                            placeholder="12-34-56"
                             disabled={loading}
                         />
                     </FormItem>

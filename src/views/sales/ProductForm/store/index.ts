@@ -3,6 +3,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import servicesReducer from './servicesSlice';
 import categoryReducer from './categorySlice';
 import jobReducer from './JobsSlice';
+import paymentReducer from './paymentSlice'; // Import the new payment slice
 
 // Configure the store
 export const store = configureStore({
@@ -10,6 +11,7 @@ export const store = configureStore({
         services: servicesReducer,
         category: categoryReducer,
         job: jobReducer,
+        payment: paymentReducer, // Add the payment reducer
         // Add other reducers here as needed
     },
     middleware: (getDefaultMiddleware) =>

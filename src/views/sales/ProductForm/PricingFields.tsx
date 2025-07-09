@@ -11,6 +11,11 @@ import {
     selectCreateJobLoading,
     selectCreateJobError,
 } from './store/JobsSlice'
+import {
+    payForJob,
+    clearPaymentError,
+    resetPaymentState,
+} from './store/paymentSlice'
 
 type FormFieldsName = {
     stock: number
@@ -51,15 +56,23 @@ const NumericFormatInput = ({
 
 const PricingFields = () => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+    const [createdJobId, setCreatedJobId] = useState<string | null>(null)
 
     // Get live form state
     const { values, touched, errors, setFieldValue } =
         useFormikContext<FormFieldsName>()
 
-    // Redux hooks
+    // Redux hooks for job creation
     const dispatch = useDispatch()
     const createJobLoading = useSelector(selectCreateJobLoading)
     const createJobError = useSelector(selectCreateJobError)
+
+    // Redux hooks for payment
+    const {
+        loading: paymentLoading,
+        error: paymentError,
+        lastPayment,
+    } = useSelector((state: any) => state.payment)
 
     // Check if all required fields are filled
     const isFormValid = () => {
@@ -115,6 +128,9 @@ const PricingFields = () => {
 
             if (createJob.fulfilled.match(resultAction)) {
                 console.log('Job created successfully:', resultAction.payload)
+                setCreatedJobId(
+                    resultAction.payload.id || resultAction.payload._id,
+                )
                 setIsPaymentModalOpen(true)
             } else {
                 console.error('Failed to create job:', resultAction.payload)
@@ -124,14 +140,40 @@ const PricingFields = () => {
         }
     }
 
-    const handleConfirmPayment = () => {
-        console.log('Processing payment for:', values.price)
-        setIsPaymentModalOpen(false)
-        // Add payment processing logic here
+    const handleConfirmPayment = async () => {
+        if (!createdJobId) {
+            console.error('No job ID available for payment')
+            return
+        }
+
+        try {
+            console.log('Processing payment for job:', createdJobId)
+
+            // Dispatch the payForJob action
+            const resultAction = await dispatch(payForJob(createdJobId))
+
+            if (payForJob.fulfilled.match(resultAction)) {
+                console.log('Payment successful:', resultAction.payload)
+                // Close modal on successful payment
+                setIsPaymentModalOpen(false)
+                setCreatedJobId(null)
+                // Reset payment state
+                dispatch(resetPaymentState())
+                // You might want to show a success message or redirect here
+            } else {
+                console.error('Payment failed:', resultAction.payload)
+                // Error is already handled in Redux state
+            }
+        } catch (error) {
+            console.error('Error processing payment:', error)
+        }
     }
 
     const closeModal = () => {
         setIsPaymentModalOpen(false)
+        setCreatedJobId(null)
+        // Clear any payment errors when closing modal
+        dispatch(clearPaymentError())
     }
 
     return (
@@ -185,22 +227,46 @@ const PricingFields = () => {
                 )}
             </AdaptableCard>
 
-            {/* Custom Payment Modal - Keeping your original styling */}
+            {/* Payment Modal */}
             {isPaymentModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center ">
-                    {/* Backdrop - keeping original background */}
+                    {/* Backdrop */}
                     <div
                         className="fixed inset-0 bg-[#2155A329] bg-opacity-50"
                         onClick={closeModal}
                     />
 
-                    {/* Modal Content - keeping your original dimensions */}
+                    {/* Modal Content */}
                     <div className="relative bg-white rounded-lg shadow-xl">
                         <div className="p-6">
                             <h4 className="text-lg font-semibold mb-2">
                                 Pay for the service
                             </h4>
                             <hr className="mb-4" />
+
+                            {/* Show payment error if any */}
+                            {paymentError && (
+                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                                    {paymentError}
+                                    <button
+                                        onClick={() =>
+                                            dispatch(clearPaymentError())
+                                        }
+                                        className="ml-2 text-red-500 underline"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Show success message if payment completed */}
+                            {lastPayment && (
+                                <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                                    Payment successful! Transaction ID:{' '}
+                                    {lastPayment.transactionId}
+                                </div>
+                            )}
+
                             <div className="flex items-center flex-col justify-center gap-4">
                                 <p className="text-[#515B6F] text-[15px] font-[600]">
                                     Service completed, proceed to pay
@@ -213,8 +279,11 @@ const PricingFields = () => {
                                         variant="solid"
                                         onClick={handleConfirmPayment}
                                         className="w-[450px] mb-3"
+                                        disabled={paymentLoading}
                                     >
-                                        Continue
+                                        {paymentLoading
+                                            ? 'Processing Payment...'
+                                            : 'Continue'}
                                     </Button>
                                 </div>
                             </div>

@@ -168,3 +168,10 @@ export async function apiGetUserAccount<T>(userId: string) {
         method: 'get',
     });
 }
+
+export async function apiPayForJob<T>(id: string) {
+    return BaseService.request<T>({
+        url: `/api/v1/job/${id}/pay-for-job`,
+        method: 'post',
+    });
+}

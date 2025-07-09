@@ -125,15 +125,14 @@ const JobHistoryTable = () => {
 
         if (status === 'In Review' || status === 'pending') {
             return `${baseClasses} text-[#FFB836] border border-[#FFB836]`
-        } else if (
-            status === 'Accepted' ||
-            status === 'accepted' ||
-            status === 'active'
-        ) {
+        } else if (status === 'Completed' || status === 'completed') {
             return `${baseClasses} text-[#0F9297] border border-[#0F9297]`
         } else if (status === 'rejected' || status === 'cancelled') {
             return `${baseClasses} text-red-500 border border-red-500`
+        } else if (status === 'Accepted' || status === 'accepted') {
+            return `${baseClasses} text-green-500 border border-green-300 bg-green-50`
         }
+
         return baseClasses
     }
 

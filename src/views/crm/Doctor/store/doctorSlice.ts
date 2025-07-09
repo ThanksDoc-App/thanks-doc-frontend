@@ -43,12 +43,10 @@ interface UserAccount {
   accountStatus?: string;
   balance?: number;
   currency?: string;
-  bankDetails?: {
     accountNumber?: string;
     sortCode?: string;
     accountName?: string;
     bankName?: string;
-  };
   paymentMethods?: Array<{
     type: string;
     details: any;
@@ -197,6 +195,7 @@ export const fetchUserAccount = createAsyncThunk(
       }
 
       return userAccount;
+
     } catch (error: any) {
       console.error('Error in fetchUserAccount:', error);
       return thunkAPI.rejectWithValue(

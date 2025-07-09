@@ -28,6 +28,7 @@ import {
 } from './store/doctorSlice'
 import { Button } from '@/components/ui'
 import DoctorTool from './components/DoctorTool'
+import { log } from 'console'
 
 const documents = [
     {
@@ -82,6 +83,8 @@ const DoctorDetails = () => {
     const userAccount = useAppSelector(selectUserAccount)
     const userAccountLoading = useAppSelector(selectUserAccountLoading)
     const userAccountError = useAppSelector(selectUserAccountError)
+
+    console.log('userAccount', userAccount)
 
     useEffect(() => {
         if (location.state?.doctorData) {
@@ -256,6 +259,8 @@ const DoctorDetails = () => {
         )
     }
 
+    // console.log("bankDetails", bankDetails);
+
     return (
         <div className="p-4">
             {/* Header */}
@@ -385,7 +390,7 @@ const DoctorDetails = () => {
                             </div>
                         )}
 
-                        {userAccount?.bankDetails ? (
+                        {userAccount ? (
                             <>
                                 <div className="flex gap-3">
                                     <BsPhone />
@@ -394,8 +399,7 @@ const DoctorDetails = () => {
                                             Sort Code
                                         </p>
                                         <p className="text-[#25324B] text-[11.5px]">
-                                            {userAccount.bankDetails.sortCode ||
-                                                'N/A'}
+                                            {userAccount.sortCode || 'N/A'}
                                         </p>
                                     </div>
                                 </div>
@@ -406,8 +410,7 @@ const DoctorDetails = () => {
                                             Account Number
                                         </p>
                                         <p className="text-[#25324B] text-[11.5px]">
-                                            {userAccount.bankDetails
-                                                .accountNumber || 'N/A'}
+                                            {userAccount.accountNumber || 'N/A'}
                                         </p>
                                     </div>
                                 </div>
@@ -418,12 +421,12 @@ const DoctorDetails = () => {
                                             Account Name
                                         </p>
                                         <p className="text-[#25324B] text-[11.5px]">
-                                            {userAccount.bankDetails
-                                                .accountName || doctor.name}
+                                            {userAccount.accountName ||
+                                                doctor.name}
                                         </p>
                                     </div>
                                 </div>
-                                {userAccount.bankDetails.bankName && (
+                                {userAccount.bankName && (
                                     <div className="flex gap-3 mt-3">
                                         <BsPhone />
                                         <div>
@@ -431,14 +434,28 @@ const DoctorDetails = () => {
                                                 Bank Name
                                             </p>
                                             <p className="text-[#25324B] text-[11.5px]">
-                                                {
-                                                    userAccount.bankDetails
-                                                        .bankName
-                                                }
+                                                {userAccount.bankName}
                                             </p>
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Account Creation Date */}
+                                {/* {userAccount.createdAt && (
+                                    <div className="flex gap-3 mt-3">
+                                        <BsPhone />
+                                        <div>
+                                            <p className="text-[#7C8493] text-[11.5px] font-[400]">
+                                                Account Created
+                                            </p>
+                                            <p className="text-[#25324B] text-[11.5px]">
+                                                {formatDate(
+                                                    userAccount.createdAt,
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )} */}
                             </>
                         ) : !userAccountLoading ? (
                             <div className="text-[#7C8493] text-[11.5px] italic">
@@ -446,7 +463,7 @@ const DoctorDetails = () => {
                             </div>
                         ) : null}
 
-                        {/* ✅ Account Balance Display */}
+                        {/* Account Balance Display (if available) */}
                         {userAccount?.balance !== undefined && (
                             <div className="flex gap-3 mt-3 pt-3 border-t border-[#D6DDEB]">
                                 <BsPhone />
@@ -464,7 +481,7 @@ const DoctorDetails = () => {
                             </div>
                         )}
 
-                        {/* ✅ Account Status Display */}
+                        {/* Account Status Display (if available) */}
                         {userAccount?.accountStatus && (
                             <div className="flex gap-3 mt-3">
                                 <BsPhone />
