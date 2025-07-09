@@ -83,7 +83,7 @@ function useAuth() {
                     navigate(authenticatedEntryPath)
                     return { status: true, message: 'Sign in successful', data: resp.data }
                 } else {
-                    return { status: false, message: 'Missing token', data: {} }
+                    return { status: false, message: resp?.data?.message, data: {} }
                 }
             } else {
                 return { status: false, message: 'Invalid response from server', data: {} }

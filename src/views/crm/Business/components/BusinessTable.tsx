@@ -193,10 +193,10 @@ const BusinessTable = () => {
     const endIndex = startIndex + itemsPerPage
     const currentData = BusinessJob.slice(startIndex, endIndex)
 
-    // Handle business row click
-    const handleBusinessClick = (businessId: any) => {
-        navigate(`/app/crm/business/${businessId}`)
-    }
+    // // Handle business row click
+    // const handleBusinessClick = (businessId: any) => {
+    //     navigate(`/app/crm/business/${businessId}`)
+    // }
 
     // Handle page change
     const handlePageChange = (page: any) => {
@@ -296,9 +296,9 @@ const BusinessTable = () => {
                         {currentData.map((bus, index) => (
                             <tr
                                 key={bus.id || index}
-                                onClick={() =>
-                                    handleBusinessClick(bus.id || index)
-                                }
+                                // onClick={() =>
+                                //     handleBusinessClick(bus.id || index)
+                                // }
                                 className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
                                     (index + 1) % 2 === 0 ? 'bg-[#F8F8FD]' : ''
                                 }`}

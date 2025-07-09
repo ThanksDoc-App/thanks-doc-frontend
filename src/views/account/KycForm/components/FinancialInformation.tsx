@@ -93,7 +93,7 @@ const FinancialInformation = ({
         onBackChange?.()
     }
 
-     return (
+    return (
         <>
             <div className="mb-8">
                 <h3 className="mb-2">Bank Details</h3>
@@ -116,15 +116,23 @@ const FinancialInformation = ({
                     return (
                         <Form>
                             <FormContainer>
-                                   <div className="flex flex-col md:flex-row gap-4">
-                                    <FormItem label="Sort code" asterisk={false} className="flex-1">
+                                <div className="flex flex-col md:flex-row gap-4">
+                                    <FormItem
+                                        label="Sort code"
+                                        asterisk={false}
+                                        className="flex-1"
+                                    >
                                         <Field
                                             name="bankName"
                                             as={Input}
                                             placeholder="Enter your sort code"
                                         />
                                     </FormItem>
-                                    <FormItem label="Account Number" asterisk={false} className="flex-1">
+                                    <FormItem
+                                        label="Account Number"
+                                        asterisk={false}
+                                        className="flex-1"
+                                    >
                                         <Field
                                             name="accountNumber"
                                             as={Input}

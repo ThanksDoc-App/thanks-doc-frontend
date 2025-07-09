@@ -1,8 +1,10 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Checkbox from '@/components/ui/Checkbox'
 import Select from '@/components/ui/Select'
+import Notification from '@/components/ui/Notification'
+import toast from '@/components/ui/toast'
 import { FormItem, FormContainer } from '@/components/ui/Form'
 import { Field, Form, Formik } from 'formik'
 import get from 'lodash/get'
@@ -10,6 +12,9 @@ import { countryList } from '@/constants/countries.constant'
 import * as Yup from 'yup'
 import type { Address } from '../store'
 import type { FieldProps, FormikTouched, FormikErrors } from 'formik'
+// Add these imports for API integration
+import { updateForm } from '../store/kycFormSlice'
+import { useAppDispatch } from '@/store'
 
 type FormModel = Address
 
@@ -205,11 +210,52 @@ const AddressInfomation = ({
     onBackChange,
     currentStepStatus,
 }: AddressInfomationProps) => {
-    const onNext = (
+    const dispatch = useAppDispatch() // Add dispatch hook
+    const [categoryId, setCategoryId] = useState<string | null>(null)
+
+    // Get category ID from localStorage on component mount
+    useEffect(() => {
+        const savedCategoryId = localStorage.getItem('selectedCategoryId')
+        setCategoryId(savedCategoryId)
+    }, [])
+
+    const onNext = async (
         values: FormModel,
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
-        onNextChange?.(values, 'addressInformation', setSubmitting)
+        try {
+            // Include category ID in the payload
+            const payload = {
+                ...values,
+                categoryId: categoryId,
+            }
+
+            // Call the API endpoint
+            await dispatch(updateForm({ addressInformation: payload })).unwrap()
+
+            // Show success notification
+            toast.push(
+                <Notification
+                    title="Address information saved successfully"
+                    type="success"
+                />,
+                { placement: 'top-center' },
+            )
+
+            // Call the next change handler
+            onNextChange?.(payload, 'addressInformation', setSubmitting)
+        } catch (error) {
+            // Show error notification
+            toast.push(
+                <Notification
+                    title="Failed to save address information"
+                    type="danger"
+                />,
+                { placement: 'top-center' },
+            )
+            console.error('Failed to save address information:', error)
+            setSubmitting(false)
+        }
     }
 
     const onBack = () => {
@@ -229,15 +275,37 @@ const AddressInfomation = ({
                 enableReinitialize
                 initialValues={data}
                 validationSchema={validationSchema}
-                onSubmit={(values, { setSubmitting }) => {
+                onSubmit={async (values, { setSubmitting }) => {
                     setSubmitting(true)
-                    setTimeout(() => {
-                        onNext(values, setSubmitting)
-                    }, 1000)
+                    // Add debug logging
+                    console.log('Form submitted with values:', values)
+                    console.log(
+                        'Validation errors:',
+                        Object.keys(
+                            validationSchema.validateSync(values, {
+                                abortEarly: false,
+                            }) || {},
+                        ),
+                    )
+
+                    try {
+                        await onNext(values, setSubmitting)
+                    } catch (error) {
+                        console.error('Submit error:', error)
+                        setSubmitting(false)
+                    }
                 }}
             >
                 {({ values, touched, errors, isSubmitting }) => {
                     const formProps = { values, touched, errors }
+
+                    // Debug logging for validation
+                    console.log('Current form errors:', errors)
+                    console.log(
+                        'Form is valid:',
+                        Object.keys(errors).length === 0,
+                    )
+
                     return (
                         <Form>
                             <FormContainer>
@@ -277,6 +345,10 @@ const AddressInfomation = ({
                                         loading={isSubmitting}
                                         variant="solid"
                                         type="submit"
+                                        onClick={(e) => {
+                                            console.log('Submit button clicked')
+                                            // Let Formik handle the submit
+                                        }}
                                     >
                                         {currentStepStatus === 'complete'
                                             ? 'Save'

@@ -3,6 +3,7 @@ import {
     apiUpdateUser,
     apiChangeProfileImage,
     apiGetUserProfile,
+    apiAddUserAccount, // ✅ Add the new import
 } from '@/services/CommonService'
 
 // Define the user update payload type
@@ -48,6 +49,13 @@ export interface UserUpdatePayload {
     }
 }
 
+// ✅ Define the add account payload type
+export interface AddAccountPayload {
+    accountName: string
+    accountNumber: string
+    sortCode: string
+}
+
 // Define the state interface
 interface SettingsState {
     updateUserLoading: boolean
@@ -67,6 +75,11 @@ interface SettingsState {
     getProfileSuccess: boolean
     getProfileError: string | null
     profileData: any
+    // ✅ Add account states
+    addAccountLoading: boolean
+    addAccountSuccess: boolean
+    addAccountError: string | null
+    addAccountData: any
 }
 
 // Initial state
@@ -85,6 +98,11 @@ const initialState: SettingsState = {
     getProfileSuccess: false,
     getProfileError: null,
     profileData: null,
+    // ✅ Add account initial states
+    addAccountLoading: false,
+    addAccountSuccess: false,
+    addAccountError: null,
+    addAccountData: null,
 }
 
 console.log('🏪 SettingsSlice initialState:', initialState)
@@ -159,6 +177,24 @@ export const getUserProfile = createAsyncThunk(
     },
 )
 
+// ✅ Async thunk for adding user account
+export const addUserAccount = createAsyncThunk(
+    'settings/addUserAccount',
+    async (accountData: AddAccountPayload, { rejectWithValue }) => {
+        console.log('🏦 addUserAccount thunk called with:', accountData)
+        try {
+            const response = await apiAddUserAccount(accountData)
+            console.log('✅ addUserAccount success:', response)
+            return response.data
+        } catch (error: any) {
+            console.error('❌ addUserAccount error:', error)
+            return rejectWithValue(
+                error.response?.data?.message || 'Failed to add user account',
+            )
+        }
+    },
+)
+
 // Create the slice
 const settingsSlice = createSlice({
     name: 'settings',
@@ -196,6 +232,17 @@ const settingsSlice = createSlice({
         clearGetProfileError: (state) => {
             console.log('🧹 clearGetProfileError called')
             state.getProfileError = null
+        },
+        // ✅ Reset add account status
+        resetAddAccountStatus: (state) => {
+            console.log('🔄 resetAddAccountStatus called')
+            state.addAccountSuccess = false
+            state.addAccountError = null
+        },
+        // ✅ Clear add account error
+        clearAddAccountError: (state) => {
+            console.log('🧹 clearAddAccountError called')
+            state.addAccountError = null
         },
     },
     extraReducers: (builder) => {
@@ -302,6 +349,30 @@ const settingsSlice = createSlice({
                     data: state.profileData,
                 })
             })
+            // ✅ Add user account
+            .addCase(addUserAccount.pending, (state) => {
+                console.log('⏳ addUserAccount.pending')
+                state.addAccountLoading = true
+                state.addAccountSuccess = false
+                state.addAccountError = null
+            })
+            .addCase(addUserAccount.fulfilled, (state, action) => {
+                console.log(
+                    '✅ addUserAccount.fulfilled with payload:',
+                    action.payload,
+                )
+                state.addAccountLoading = false
+                state.addAccountSuccess = true
+                state.addAccountData = action.payload
+            })
+            .addCase(addUserAccount.rejected, (state, action) => {
+                console.error(
+                    '❌ addUserAccount.rejected with error:',
+                    action.payload,
+                )
+                state.addAccountLoading = false
+                state.addAccountError = action.payload as string
+            })
     },
 })
 
@@ -314,6 +385,8 @@ export const {
     clearProfileImageError,
     resetGetProfileStatus,
     clearGetProfileError,
+    resetAddAccountStatus, // ✅ Export new action
+    clearAddAccountError, // ✅ Export new action
 } = settingsSlice.actions
 
 console.log('📤 SettingsSlice exported actions:', {
@@ -323,6 +396,8 @@ console.log('📤 SettingsSlice exported actions:', {
     clearProfileImageError,
     resetGetProfileStatus,
     clearGetProfileError,
+    resetAddAccountStatus,
+    clearAddAccountError,
 })
 
 console.log('📤 SettingsSlice exported reducer')

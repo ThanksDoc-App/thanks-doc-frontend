@@ -5,13 +5,14 @@ import locale, { LocaleState } from './slices/locale/localeSlice'
 import theme, { ThemeState } from './slices/theme/themeSlice'
 import categoryReducer from '../views/crm/Category/store/categorySlice'
 import servicesReducer from '../views/crm/Services/store/servicesSlice'
-import doctorReducer from '../views/crm/Doctor/store/doctorSlice'  // ✅ Import your doctorReducer
-import businessReducer from '../views/crm/Business/store/businessSlice'  // ✅ Import your businessReducer
-import jobHistoryReducer from '../views/project/JobHistory/store/jobHistorySlice'  
-import jobReducer from '../views/sales/ProductForm/store/JobsSlice'  // ✅ Import your jobReducer
-import settingsReducer from '../views/account/Settings/store/SettingsSlice'  // ✅ Import your settingsReducer
-import projectDashboardReducer, { ProjectDashboardState } from '../views/project/ProjectDashboard/store/projectDashboardSlice'  // ✅ Import project dashboard reducer
-import kycFormReducer, { KycFormState } from '../views/account/KycForm/store/kycFormSlice'  // ✅ Import KYC form reducer
+import doctorReducer from '../views/crm/Doctor/store/doctorSlice'
+import businessReducer from '../views/crm/Business/store/businessSlice'
+import jobHistoryReducer from '../views/project/JobHistory/store/jobHistorySlice'
+import jobReducer from '../views/sales/ProductForm/store/JobsSlice'
+import settingsReducer from '../views/account/Settings/store/SettingsSlice'
+import projectDashboardReducer, { ProjectDashboardState } from '../views/project/ProjectDashboard/store/projectDashboardSlice'
+import kycFormReducer, { KycFormState } from '../views/account/KycForm/store/kycFormSlice'
+import salesProductListReducer from '../views/sales/ProductList/store/productListSlice'
 import RtkQueryService from '@/services/RtkQueryService'
 import adminDashboardReducer, { AdminDashboardState } from '@/views/crm/CrmDashboard/store'
 
@@ -31,7 +32,51 @@ interface CategoryState {
   deleteError: any
 }
 
-// ✅ Doctor state interface
+// ✅ Payment History interface
+interface PaymentHistory {
+  _id: string;
+  doctorId?: string;
+  businessOwnerId?: string;
+  jobId?: string;
+  amount: number;
+  currency?: string;
+  status: string;
+  paymentDate: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ✅ User Account interface
+interface UserAccount {
+  _id: string;
+  userId: string;
+  accountType?: string;
+  accountStatus?: string;
+  balance?: number;
+  currency?: string;
+  bankDetails?: {
+    accountNumber?: string;
+    sortCode?: string;
+    accountName?: string;
+    bankName?: string;
+  };
+  paymentMethods?: Array<{
+    type: string;
+    details: any;
+    isDefault: boolean;
+  }>;
+  transactionHistory?: Array<{
+    transactionId: string;
+    amount: number;
+    type: string;
+    status: string;
+    date: string;
+  }>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ✅ ENHANCED Doctor state interface with payment history and user account functionality
 interface DoctorState {
   data: Array<{
     _id: string;
@@ -55,6 +100,14 @@ interface DoctorState {
   }>;
   loading: boolean;
   error: string | null;
+  // ✅ Payment history state
+  paymentHistory: PaymentHistory[];
+  paymentHistoryLoading: boolean;
+  paymentHistoryError: string | null;
+  // ✅ User account state
+  userAccount: UserAccount | null;
+  userAccountLoading: boolean;
+  userAccountError: string | null;
 }
 
 // ✅ Business state interface
@@ -83,7 +136,7 @@ interface BusinessState {
   error: string | null;
 }
 
-// ✅ Job History state interface
+// ✅ ENHANCED Job History state interface with rating functionality
 interface JobHistoryState {
   data: Array<{
     _id: string;
@@ -94,12 +147,19 @@ interface JobHistoryState {
     salary?: string;
     type?: string;
     status?: string;
+    rating?: number;
     createdAt?: string;
     updatedAt?: string;
     __v?: number;
+    job?: any;
+    doctor?: any;
   }>;
   loading: boolean;
   error: string | null;
+  updateLoading: boolean;
+  updateError: string | null;
+  ratingLoading: boolean;
+  ratingError: string | null;
 }
 
 // ✅ Job state interface
@@ -152,7 +212,7 @@ interface ServicesState {
   deleteError: string | null;
 }
 
-// ✅ Updated Settings state interface with profile image upload and get profile functionality
+// ✅ ENHANCED Settings state interface with add account functionality
 interface SettingsState {
   updateUserLoading: boolean
   updateUserSuccess: boolean
@@ -171,6 +231,51 @@ interface SettingsState {
   getProfileSuccess: boolean
   getProfileError: string | null
   profileData: any
+  // ✅ Add account states
+  addAccountLoading: boolean
+  addAccountSuccess: boolean
+  addAccountError: string | null
+  addAccountData: any
+}
+
+// ✅ Sales Product List state interface
+interface Product {
+  id: string
+  name: string
+  productCode: string
+  img: string
+  category: string
+  price: number
+  stock: number
+  status: number
+}
+
+interface FilterQueries {
+  name: string
+  category: string[]
+  status: number[]
+  productStatus: number
+}
+
+interface TableQueries {
+  total: number
+  pageIndex: number
+  pageSize: number
+  query: string
+  sort: {
+    order: string
+    key: string
+  }
+}
+
+interface SalesProductListState {
+  loading: boolean
+  deleteConfirmation: boolean
+  selectedProduct: string
+  tableData: TableQueries
+  filterData: FilterQueries
+  productList: Product[]
+  updatingStatus: boolean
 }
 
 export type RootState = {
@@ -181,13 +286,14 @@ export type RootState = {
     category: CategoryState
     services: ServicesState
     adminDashboard: AdminDashboardState
-    doctor: DoctorState  // ✅ Doctor state
-    business: BusinessState  // ✅ Business state
-    jobHistory: JobHistoryState  // ✅ Job History state
-    job: JobState  // ✅ Job state
-    settings: SettingsState  // ✅ Settings state with profile image and get profile functionality
-    projectDashboard: ProjectDashboardState  // ✅ Project Dashboard state
-    accountDetailForm: KycFormState  // ✅ KYC Form state
+    doctor: DoctorState
+    business: BusinessState
+    jobHistory: JobHistoryState
+    job: JobState
+    settings: SettingsState  // ✅ Now includes add account functionality
+    projectDashboard: ProjectDashboardState
+    accountDetailForm: KycFormState
+    salesProductList: SalesProductListState
     /* eslint-disable @typescript-eslint/no-explicit-any */
     [RtkQueryService.reducerPath]: any
 }
@@ -203,14 +309,15 @@ const staticReducers = {
     theme,
     category: categoryReducer,
     services: servicesReducer,
-    doctor: doctorReducer,  // ✅ Add the doctorReducer
-    business: businessReducer,  // ✅ Add the businessReducer
-    jobHistory: jobHistoryReducer,  // ✅ Add the jobHistoryReducer
-    job: jobReducer,  // ✅ Add the jobReducer
-    settings: settingsReducer,  // ✅ Add the settingsReducer
-    projectDashboard: projectDashboardReducer,  // ✅ Add the projectDashboardReducer
-    accountDetailForm: kycFormReducer,  // ✅ Add the kycFormReducer
+    doctor: doctorReducer,
+    business: businessReducer,
+    jobHistory: jobHistoryReducer,
+    job: jobReducer,
+    settings: settingsReducer,  // ✅ Now includes addUserAccount functionality
+    projectDashboard: projectDashboardReducer,
+    accountDetailForm: kycFormReducer,
     adminDashboard: adminDashboardReducer,
+    salesProductList: salesProductListReducer,
     [RtkQueryService.reducerPath]: RtkQueryService.reducer,
 }
 

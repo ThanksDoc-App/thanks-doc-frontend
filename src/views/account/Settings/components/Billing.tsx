@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react'
-import classNames from 'classnames'
-import Tag from '@/components/ui/Tag'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import { FormContainer } from '@/components/ui/Form'
-import Dialog from '@/components/ui/Dialog'
 import FormDesription from './FormDesription'
 import FormRow from './FormRow'
 import CreditCardForm, { CreditCardInfo } from './CreditCardForm'
-import BillingHistory from './BillingHistory'
 import { Field, Form, Formik } from 'formik'
-import { HiPlus } from 'react-icons/hi'
-import isLastChild from '@/utils/isLastChild'
-import { apiGetAccountSettingBillingData } from '@/services/AccountServices'
+// ✅ Redux imports only
+import { useAppDispatch, useAppSelector } from '@/store'
+import {
+    addUserAccount,
+    resetAddAccountStatus,
+    clearAddAccountError,
+} from '@/views/account/Settings/store/SettingsSlice'
 import type { FieldProps, FieldInputProps, FormikProps } from 'formik'
 
 type CreditCard = {
@@ -26,62 +26,24 @@ type CreditCard = {
     primary: boolean
 }
 
-type OtherPayemnt = {
-    id: string
-    identifier: string
-    redirect: string
-    type: string
-}
-
-type Bill = {
-    id: string
-    item: string
-    status: string
-    amount: number
-    date: number
-}
-
 type BillingData = {
     paymentMethods: CreditCard[]
-    otherMethod: OtherPayemnt[]
-    billingHistory: Bill[]
 }
 
 type BillingFormModel = BillingData
 
-type GetAccountSettingBillingDataResponse = BillingData
-
-const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-]
-
 const Billing = () => {
+    // ✅ Redux state only
+    const dispatch = useAppDispatch()
+    const { addAccountLoading, addAccountSuccess, addAccountError } =
+        useAppSelector((state) => state.settings)
+
     const [data, setData] = useState<BillingData>({
         paymentMethods: [],
-        otherMethod: [],
-        billingHistory: [],
     })
     const [selectedCard, setSelectedCard] = useState<Partial<CreditCardInfo>>(
         {},
     )
-    const [ccDialogType, setCcDialogType] = useState<'NEW' | 'EDIT' | ''>('')
-
-    const fetchData = async () => {
-        const response =
-            await apiGetAccountSettingBillingData<GetAccountSettingBillingDataResponse>()
-        setData(response.data)
-    }
 
     const onFormSubmit = (
         _: BillingFormModel,
@@ -99,73 +61,104 @@ const Billing = () => {
         setSubmitting(false)
     }
 
-    const onCreditCardDialogClose = () => {
-        setCcDialogType('')
-        setSelectedCard({})
-    }
-
-    const onEditCreditCard = (
-        card: Partial<CreditCard>,
-        type: 'EDIT' | 'NEW',
-    ) => {
-        setCcDialogType(type)
-        setSelectedCard(card)
-    }
-
-    const onCardUpdate = (
+    // ✅ Enhanced onCardUpdate to use Redux only
+    const onCardUpdate = async (
         cardValue: CreditCardInfo,
         form: FormikProps<BillingData>,
         field: FieldInputProps<BillingData>,
     ) => {
-        let paymentMethodsValue = form.values[
-            field.name as keyof BillingData
-        ] as CreditCard[]
+        try {
+            // Dispatch the addUserAccount action
+            await dispatch(
+                addUserAccount({
+                    accountName: cardValue.accountName || '',
+                    accountNumber: cardValue.accountNumber || '',
+                    sortCode: cardValue.sortCode || '',
+                }),
+            ).unwrap()
 
-        if (cardValue.primary) {
-            paymentMethodsValue.forEach((card) => {
-                card.primary = false
-            })
-        }
-
-        if (
-            !paymentMethodsValue.some(
-                (card) => card.cardId === cardValue.cardId,
+            // Show success notification
+            toast.push(
+                <Notification
+                    title={'Bank account added successfully'}
+                    type="success"
+                />,
+                {
+                    placement: 'top-center',
+                },
             )
-        ) {
-            paymentMethodsValue.push(cardValue)
+
+            // Update local form state
+            let paymentMethodsValue = form.values[
+                field.name as keyof BillingData
+            ] as CreditCard[]
+
+            if (cardValue.primary) {
+                paymentMethodsValue.forEach((card) => {
+                    card.primary = false
+                })
+            }
+
+            if (
+                !paymentMethodsValue.some(
+                    (card) => card.cardId === cardValue.cardId,
+                )
+            ) {
+                paymentMethodsValue.push(cardValue as CreditCard)
+            }
+
+            paymentMethodsValue = paymentMethodsValue.map((card) => {
+                if (card.cardId === cardValue.cardId) {
+                    card = { ...card, ...cardValue }
+                }
+                return card
+            })
+
+            let cardTemp = {}
+            paymentMethodsValue = paymentMethodsValue.filter((card) => {
+                if (card.primary) {
+                    cardTemp = card
+                }
+                return !card.primary
+            })
+            paymentMethodsValue = [
+                ...[cardTemp as CreditCard],
+                ...paymentMethodsValue,
+            ]
+            form.setFieldValue(field.name, paymentMethodsValue)
+        } catch (error) {
+            // Show error notification
+            toast.push(
+                <Notification
+                    title={'Failed to add bank account'}
+                    type="danger"
+                />,
+                {
+                    placement: 'top-center',
+                },
+            )
+            console.error('Failed to add account:', error)
         }
-
-        paymentMethodsValue = paymentMethodsValue.map((card) => {
-            if (card.cardId === cardValue.cardId) {
-                card = { ...card, ...cardValue }
-            }
-            return card
-        })
-
-        let cardTemp = {}
-        paymentMethodsValue = paymentMethodsValue.filter((card) => {
-            if (card.primary) {
-                cardTemp = card
-            }
-            return !card.primary
-        })
-        paymentMethodsValue = [
-            ...[cardTemp as CreditCard],
-            ...paymentMethodsValue,
-        ]
-        form.setFieldValue(field.name, paymentMethodsValue)
-        onCreditCardDialogClose()
     }
 
-    const onRedirect = (url: string) => {
-        const win = window.open(url, '_blank')
-        win?.focus()
-    }
-
+    // ✅ Clear error when component unmounts
     useEffect(() => {
-        fetchData()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+        return () => {
+            if (addAccountError) {
+                dispatch(clearAddAccountError())
+            }
+        }
+    }, [addAccountError, dispatch])
+
+    // ✅ Handle success state
+    useEffect(() => {
+        if (addAccountSuccess) {
+            // Reset the success state after showing notification
+            setTimeout(() => {
+                dispatch(resetAddAccountStatus())
+            }, 3000)
+        }
+    }, [addAccountSuccess, dispatch])
 
     return (
         <Formik
@@ -187,9 +180,29 @@ const Billing = () => {
                                 title="Account details"
                                 desc="This is bank account information that you can update anytime."
                             />
+
+                            {/* ✅ Error Display */}
+                            {addAccountError && (
+                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-red-600 text-sm">
+                                            {addAccountError}
+                                        </span>
+                                        <button
+                                            onClick={() =>
+                                                dispatch(clearAddAccountError())
+                                            }
+                                            className="text-red-400 hover:text-red-600"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             <FormRow
                                 border={false}
-                                name="otherMethod"
+                                name="paymentMethods"
                                 alignCenter={false}
                                 label="Payment Details"
                                 {...validatorProps}
@@ -201,16 +214,15 @@ const Billing = () => {
                                     }: FieldProps<BillingFormModel>) => {
                                         return (
                                             <CreditCardForm
-                                                type={ccDialogType}
                                                 card={
                                                     selectedCard as CreditCardInfo
                                                 }
+                                                loading={addAccountLoading}
                                                 onUpdate={(cardValue) =>
                                                     onCardUpdate(
                                                         cardValue,
                                                         form,
                                                         field,
-                                                        
                                                     )
                                                 }
                                             />

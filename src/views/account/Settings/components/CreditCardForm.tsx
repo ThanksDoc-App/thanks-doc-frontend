@@ -1,92 +1,202 @@
+import { useState } from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { FormContainer, FormItem } from '@/components/ui/Form'
-import { Field, Form, Formik } from 'formik'
-import * as Yup from 'yup'
 
 export type CreditCardFormModel = {
-    bankName?: string
-    sortCode?: string
-    accountNumber?: string
+    accountName: string
+    sortCode: string
+    accountNumber: string
+}
+
+export type CreditCardInfo = CreditCardFormModel & {
+    cardId?: string
+    cardHolderName?: string
+    cardType?: string
+    expMonth?: string
+    expYear?: string
+    last4Number?: string
+    primary?: boolean
 }
 
 type CreditCardFormProps = {
-    onUpdate: (bankDetails: CreditCardFormModel) => void
+    onUpdate: (bankDetails: CreditCardInfo) => void
+    loading?: boolean
+    card?: Partial<CreditCardInfo>
 }
 
-const validationSchema = Yup.object().shape({
-    bankName: Yup.string(),
-    sortCode: Yup.string(),
-    accountNumber: Yup.string(),
-})
+const CreditCardForm = ({
+    onUpdate,
+    loading = false,
+    card,
+}: CreditCardFormProps) => {
+    const [formData, setFormData] = useState<CreditCardFormModel>({
+        accountName: card?.accountName || '',
+        sortCode: card?.sortCode || '',
+        accountNumber: card?.accountNumber || '',
+    })
 
-const CreditCardForm = ({ onUpdate }: CreditCardFormProps) => {
+    const [errors, setErrors] = useState<Partial<CreditCardFormModel>>({})
+
+    const validateForm = () => {
+        const newErrors: Partial<CreditCardFormModel> = {}
+
+        if (!formData.accountName || formData.accountName.length < 2) {
+            newErrors.accountName =
+                'Account name is required and must be at least 2 characters'
+        }
+
+        // ✅ Flexible sort code validation for international use
+        if (!formData.sortCode) {
+            newErrors.sortCode = 'Sort code/routing number is required'
+        } else if (
+            !/^[\d-]+$/.test(formData.sortCode) ||
+            formData.sortCode.length < 6
+        ) {
+            newErrors.sortCode =
+                'Sort code must contain only digits and dashes, minimum 6 characters'
+        }
+
+        // ✅ International account number validation
+        if (!formData.accountNumber) {
+            newErrors.accountNumber = 'Account number is required'
+        } else if (!/^[\d\s-]+$/.test(formData.accountNumber)) {
+            newErrors.accountNumber =
+                'Account number must contain only digits, spaces, and dashes'
+        } else {
+            const cleanAccountNumber = formData.accountNumber.replace(
+                /[\s-]/g,
+                '',
+            )
+            if (cleanAccountNumber.length < 4) {
+                newErrors.accountNumber =
+                    'Account number must be at least 4 digits'
+            } else if (cleanAccountNumber.length > 34) {
+                newErrors.accountNumber =
+                    'Account number must be at most 34 digits'
+            }
+        }
+
+        setErrors(newErrors)
+        return Object.keys(newErrors).length === 0
+    }
+
+    const handleInputChange = (
+        field: keyof CreditCardFormModel,
+        value: string,
+    ) => {
+        setFormData((prev) => ({
+            ...prev,
+            [field]: value,
+        }))
+
+        // Clear error when user starts typing
+        if (errors[field]) {
+            setErrors((prev) => ({
+                ...prev,
+                [field]: undefined,
+            }))
+        }
+    }
+
+    const handleSubmit = () => {
+        console.log('Button clicked!')
+        console.log('Form data:', formData)
+
+        if (validateForm()) {
+            // Clean the account number by removing spaces and dashes for processing
+            const cleanAccountNumber = formData.accountNumber.replace(
+                /[\s-]/g,
+                '',
+            )
+
+            const cardInfo: CreditCardInfo = {
+                ...formData,
+                accountNumber: cleanAccountNumber, // Store clean version
+                cardId: card?.cardId || `card_${Date.now()}`,
+                cardHolderName: formData.accountName,
+                cardType: 'bank',
+                expMonth: '',
+                expYear: '',
+                last4Number: cleanAccountNumber.slice(-4),
+                primary: card?.primary || false,
+            }
+
+            console.log('Calling onUpdate with:', cardInfo)
+            onUpdate(cardInfo)
+        }
+    }
+
     return (
-        <Formik<CreditCardFormModel>
-            initialValues={{
-                bankName: '',
-                sortCode: '',
-                accountNumber: '',
-            }}
-            validationSchema={validationSchema}
-            onSubmit={(values, { setSubmitting }) => {
-                onUpdate(values)
-                setSubmitting(false)
-            }}
-        >
-            {({ touched, errors }) => (
-                <Form>
-                    <FormContainer>
-                        <FormItem
-                            label="Account Name"
-                            invalid={errors.bankName && touched.bankName}
-                            errorMessage={errors.bankName}
-                        >
-                            <Field
-                                type="text"
-                                autoComplete="off"
-                                name="accountName"
-                                component={Input}
-                                placeholder="Enter your account name"
-                            />
-                        </FormItem>
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormItem
-                                label="Sort Code"
-                                invalid={errors.sortCode && touched.sortCode}
-                                errorMessage={errors.sortCode}
-                            >
-                                <Field
-                                    type="text"
-                                    autoComplete="off"
-                                    name="sortCode"
-                                    component={Input}
-                                    placeholder="Enter sort code"
-                                />
-                            </FormItem>
-                            <FormItem
-                                label="Account Number"
-                                invalid={errors.accountNumber && touched.accountNumber}
-                                errorMessage={errors.accountNumber}
-                            >
-                                <Field
-                                    type="text"
-                                    autoComplete="off"
-                                    name="accountNumber"
-                                    component={Input}
-                                    placeholder="Enter account number"
-                                />
-                            </FormItem>
-                        </div>
-                        <FormItem className="mb-0 text-right">
-                            <Button block variant="solid" type="submit">
-                                Edit
-                            </Button>
-                        </FormItem>
-                    </FormContainer>
-                </Form>
-            )}
-        </Formik>
+        <div className="space-y-6">
+            <FormContainer>
+                <FormItem
+                    label="Account Name"
+                    invalid={!!errors.accountName}
+                    errorMessage={errors.accountName}
+                >
+                    <Input
+                        type="text"
+                        autoComplete="off"
+                        value={formData.accountName}
+                        onChange={(e) =>
+                            handleInputChange('accountName', e.target.value)
+                        }
+                        placeholder="Enter your account name"
+                        disabled={loading}
+                    />
+                </FormItem>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormItem
+                        label="Sort Code / Routing Number"
+                        invalid={!!errors.sortCode}
+                        errorMessage={errors.sortCode}
+                    >
+                        <Input
+                            type="text"
+                            autoComplete="off"
+                            value={formData.sortCode}
+                            onChange={(e) =>
+                                handleInputChange('sortCode', e.target.value)
+                            }
+                            placeholder="e.g., 12-34-56 or 123456789"
+                            disabled={loading}
+                        />
+                    </FormItem>
+                    <FormItem
+                        label="Account Number"
+                        invalid={!!errors.accountNumber}
+                        errorMessage={errors.accountNumber}
+                    >
+                        <Input
+                            type="text"
+                            autoComplete="off"
+                            value={formData.accountNumber}
+                            onChange={(e) =>
+                                handleInputChange(
+                                    'accountNumber',
+                                    e.target.value,
+                                )
+                            }
+                            placeholder="Enter your account number"
+                            disabled={loading}
+                        />
+                    </FormItem>
+                </div>
+                <FormItem className="mb-0 text-right">
+                    <Button
+                        block
+                        variant="solid"
+                        type="button"
+                        loading={loading}
+                        disabled={loading}
+                        onClick={handleSubmit}
+                    >
+                        {loading ? 'Adding Account...' : 'Add Account'}
+                    </Button>
+                </FormItem>
+            </FormContainer>
+        </div>
     )
 }
 

@@ -92,3 +92,25 @@ export async function apiGetSalesOrderDetails<
         params,
     })
 }
+
+export async function apiUpdateJobStatus<T, U extends Record<string, unknown>>(
+    id: string | number,
+    data: U,
+) {
+    return ApiService.fetchData<T>({
+        url: `/api/v1/job/${id}/status`,
+        method: 'put',
+        data,
+    })
+}
+
+export async function apiRateJob<T, U extends { rating: number }>(
+    id: string | number,
+    data: U,
+) {
+    return ApiService.fetchData<T>({
+        url: `/api/v1/job/${id}/rate-job`,
+        method: 'post',
+        data,
+    });
+}

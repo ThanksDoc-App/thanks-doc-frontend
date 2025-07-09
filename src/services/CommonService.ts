@@ -222,3 +222,19 @@ export async function apiGetUserProfile() {
         method: 'get',
     })
 }
+// Add user account endpoint
+export async function apiAddUserAccount(data: {
+    accountName: string
+    accountNumber: string
+    sortCode: string
+}) {
+    return ApiService.fetchData<{
+        status: boolean
+        message?: string
+        data?: any
+    }>({
+        url: '/api/v1/account/add-account',
+        method: 'post',
+        data,
+    })
+}
