@@ -2,6 +2,7 @@ import { useState, ComponentType } from 'react'
 import { Field, FieldProps, FieldInputProps, useFormikContext } from 'formik'
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
 import { useDispatch, useSelector } from 'react-redux'
+import { AppDispatch, RootState } from '@/store'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import { FormItem } from '@/components/ui/Form'
 import Input, { InputProps } from '@/components/ui/Input'
@@ -31,7 +32,7 @@ type FormFieldsName = {
     name: string
 }
 
-const PriceInput = (props: InputProps) => {
+const PriceInput = (props: InputProps & { field: any }) => {
     return <Input {...props} value={props.field.value} suffix="GBP" />
 }
 
@@ -39,7 +40,6 @@ const NumericFormatInput = ({
     onValueChange,
     ...rest
 }: Omit<NumericFormatProps, 'form'> & {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     form: any
     field: FieldInputProps<unknown>
 }) => {
@@ -62,21 +62,22 @@ const PricingFields = () => {
     const { values, touched, errors, setFieldValue } =
         useFormikContext<FormFieldsName>()
 
-    // Redux hooks for job creation
-    const dispatch = useDispatch()
+    // Redux hooks with proper typing
+    const dispatch = useDispatch<AppDispatch>()
     const createJobLoading = useSelector(selectCreateJobLoading)
     const createJobError = useSelector(selectCreateJobError)
 
-    // Redux hooks for payment
+    // Redux hooks for payment with proper typing
+    const paymentState = useSelector((state: RootState) => state.payment)
     const {
-        // loading: paymentLoading,
-        error: paymentError,
-        lastPayment,
-    } = useSelector((state: any) => state.payment)
+        loading: paymentLoading = false,
+        error: paymentError = null,
+        lastPayment = null,
+    } = paymentState || {}
 
     // Check if all required fields are filled
-    const isFormValid = () => {
-        const requiredFields = [
+    const isFormValid = (): boolean => {
+        const requiredFields: (keyof FormFieldsName)[] = [
             'category',
             'service',
             'description',
@@ -93,10 +94,13 @@ const PricingFields = () => {
         )
     }
 
-    const handlePayForService = async (e: React.MouseEvent) => {
+    const handlePayForService = async (
+        e: React.MouseEvent<HTMLButtonElement>,
+    ) => {
         e.preventDefault()
 
         if (!isFormValid()) {
+            console.warn('Form is not valid')
             return
         }
 
@@ -128,15 +132,53 @@ const PricingFields = () => {
 
             if (createJob.fulfilled.match(resultAction)) {
                 console.log('Job created successfully:', resultAction.payload)
-                setCreatedJobId(
-                    resultAction.payload.id || resultAction.payload._id,
-                )
-                setIsPaymentModalOpen(true)
+                const jobId =
+                    resultAction.payload?.id || resultAction.payload?._id
+
+                if (jobId) {
+                    setCreatedJobId(jobId)
+                    setIsPaymentModalOpen(true)
+                } else {
+                    console.error('No job ID returned from job creation')
+                }
             } else {
                 console.error('Failed to create job:', resultAction.payload)
             }
         } catch (error) {
             console.error('Error creating job:', error)
+        }
+    }
+
+    const navigateToStripe = (url: string) => {
+        console.log('Attempting to navigate to:', url)
+
+        // Method 1: Direct assignment
+        try {
+            window.location.href = url
+            return
+        } catch (error) {
+            console.error('window.location.href failed:', error)
+        }
+
+        // Method 2: Using assign
+        try {
+            window.location.assign(url)
+            return
+        } catch (error) {
+            console.error('window.location.assign failed:', error)
+        }
+
+        // Method 3: Create and click a link
+        try {
+            const link = document.createElement('a')
+            link.href = url
+            link.target = '_self'
+            link.style.display = 'none'
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+        } catch (error) {
+            console.error('Link click method failed:', error)
         }
     }
 
@@ -153,26 +195,64 @@ const PricingFields = () => {
             const resultAction = await dispatch(payForJob(createdJobId))
 
             if (payForJob.fulfilled.match(resultAction)) {
-                console.log('Payment successful:', resultAction.payload)
-                // Close modal on successful payment
-                setIsPaymentModalOpen(false)
-                setCreatedJobId(null)
-                // Reset payment state
-                dispatch(resetPaymentState())
-                // You might want to show a success message or redirect here
+                console.log('Payment action fulfilled')
+                console.log('Full response:', resultAction.payload)
+
+                const response = resultAction.payload
+
+                // The response structure is: response.data.data.data.url
+                // Based on your console log, the structure is different
+                let checkoutUrl: string | undefined
+
+                // Try different possible paths for the URL
+                if (response?.data?.data?.data?.url) {
+                    checkoutUrl = response.data.data.data.url
+                } else if (response?.data?.data?.url) {
+                    checkoutUrl = response.data.data.url
+                } else if (response?.data?.url) {
+                    checkoutUrl = response.data.url
+                }
+
+                console.log('Extracted checkout URL:', checkoutUrl)
+                console.log('Response structure analysis:', {
+                    hasData: !!response?.data,
+                    dataKeys: response?.data ? Object.keys(response.data) : [],
+                    nestedData: response?.data?.data,
+                    nestedDataKeys: response?.data?.data
+                        ? Object.keys(response.data.data)
+                        : [],
+                    deepNestedData: response?.data?.data?.data,
+                    deepNestedDataKeys: response?.data?.data?.data
+                        ? Object.keys(response.data.data.data)
+                        : [],
+                })
+
+                if (checkoutUrl && typeof checkoutUrl === 'string') {
+                    // Clean up state before navigation
+                    setIsPaymentModalOpen(false)
+                    setCreatedJobId(null)
+                    dispatch(resetPaymentState())
+
+                    // Navigate to Stripe checkout
+                    navigateToStripe(checkoutUrl)
+                } else {
+                    console.error('Invalid checkout URL:', {
+                        url: checkoutUrl,
+                        type: typeof checkoutUrl,
+                        fullResponse: response,
+                    })
+                }
             } else {
-                console.error('Payment failed:', resultAction.payload)
-                // Error is already handled in Redux state
+                console.error('Payment action rejected:', resultAction.payload)
             }
         } catch (error) {
-            console.error('Error processing payment:', error)
+            console.error('Error in handleConfirmPayment:', error)
         }
     }
 
     const closeModal = () => {
         setIsPaymentModalOpen(false)
         setCreatedJobId(null)
-        // Clear any payment errors when closing modal
         dispatch(clearPaymentError())
     }
 
@@ -229,19 +309,28 @@ const PricingFields = () => {
 
             {/* Payment Modal */}
             {isPaymentModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center ">
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
                     {/* Backdrop */}
                     <div
-                        className="fixed inset-0 bg-[#2155A329] bg-opacity-50"
+                        className="fixed inset-0 bg-black bg-opacity-50"
                         onClick={closeModal}
                     />
 
                     {/* Modal Content */}
-                    <div className="relative bg-white rounded-lg shadow-xl">
+                    <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
                         <div className="p-6">
-                            <h4 className="text-lg font-semibold mb-2">
-                                Pay for the service
-                            </h4>
+                            <div className="flex justify-between items-center mb-4">
+                                <h4 className="text-lg font-semibold">
+                                    Pay for the service
+                                </h4>
+                                <button
+                                    onClick={closeModal}
+                                    className="text-gray-500 hover:text-gray-700"
+                                    type="button"
+                                >
+                                    ✕
+                                </button>
+                            </div>
                             <hr className="mb-4" />
 
                             {/* Show payment error if any */}
@@ -252,34 +341,36 @@ const PricingFields = () => {
                                         onClick={() =>
                                             dispatch(clearPaymentError())
                                         }
-                                        className="ml-2 text-red-500 underline"
+                                        className="ml-2 text-red-500 underline hover:no-underline"
+                                        type="button"
                                     >
                                         Clear
                                     </button>
                                 </div>
                             )}
 
-                            {/* Show success message if payment completed */}
+                            {/* Show success message if payment initiated */}
                             {lastPayment && (
                                 <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                                    Payment successful! Transaction ID:{' '}
-                                    {lastPayment.transactionId}
+                                    Payment initiated successfully! Session ID:{' '}
+                                    {lastPayment.data?.data?.session_id}
                                 </div>
                             )}
 
                             <div className="flex items-center flex-col justify-center gap-4">
-                                <p className="text-[#515B6F] text-[15px] font-[600]">
+                                <p className="text-gray-600 text-sm font-medium text-center">
                                     Service completed, proceed to pay
                                 </p>
-                                <p className="text-2xl font-bold text-[#202430] text-[30px]">
+                                <p className="text-3xl font-bold text-gray-800">
                                     {Number(values.price || 0).toFixed(2)} GBP
                                 </p>
-                                <div>
+                                <div className="w-full">
                                     <Button
                                         variant="solid"
                                         onClick={handleConfirmPayment}
-                                        className="w-[450px] mb-3"
+                                        className="w-full"
                                         disabled={paymentLoading}
+                                        type="button"
                                     >
                                         {paymentLoading
                                             ? 'Processing Payment...'

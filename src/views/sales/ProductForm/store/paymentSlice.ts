@@ -1,13 +1,20 @@
 import { apiPayForJob } from '@/services/CrmService';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-// Define the response type
+// Updated response type to match your API response
 interface PayForJobResponse {
-    success: boolean;
+    status: boolean;
+    statusCode: number;
     message: string;
-    transactionId?: string;
-    jobId: string;
-    amount?: number;
+    data: {
+        status: boolean;
+        statusCode: number;
+        message: string;
+        data: {
+            session_id: string;
+            url: string;
+        };
+    };
 }
 
 // Define the payment state
@@ -32,9 +39,12 @@ export const payForJob = createAsyncThunk<
     'payment/payForJob',
     async (jobId: string, { rejectWithValue }) => {
         try {
+            console.log('Making API call for job:', jobId)
             const response = await apiPayForJob<PayForJobResponse>(jobId);
+            console.log('API response received:', response)
             return response;
         } catch (error: any) {
+            console.error('API call error:', error)
             return rejectWithValue(
                 error.response?.data?.message || 
                 error.message || 
