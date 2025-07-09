@@ -14,7 +14,12 @@ import type { Address } from '../store'
 import type { FieldProps, FormikTouched, FormikErrors } from 'formik'
 // Add these imports for API integration
 import { updateForm } from '../store/kycFormSlice'
-import { useAppDispatch } from '@/store'
+import { useAppDispatch, useAppSelector } from '@/store'
+// Import temp data selectors - now from main store
+import {
+    selectTempPersonalInfo,
+    clearTempPersonalInfo,
+} from '../store/tempDataSlice'
 
 type FormModel = Address
 
@@ -86,41 +91,6 @@ const AddressForm = (props: AddressFormProps) => {
 
     return (
         <>
-            {/* <div className="md:grid grid-cols-2 gap-4"> */}
-            {/* <div>
-                <FormItem
-                    label="Search your postcode"
-                    invalid={getError(zipCodeName) && getTouched(zipCodeName)}
-                    errorMessage={getError(zipCodeName)}
-                >
-                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                        <Field
-                            type="text"
-                            autoComplete="off"
-                            name={zipCodeName}
-                            placeholder="Find a Postcode"
-                            component={Input}
-                            className="flex-1"
-                        />
-                        <Button
-                            type="button"
-                            className="flex-1"
-                            onClick={() => {
-                                alert('Find a Postcode feature coming soon!')
-                            }}
-                        >
-                            Find address
-                        </Button>
-                        <Field
-                            name="addressSelect"
-                            component={Select}
-                            options={[]} // Empty select
-                            className="flex-1"
-                        />
-                    </div>
-                </FormItem>
-            </div> */}
-
             <div className="md:grid grid-cols-2 gap-4">
                 <FormItem
                     label="Address Line 1"
@@ -210,50 +180,123 @@ const AddressInfomation = ({
     onBackChange,
     currentStepStatus,
 }: AddressInfomationProps) => {
-    const dispatch = useAppDispatch() // Add dispatch hook
-    const [categoryId, setCategoryId] = useState<string | null>(null)
+    const dispatch = useAppDispatch()
 
-    // Get category ID from localStorage on component mount
+    // Get temporary personal information from main store
+    const tempPersonalInfo = useAppSelector(selectTempPersonalInfo)
+
+    // Check if personal information is available
     useEffect(() => {
-        const savedCategoryId = localStorage.getItem('selectedCategoryId')
-        setCategoryId(savedCategoryId)
-    }, [])
+        if (!tempPersonalInfo) {
+            toast.push(
+                <Notification
+                    title="Please complete personal information first"
+                    type="warning"
+                />,
+                { placement: 'top-center' },
+            )
+        }
+    }, [tempPersonalInfo])
 
     const onNext = async (
         values: FormModel,
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
+        if (!tempPersonalInfo) {
+            toast.push(
+                <Notification
+                    title="Personal information is missing. Please go back and complete it."
+                    type="danger"
+                />,
+                { placement: 'top-center' },
+            )
+            setSubmitting(false)
+            return
+        }
+
         try {
-            // Include category ID in the payload
-            const payload = {
-                ...values,
-                categoryId: categoryId,
+            // Combine personal information and address information to match API structure
+            const combinedPayload = {
+                phone: tempPersonalInfo.phoneNumber,
+                location: {
+                    country: values.country,
+                    city: values.city,
+                    state: values.state,
+                    address1: values.addressLine1,
+                    address2: values.addressLine2,
+                    zipCode: values.zipCode,
+                },
+                maritalStatus: tempPersonalInfo.maritalStatus,
+                countryCode: tempPersonalInfo.dialCode,
+                dateOfBirth: tempPersonalInfo.dob,
+                category: tempPersonalInfo.category,
+                isCorrespondenceAddressSame: values.sameCorrespondenceAddress,
+                correspondenceAddress: values.sameCorrespondenceAddress
+                    ? {
+                          country: values.country,
+                          city: values.city,
+                          state: values.state,
+                          address1: values.addressLine1,
+                          address2: values.addressLine2,
+                          zipCode: values.zipCode,
+                      }
+                    : {
+                          country: values.correspondenceAddress.country,
+                          city: values.correspondenceAddress.city,
+                          state: values.correspondenceAddress.state,
+                          address1: values.correspondenceAddress.addressLine1,
+                          address2: values.correspondenceAddress.addressLine2,
+                          zipCode: values.correspondenceAddress.zipCode,
+                      },
             }
 
-            // Call the API endpoint
-            await dispatch(updateForm({ addressInformation: payload })).unwrap()
+            console.log('Combined payload being sent:', combinedPayload)
+
+            // Call the API endpoint with combined data
+            const response = await dispatch(
+                updateForm(combinedPayload),
+            ).unwrap()
+
+            // Check if status is true before proceeding
+            if (response.status !== true) {
+                toast.push(
+                    <Notification
+                        title={response.message || 'Failed to save information'}
+                        type="danger"
+                    />,
+                    { placement: 'top-center' },
+                )
+                setSubmitting(false)
+                return
+            }
+
+            // Clear temporary personal information after successful submission
+            dispatch(clearTempPersonalInfo())
 
             // Show success notification
             toast.push(
                 <Notification
-                    title="Address information saved successfully"
+                    title={
+                        response.message ||
+                        'Personal and address information saved successfully'
+                    }
                     type="success"
                 />,
                 { placement: 'top-center' },
             )
 
-            // Call the next change handler
-            onNextChange?.(payload, 'addressInformation', setSubmitting)
+            // Call the next change handler only if status is true
+            onNextChange?.(values, 'addressInformation', setSubmitting)
         } catch (error) {
             // Show error notification
             toast.push(
                 <Notification
-                    title="Failed to save address information"
+                    title="Failed to save information"
                     type="danger"
                 />,
                 { placement: 'top-center' },
             )
-            console.error('Failed to save address information:', error)
+            console.error('Failed to save combined information:', error)
             setSubmitting(false)
         }
     }
@@ -270,6 +313,14 @@ const AddressInfomation = ({
                     Enter your address information to help us speed up the
                     verification process.
                 </p>
+                {tempPersonalInfo && (
+                    <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                        <p className="text-sm text-green-700">
+                            ✓ Personal information saved. Complete address
+                            information to submit both forms.
+                        </p>
+                    </div>
+                )}
             </div>
             <Formik
                 enableReinitialize
@@ -279,14 +330,7 @@ const AddressInfomation = ({
                     setSubmitting(true)
                     // Add debug logging
                     console.log('Form submitted with values:', values)
-                    console.log(
-                        'Validation errors:',
-                        Object.keys(
-                            validationSchema.validateSync(values, {
-                                abortEarly: false,
-                            }) || {},
-                        ),
-                    )
+                    console.log('Temporary personal info:', tempPersonalInfo)
 
                     try {
                         await onNext(values, setSubmitting)
@@ -298,13 +342,6 @@ const AddressInfomation = ({
             >
                 {({ values, touched, errors, isSubmitting }) => {
                     const formProps = { values, touched, errors }
-
-                    // Debug logging for validation
-                    console.log('Current form errors:', errors)
-                    console.log(
-                        'Form is valid:',
-                        Object.keys(errors).length === 0,
-                    )
 
                     return (
                         <Form>
@@ -319,6 +356,25 @@ const AddressInfomation = ({
                                     zipCodeName="zipCode"
                                     {...formProps}
                                 />
+
+                                <FormItem>
+                                    <Field name="sameCorrespondenceAddress">
+                                        {({ field, form }: FieldProps) => (
+                                            <Checkbox
+                                                {...field}
+                                                checked={field.value}
+                                                onChange={(checked) => {
+                                                    form.setFieldValue(
+                                                        field.name,
+                                                        checked,
+                                                    )
+                                                }}
+                                            >
+                                                Same as correspondence address
+                                            </Checkbox>
+                                        )}
+                                    </Field>
+                                </FormItem>
 
                                 {!values.sameCorrespondenceAddress && (
                                     <>
@@ -345,10 +401,7 @@ const AddressInfomation = ({
                                         loading={isSubmitting}
                                         variant="solid"
                                         type="submit"
-                                        onClick={(e) => {
-                                            console.log('Submit button clicked')
-                                            // Let Formik handle the submit
-                                        }}
+                                        disabled={!tempPersonalInfo}
                                     >
                                         {currentStepStatus === 'complete'
                                             ? 'Save'

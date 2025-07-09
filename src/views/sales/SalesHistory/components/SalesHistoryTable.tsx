@@ -407,10 +407,9 @@ const SalesHistory = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {item.doctor?.name ||
-                                                item.doctor ||
-                                                'N/A'}
+                                            {item.doctor?.name || 'N/A'}
                                         </td>
+
                                         <td className="px-6 py-4 relative">
                                             <div className="dropdown-container">
                                                 <button

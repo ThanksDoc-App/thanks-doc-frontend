@@ -26,9 +26,10 @@ import {
     selectCategoriesLoading,
     selectCategoriesError,
 } from '../../../sales/ProductForm/store/categorySlice'
-// Add KYC form imports
-import { updateForm } from '../store/kycFormSlice'
+// Add KYC form imports - Remove updateForm import since we're not using it here
 import { useAppDispatch, useAppSelector } from '@/store'
+// Add local storage for temporary data
+import { setTempPersonalInfo } from '../store/tempDataSlice' // We'll create this
 
 type CountryOption = {
     label: string
@@ -193,17 +194,19 @@ const PersonalInformation = ({
                             specialty: undefined,
                         }
 
-                        // Call the KYC endpoint
-                        await dispatch(updateForm(apiData)).unwrap()
+                        // Store personal information in temporary state instead of calling API
+                        dispatch(setTempPersonalInfo(apiData))
 
+                        // Show success notification for saving locally
                         toast.push(
                             <Notification
-                                title="Information saved successfully"
+                                title="Personal information saved. Continue to address information."
                                 type="success"
                             />,
                             { placement: 'top-center' },
                         )
 
+                        // Proceed to next step without API call
                         setTimeout(() => {
                             onNextChange?.(
                                 values,
@@ -298,8 +301,17 @@ const PersonalInformation = ({
                                     </FormItem>
                                     <FormItem
                                         label="Date of Birth"
-                                        invalid={errors.dob && touched.dob}
-                                        errorMessage={errors.dob}
+                                        invalid={
+                                            typeof errors.dob === 'string' &&
+                                            touched.dob
+                                        }
+                                        errorMessage={
+                                            Array.isArray(errors.dob)
+                                                ? errors.dob.join(', ')
+                                                : typeof errors.dob === 'string'
+                                                  ? errors.dob
+                                                  : undefined
+                                        }
                                     >
                                         <Field name="dob" placeholder="Date">
                                             {({ field, form }: FieldProps) => (
@@ -321,18 +333,6 @@ const PersonalInformation = ({
                                     </FormItem>
                                 </div>
                                 <div className="flex justify-end gap-2">
-                                    <Button
-                                        type="button"
-                                        onClick={() =>
-                                            onNextChange?.(
-                                                values,
-                                                'personalInformation',
-                                                setSubmitting,
-                                            )
-                                        }
-                                    >
-                                        Next
-                                    </Button>
                                     <Button
                                         loading={isSubmitting}
                                         variant="solid"

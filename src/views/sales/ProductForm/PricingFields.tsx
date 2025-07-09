@@ -69,7 +69,7 @@ const PricingFields = () => {
 
     // Redux hooks for payment
     const {
-        loading: paymentLoading,
+        // loading: paymentLoading,
         error: paymentError,
         lastPayment,
     } = useSelector((state: any) => state.payment)

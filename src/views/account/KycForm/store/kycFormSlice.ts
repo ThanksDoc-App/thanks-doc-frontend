@@ -31,6 +31,25 @@ export type PersonalInformation = {
         address2: string
         zipCode: string
     }
+        specialty: string // Added specialty property
+dialCode?: any
+phoneNumber?:any
+dob?:any
+firstName?: string
+lastName?:string
+email?:string
+residentCountry?:string
+nationality?:string
+data: {
+   dialCode?: any
+phoneNumber?:any
+dob?:any
+firstName?: string
+lastName?:string
+email?:string
+residentCountry?:string
+nationality?:string 
+}
 }
 
 export type Identification = {
