@@ -9,7 +9,8 @@ export async function apiGetAccountSettingData<T>() {
 
 export async function apiGetAccountSettingIntegrationData<T>() {
     return ApiService.fetchData<T>({
-        url: '/account/setting/integration',
+        // url: '/account/setting/integration',
+        url: '/api/v1/documents',
         method: 'get',
     })
 }
