@@ -24,7 +24,7 @@ import { useState } from 'react'
 import * as Yup from 'yup'
 import { useAppDispatch, useAppSelector } from '@/store'
 import {
-    createDocumentWithFiles,
+    createMultipleDocuments,
     selectDocumentLoading,
     selectDocumentError,
     clearError,
@@ -169,7 +169,7 @@ const generateValidationSchema = () => {
 
 const validationSchema = generateValidationSchema()
 
-// ✅ Enhanced DocumentUploadField with PDF support
+// Enhanced DocumentUploadField with PDF support
 const DocumentUploadField = (props: DocumentUploadFieldProps) => {
     const { label, name, children, touched, errors } = props
 
@@ -180,14 +180,14 @@ const DocumentUploadField = (props: DocumentUploadFieldProps) => {
     ) => {
         if (files.length > 0) {
             const file = files[0]
-            // ✅ Validate file type - PDF only
+            // Validate file type - PDF only
             const allowedTypes = ['application/pdf']
             if (!allowedTypes.includes(file.type)) {
                 form.setFieldError(field.name, 'Only PDF files are allowed')
                 return
             }
 
-            // ✅ Validate file size (10MB limit for PDFs)
+            // Validate file size (10MB limit for PDFs)
             const maxSize = 10 * 1024 * 1024 // 10MB
             if (file.size > maxSize) {
                 form.setFieldError(
@@ -376,7 +376,7 @@ const Identification = ({
         }
     }
 
-    // ✅ Enhanced onNext function with single PDF support
+    // FIXED: Enhanced onNext function to handle individual document uploads
     const onNext = async (
         values: FormModel,
         setSubmitting: (isSubmitting: boolean) => void,
@@ -385,9 +385,8 @@ const Identification = ({
             setSubmitting(true)
             dispatch(clearError())
 
-            // Create structured documents array
-            const documentsData: any[] = []
-            const allFiles: File[] = []
+            // Create array of individual documents to upload
+            const documentsToUpload: any[] = []
 
             documentTypes.forEach((docType) => {
                 const fieldName = docType.value
@@ -399,12 +398,16 @@ const Identification = ({
                     const email = values[`${fieldName}Email`]
 
                     if (fullName || email) {
-                        documentsData.push({
-                            label: documentLabel,
-                            content: {
+                        documentsToUpload.push({
+                            title: `${documentLabel} - Reference`,
+                            content: JSON.stringify({
+                                type: 'reference',
+                                documentType: documentLabel,
                                 fullName: fullName || '',
                                 email: email || '',
-                            },
+                                submittedAt: new Date().toISOString(),
+                            }),
+                            files: [], // No files for reference documents
                         })
                     }
                 } else if (titleDocumentTypes.includes(fieldName)) {
@@ -413,25 +416,21 @@ const Identification = ({
                     const certificateTitle = values[`${fieldName}Title`]
 
                     if (documentFile || certificateTitle) {
-                        const documentEntry: any = {
-                            title: documentLabel,
-                            content: {
-                                documentTitle: certificateTitle || '',
-                            },
-                        }
+                        const files = documentFile ? [documentFile] : []
 
-                        // Handle PDF file upload
-                        if (documentFile) {
-                            const fileName = `${fieldName}_${Date.now()}.pdf`
-                            documentEntry.content.documentRef = fileName
-                            allFiles.push(
-                                new File([documentFile], fileName, {
-                                    type: documentFile.type,
-                                }),
-                            )
-                        }
-
-                        documentsData.push(documentEntry)
+                        documentsToUpload.push({
+                            title: `${documentLabel} - ${
+                                certificateTitle || 'Certificate'
+                            }`,
+                            content: JSON.stringify({
+                                type: 'certificate',
+                                documentType: documentLabel,
+                                certificateTitle: certificateTitle || '',
+                                hasFile: !!documentFile,
+                                submittedAt: new Date().toISOString(),
+                            }),
+                            files,
+                        })
                     }
                 } else {
                     // For other documents
@@ -439,48 +438,48 @@ const Identification = ({
                     const expiryDate = values[`${fieldName}ExpiryDate`]
 
                     if (documentFile || expiryDate) {
-                        const documentEntry: any = {
-                            label: documentLabel,
-                            content: {
+                        const files = documentFile ? [documentFile] : []
+
+                        documentsToUpload.push({
+                            title: `${documentLabel} - Document`,
+                            content: JSON.stringify({
+                                type: 'standard',
+                                documentType: documentLabel,
                                 expiryDate: expiryDate || '',
-                            },
-                        }
-
-                        // Handle PDF file upload
-                        if (documentFile) {
-                            const fileName = `${fieldName}_${Date.now()}.pdf`
-                            documentEntry.content.documentRef = fileName
-                            allFiles.push(
-                                new File([documentFile], fileName, {
-                                    type: documentFile.type,
-                                }),
-                            )
-                        }
-
-                        documentsData.push(documentEntry)
+                                hasFile: !!documentFile,
+                                submittedAt: new Date().toISOString(),
+                            }),
+                            files,
+                        })
                     }
                 }
             })
 
-            // Create clean payload that matches Swagger spec exactly
+            if (documentsToUpload.length === 0) {
+                setSubmitting(false)
+                return
+            }
+
+            // Upload documents individually
             const result = await dispatch(
-                createDocumentWithFiles({
-                    title: `Document Submission - ${new Date().toLocaleDateString()}`,
-                    additionalFields: {
-                        documents: documentsData,
-                        metadata: {
-                            submittedAt: new Date().toISOString(),
-                            selectedDocumentType: values.documentType,
-                            userAgent: navigator.userAgent,
-                            timestamp: Date.now(),
-                        },
-                    },
-                    files: allFiles,
+                createMultipleDocuments({
+                    documents: documentsToUpload,
                 }),
             )
 
-            if (createDocumentWithFiles.fulfilled.match(result)) {
-                console.log('Document upload successful:', result.payload)
+            if (createMultipleDocuments.fulfilled.match(result)) {
+                console.log('Documents uploaded successfully:', result.payload)
+
+                // Check for any failed uploads
+                const failedUploads = result.payload.filter((doc) => doc.error)
+                if (failedUploads.length > 0) {
+                    console.warn(
+                        'Some documents failed to upload:',
+                        failedUploads,
+                    )
+                    // You might want to show a warning to the user here
+                }
+
                 onNextChange?.(values, 'identification', setSubmitting)
             } else {
                 console.error('Document upload failed:', result.payload)
@@ -509,7 +508,7 @@ const Identification = ({
             <div className="mb-8">
                 <h3 className="mb-2">Identification</h3>
                 <p>Upload relevant PDF documents to verify your identity.</p>
-                {/* ✅ Enhanced error display */}
+                {/* Enhanced error display */}
                 {documentError && (
                     <div className="mt-2 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
                         <div className="flex justify-between items-center">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
     X,
     MoreHorizontal,
@@ -35,26 +35,70 @@ import {
     clearError,
 } from './store/documentSlice'
 import { apiApproveRejectDocument } from '@/services/CrmService'
-import { Button } from '@/components/ui'
 import DoctorTool from './components/DoctorTool'
+import { Button } from '@/components/ui'
+
+// **Enhanced TypeScript Interfaces**
+interface Doctor {
+    _id: string
+    name: string
+    email: string
+    phone?: string
+    role: string
+    rating?: number
+    specialization: string
+    gmcNumber?: string
+    profileImage?: {
+        url: string
+    }
+}
+
+interface PaymentHistory {
+    _id: string
+    jobId: string
+    amount: number
+    currency: string
+    paymentDate: string
+    status: 'paid' | 'pending' | 'completed' | 'failed'
+}
+
+interface UserAccount {
+    sortCode?: string
+    accountNumber?: string
+    accountName?: string
+    bankName?: string
+    balance?: number
+    currency?: string
+    accountStatus?: 'active' | 'inactive'
+}
 
 interface DocumentItem {
     id: number
     name: string
     type: string
     fileUrl?: string
-    status?: string
+    status?: 'approved' | 'rejected' | 'pending' | 'under_review'
     documentId?: string
+    // Add reference-specific fields
+    referenceData?: {
+        fullName: string
+        email: string
+        position?: string
+        organization?: string
+        phone?: string
+    }
 }
 
 const DoctorDetails = () => {
-    const [doctor, setDoctor] = useState<any>(null)
+    // **Fixed State Declarations with Proper Types**
+    const [doctor, setDoctor] = useState<Doctor | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedDocument, setSelectedDocument] =
         useState<DocumentItem | null>(null)
     const [activeTab, setActiveTab] = useState('jobs')
     const [jobActions, setJobActions] = useState<{ [key: string]: boolean }>({})
     const [approvalLoading, setApprovalLoading] = useState(false)
+    const [declineLoading, setDeclineLoading] = useState(false)
 
     // Jobs pagination state
     const [currentJobsPage, setCurrentJobsPage] = useState(1)
@@ -120,7 +164,7 @@ const DoctorDetails = () => {
         }
     }, [dispatch, doctor?._id, activeTab])
 
-    // Fetch payment history when doctor is loaded or filter changes
+    // **Fixed useEffect with Proper Dependencies**
     useEffect(() => {
         if (doctor?._id && activeTab === 'jobs') {
             const timeframe = selectedFilter === 'This Week' ? 'week' : 'month'
@@ -141,6 +185,13 @@ const DoctorDetails = () => {
         jobsPerPage,
         activeTab,
     ])
+
+    // **Performance Optimization with useMemo**
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentJobsPage - 1) * jobsPerPage
+        const endIndex = startIndex + jobsPerPage
+        return paymentHistory.slice(startIndex, endIndex)
+    }, [paymentHistory, currentJobsPage, jobsPerPage])
 
     // Jobs pagination calculations using payment history data
     const totalJobsItems = paymentHistory.length
@@ -169,8 +220,8 @@ const DoctorDetails = () => {
         setCurrentJobsPage(1)
     }
 
-    // Generate page numbers for jobs
-    const getJobsPageNumbers = () => {
+    // **Memoized Page Numbers Generation**
+    const jobsPageNumbers = useMemo(() => {
         const pages: (number | string)[] = []
         const maxVisiblePages = 5
 
@@ -207,6 +258,16 @@ const DoctorDetails = () => {
         }
 
         return pages
+    }, [currentJobsPage, totalJobsPages])
+
+    // **Input Validation Function**
+    const validateDocumentUrl = (url: string): boolean => {
+        try {
+            new URL(url)
+            return url.startsWith('https://') || url.startsWith('http://')
+        } catch {
+            return false
+        }
     }
 
     // Enhanced file matching function
@@ -229,20 +290,67 @@ const DoctorDetails = () => {
         })
     }
 
-    // Enhanced handleViewDocument to support both API documents and modal with PDF viewer
+    // **Enhanced handleViewDocument to support Professional References**
     const handleViewDocument = (
         document: any,
         fileUrl?: string,
         documentId?: string,
     ): void => {
-        setSelectedDocument({
-            id: document.id || Math.random(),
-            name: document.name || document.label || document.title,
-            type: document.type || 'PDF',
-            fileUrl: fileUrl,
-            status: document.status,
-            documentId: documentId,
-        })
+        // Check if this is a Professional Reference document
+        const isProfessionalReference =
+            document.content?.documentType === 'Professional References' ||
+            document.title?.toLowerCase().includes('professional reference')
+
+        if (isProfessionalReference) {
+            // Extract reference data from document content
+            const referenceData = {
+                fullName:
+                    document.content?.fullName ||
+                    document.content?.referenceName ||
+                    'N/A',
+                email:
+                    document.content?.email ||
+                    document.content?.referenceEmail ||
+                    'N/A',
+                position:
+                    document.content?.position ||
+                    document.content?.jobTitle ||
+                    '',
+                organization:
+                    document.content?.organization ||
+                    document.content?.company ||
+                    '',
+                phone:
+                    document.content?.phone ||
+                    document.content?.phoneNumber ||
+                    '',
+            }
+
+            setSelectedDocument({
+                id: document.id || Math.random(),
+                name: document.name || document.label || document.title,
+                type: 'Professional Reference',
+                status: document.status,
+                documentId: documentId,
+                referenceData: referenceData,
+            })
+        } else {
+            // Handle regular documents with PDF files
+            if (fileUrl && !validateDocumentUrl(fileUrl)) {
+                console.error('Invalid document URL:', fileUrl)
+                return
+            }
+
+            setSelectedDocument({
+                id: document.id || Math.random(),
+                name: document.name || document.label || document.title,
+                type: document.type || 'PDF',
+                fileUrl: fileUrl,
+                status: document.status,
+                documentId: documentId,
+            })
+        }
+
         setIsModalOpen(true)
     }
 
@@ -292,7 +400,7 @@ const DoctorDetails = () => {
         }
 
         try {
-            setApprovalLoading(true)
+            setDeclineLoading(true)
             await apiApproveRejectDocument(
                 selectedDocument.documentId,
                 'rejected',
@@ -314,7 +422,7 @@ const DoctorDetails = () => {
         } catch (error) {
             console.error('Error rejecting document:', error)
         } finally {
-            setApprovalLoading(false)
+            setDeclineLoading(false)
         }
     }
 
@@ -333,8 +441,8 @@ const DoctorDetails = () => {
         console.log('Marking job as paid:', jobId)
     }
 
-    // Format date helper
-    const formatDate = (dateString: string) => {
+    // **Enhanced Format Date Helper with Error Handling**
+    const formatDate = (dateString: string): string => {
         if (!dateString) return 'N/A'
         try {
             const date = new Date(dateString)
@@ -345,6 +453,7 @@ const DoctorDetails = () => {
                 year: 'numeric',
             })
         } catch (error) {
+            console.error('Date formatting error:', error)
             return 'N/A'
         }
     }
@@ -354,52 +463,49 @@ const DoctorDetails = () => {
         return `${amount} ${currency}`
     }
 
+    // **Consolidated Loading State**
+    const isLoading = paymentLoading || documentsLoading || userAccountLoading
+
     if (!doctor) {
         return (
             <div className="p-4">
                 <div className="flex items-center justify-center h-64">
-                    <div className="text-gray-500">
-                        Loading doctor details...
-                    </div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
                 </div>
             </div>
         )
     }
 
-    const getStatusBadge = (status) => {
+    const getStatusBadge = (status: string) => {
         switch (status) {
             case 'approved':
                 return {
-                    className:
-                        'bg-green-100 text-green-800 border border-green-200',
+                    className: 'text-[#34C759] border border-[#34C759]',
                     text: 'Approved',
                 }
             case 'rejected':
                 return {
-                    className: 'bg-red-100 text-red-800 border border-red-200',
+                    className: ' text-red-800 border border-red-200',
                     text: 'Rejected',
                 }
             case 'pending':
                 return {
-                    className:
-                        'bg-yellow-100 text-yellow-800 border border-yellow-200',
+                    className: ' text-[#FF9500] border border-[#FF9500]',
                     text: 'Pending',
                 }
             case 'under_review':
                 return {
-                    className:
-                        'bg-blue-100 text-blue-800 border border-blue-200',
+                    className: ' text-blue-800 border border-blue-200',
                     text: 'Under Review',
                 }
             case 'accepted':
                 return {
-                    className:
-                        'bg-green-100 text-green-800 border border-green-200',
+                    className: 'text-[#34C759] border border-[#34C759]',
                     text: 'Accepted',
                 }
             case 'declined':
                 return {
-                    className: 'bg-red-100 text-red-800 border border-red-200',
+                    className: 'text-[#FF3B30] border border-[#FF3B30]',
                     text: 'Declined',
                 }
             default:
@@ -418,6 +524,7 @@ const DoctorDetails = () => {
                 <button
                     className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
                     onClick={() => navigate(-1)}
+                    aria-label="Go back to previous page"
                 >
                     <IoMdArrowRoundBack size={24} />
                     <span className="text-lg font-medium">Doctor Details</span>
@@ -694,9 +801,7 @@ const DoctorDetails = () => {
                             {/* Loading State */}
                             {paymentLoading ? (
                                 <div className="flex items-center justify-center h-64">
-                                    <div className="text-gray-500">
-                                        Loading payment history...
-                                    </div>
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
                                 </div>
                             ) : (
                                 <div className="bg-white">
@@ -879,7 +984,7 @@ const DoctorDetails = () => {
 
                                         {/* Page numbers */}
                                         <div className="flex items-center gap-1">
-                                            {getJobsPageNumbers().map(
+                                            {jobsPageNumbers.map(
                                                 (page, index) => (
                                                     <React.Fragment key={index}>
                                                         {page === '...' ? (
@@ -929,7 +1034,7 @@ const DoctorDetails = () => {
                         </div>
                     )}
 
-                    {/* Documents List with Fixed File Matching */}
+                    {/* **Enhanced Documents List with Professional References Support** */}
                     {activeTab === 'documents' && (
                         <div className="space-y-3">
                             {/* Error Display */}
@@ -954,9 +1059,7 @@ const DoctorDetails = () => {
                             {/* Loading State */}
                             {documentsLoading ? (
                                 <div className="flex items-center justify-center h-64">
-                                    <div className="text-gray-500">
-                                        Loading documents...
-                                    </div>
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
                                 </div>
                             ) : documents.length === 0 ? (
                                 <div className="flex items-center justify-center h-64">
@@ -965,133 +1068,148 @@ const DoctorDetails = () => {
                                     </div>
                                 </div>
                             ) : (
-                                // Fixed Documents Display with Proper File Matching
-                                documents.flatMap((doc) =>
-                                    doc.content.documents.map((item, index) => {
-                                        const statusBadge = getStatusBadge(
-                                            doc.status,
-                                        )
+                                // Enhanced mapping with Professional References support
+                                documents.map((doc, index) => {
+                                    const statusBadge = getStatusBadge(
+                                        doc.status,
+                                    )
+                                    const correspondingFile = doc.files?.[0]
+                                    const isProfessionalReference =
+                                        doc.content?.documentType ===
+                                            'Professional References' ||
+                                        doc.title
+                                            ?.toLowerCase()
+                                            .includes('professional reference')
 
-                                        // Use the enhanced file matching function
-                                        const correspondingFile =
-                                            findCorrespondingFile(
-                                                item,
-                                                doc.files,
-                                            )
+                                    return (
+                                        <div
+                                            key={`${doc._id}-${index}`}
+                                            className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-sm transition-shadow"
+                                        >
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-800">
+                                                    {doc.title}
+                                                </p>
 
-                                        return (
-                                            <div
-                                                key={`${doc._id}-${index}`}
-                                                className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-sm transition-shadow"
-                                            >
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-medium text-gray-800">
-                                                        {item.label ||
-                                                            item.title}
+                                                {/* Show document type */}
+                                                {doc.content?.documentType && (
+                                                    <p className="text-xs text-gray-600 mt-1">
+                                                        Type:{' '}
+                                                        {
+                                                            doc.content
+                                                                .documentType
+                                                        }
                                                     </p>
+                                                )}
 
-                                                    {/* Show additional info for reference documents */}
-                                                    {item.content.fullName && (
+                                                {/* Show reference-specific info for Professional References */}
+                                                {isProfessionalReference &&
+                                                    doc.content?.fullName && (
                                                         <p className="text-xs text-gray-600 mt-1">
-                                                            Contact:{' '}
+                                                            Fullname :&nbsp;
                                                             {
-                                                                item.content
+                                                                doc.content
                                                                     .fullName
-                                                            }{' '}
-                                                            (
-                                                            {item.content.email}
-                                                            )
-                                                        </p>
-                                                    )}
-
-                                                    {/* Show expiry date if available */}
-                                                    {item.content
-                                                        .expiryDate && (
-                                                        <p className="text-xs text-gray-600 mt-1">
-                                                            Expires:{' '}
-                                                            {formatDate(
-                                                                item.content
-                                                                    .expiryDate,
-                                                            )}
-                                                        </p>
-                                                    )}
-
-                                                    {/* Show document title if available */}
-                                                    {item.content
-                                                        .documentTitle && (
-                                                        <p className="text-xs text-gray-600 mt-1">
-                                                            Title:{' '}
-                                                            {
-                                                                item.content
-                                                                    .documentTitle
                                                             }
                                                         </p>
                                                     )}
-                                                </div>
 
-                                                <div className="flex items-center gap-3">
-                                                    {/* Status Badge */}
-                                                    <span
-                                                        className={`px-3 py-1 rounded-full text-xs font-medium ${statusBadge.className}`}
-                                                    >
-                                                        {statusBadge.text}
-                                                    </span>
+                                                {doc.content?.email && (
+                                                    <p className="text-xs text-gray-600 mt-1">
+                                                        Email :&nbsp;
+                                                        {doc.content.email}
+                                                    </p>
+                                                )}
 
-                                                    {/* Conditional View Button based on document type */}
-                                                    {item.content.fullName ? (
-                                                        // For reference documents (no PDF), show contact info
-                                                        <div className="bg-gray-100 px-4 py-2 rounded text-sm text-gray-600">
-                                                            Contact Info
-                                                        </div>
-                                                    ) : correspondingFile ? (
-                                                        // For documents with PDF files
-                                                        <button
-                                                            onClick={() => {
-                                                                handleViewDocument(
-                                                                    {
-                                                                        id: index,
-                                                                        name:
-                                                                            item.label ||
-                                                                            item.title,
-                                                                        type: 'PDF',
-                                                                        status: doc.status,
-                                                                    },
-                                                                    correspondingFile.url,
-                                                                    doc._id,
-                                                                )
-                                                            }}
-                                                            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors w-full sm:w-auto"
-                                                        >
-                                                            View PDF
-                                                        </button>
-                                                    ) : (
-                                                        // For documents without files
-                                                        <div className="bg-gray-100 px-4 py-2 rounded text-sm text-gray-600">
-                                                            No File
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                {/* Show submission date */}
+                                                {doc.content?.submittedAt && (
+                                                    <p className="text-xs text-gray-600 mt-1">
+                                                        Submitted:{' '}
+                                                        {formatDate(
+                                                            doc.content
+                                                                .submittedAt,
+                                                        )}
+                                                    </p>
+                                                )}
                                             </div>
-                                        )
-                                    }),
-                                )
+
+                                            <div className="flex items-center gap-3">
+                                                {/* Status Badge */}
+                                                <span
+                                                    className={`px-3 py-1 rounded-full text-xs font-medium ${statusBadge.className}`}
+                                                >
+                                                    {statusBadge.text}
+                                                </span>
+
+                                                {/* View Button - Different handling for Professional References */}
+                                                {isProfessionalReference ? (
+                                                    <button
+                                                        onClick={() => {
+                                                            handleViewDocument(
+                                                                {
+                                                                    id: index,
+                                                                    name: doc.title,
+                                                                    type: 'Professional Reference',
+                                                                    status: doc.status,
+                                                                    content:
+                                                                        doc.content,
+                                                                },
+                                                                undefined,
+                                                                doc._id,
+                                                            )
+                                                        }}
+                                                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors w-full sm:w-auto"
+                                                    >
+                                                        View
+                                                    </button>
+                                                ) : correspondingFile ? (
+                                                    <button
+                                                        onClick={() => {
+                                                            handleViewDocument(
+                                                                {
+                                                                    id: index,
+                                                                    name: doc.title,
+                                                                    type: 'PDF',
+                                                                    status: doc.status,
+                                                                },
+                                                                correspondingFile.url,
+                                                                doc._id,
+                                                            )
+                                                        }}
+                                                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors w-full sm:w-auto"
+                                                    >
+                                                        View PDF
+                                                    </button>
+                                                ) : (
+                                                    <div className="bg-gray-100 px-4 py-2 rounded text-sm text-gray-600">
+                                                        No File
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })
                             )}
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Modal with PDF Viewer and Accept/Decline */}
+            {/* **Enhanced Modal with Professional References Support** */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-[#2155A329] bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] p-5 max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between p-4">
                             <h3 className="text-[17px] font-semibold text-[#272D37]">
-                                View Document
+                                {selectedDocument?.type ===
+                                'Professional Reference'
+                                    ? 'View Professional Reference'
+                                    : 'View Document'}
                             </h3>
                             <button
                                 onClick={handleCloseModal}
                                 className="text-gray-400 hover:text-gray-600 transition-colors"
+                                aria-label="Close modal"
                             >
                                 <X className="w-5 h-5" color="#0A1629" />
                             </button>
@@ -1110,74 +1228,194 @@ const DoctorDetails = () => {
                                 />
                             </div>
 
-                            {/* PDF Link Section - Clickable link to open in new tab */}
-                            {selectedDocument?.fileUrl && (
-                                <div className="mb-4">
+                            {/* Professional Reference Preview - Shows in place of PDF preview */}
+                            {selectedDocument?.type ===
+                                'Professional Reference' &&
+                            selectedDocument?.referenceData ? (
+                                <div className="mb-6">
                                     <label className="block text-[13px] font-medium text-[#344054] mb-2">
-                                        PDF Document
+                                        Reference Information Preview
                                     </label>
-                                    <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
-                                        <div className="flex items-center gap-2 flex-1">
-                                            <span className="text-sm font-bold text-[#000000]">
-                                                {selectedDocument?.type ||
-                                                    'PDF'}
-                                            </span>
-                                            <span className="text-[#25324B] text-[13px] font-[500]">
-                                                Click to view
-                                            </span>
-                                        </div>
-                                        <button
-                                            onClick={() =>
-                                                window.open(
-                                                    selectedDocument.fileUrl,
-                                                    '_blank',
-                                                )
-                                            }
-                                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
-                                        >
-                                            <ExternalLink className="w-4 h-4" />
-                                            Open PDF
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
+                                    <div className="border border-gray-200 rounded-lg h-[500px] bg-gray-50 p-6 overflow-y-auto">
+                                        <div className="space-y-6">
+                                            {/* Full Name - Prominent Display */}
+                                            <div className="text-center border-b border-gray-300 pb-4">
+                                                <h2 className="text-2xl font-bold text-[#25324B] mb-2">
+                                                    {
+                                                        selectedDocument
+                                                            .referenceData
+                                                            .fullName
+                                                    }
+                                                </h2>
+                                                <p className="text-[#7C8493] text-sm">
+                                                    Professional Reference
+                                                </p>
+                                            </div>
 
-                            {/* PDF Viewer Section */}
-                            {selectedDocument?.fileUrl ? (
-                                <div className="mb-6">
-                                    <label className="block text-[13px] font-medium text-[#344054] mb-2">
-                                        Document Preview
-                                    </label>
-                                    <div className="border border-gray-200 rounded-lg h-[500px] bg-gray-50">
-                                        <iframe
-                                            src={`${selectedDocument.fileUrl}#view=fitH`}
-                                            className="w-full h-full rounded-lg"
-                                            title="Document Preview"
-                                            style={{ border: 'none' }}
-                                        />
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="mb-6">
-                                    <div className="flex items-center justify-center px-3 py-8 border border-gray-200 rounded-lg bg-gray-50">
-                                        <div className="text-center">
-                                            <div className="flex items-center gap-4">
-                                                <span className="text-sm font-bold text-[#000000]">
-                                                    {selectedDocument?.type ||
-                                                        'PDF'}
-                                                </span>
-                                                <span className="text-[#25324B] text-[13px] font-[500]">
-                                                    Document not available for
-                                                    preview
-                                                </span>
-                                                <IoIosArrowForward
-                                                    color="#25324B"
-                                                    size={20}
-                                                />
+                                            {/* Contact Information */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {/* Email */}
+                                                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <CiMail className="text-[#0F9297] text-xl" />
+                                                        <h3 className="text-[#25324B] font-semibold text-sm">
+                                                            Email Address
+                                                        </h3>
+                                                    </div>
+                                                    <p className="text-[#25324B] text-lg font-medium break-all">
+                                                        {
+                                                            selectedDocument
+                                                                .referenceData
+                                                                .email
+                                                        }
+                                                    </p>
+                                                </div>
+
+                                                {/* Phone (if available) */}
+                                                {selectedDocument.referenceData
+                                                    .phone && (
+                                                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <BsPhone className="text-[#0F9297] text-xl" />
+                                                            <h3 className="text-[#25324B] font-semibold text-sm">
+                                                                Phone Number
+                                                            </h3>
+                                                        </div>
+                                                        <p className="text-[#25324B] text-lg font-medium">
+                                                            {
+                                                                selectedDocument
+                                                                    .referenceData
+                                                                    .phone
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Professional Details */}
+                                            <div className="space-y-4">
+                                                {/* Position */}
+                                                {selectedDocument.referenceData
+                                                    .position && (
+                                                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                                        <h3 className="text-[#7C8493] text-sm font-medium mb-1">
+                                                            Position
+                                                        </h3>
+                                                        <p className="text-[#25324B] text-base font-medium">
+                                                            {
+                                                                selectedDocument
+                                                                    .referenceData
+                                                                    .position
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Organization */}
+                                                {selectedDocument.referenceData
+                                                    .organization && (
+                                                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                                        <h3 className="text-[#7C8493] text-sm font-medium mb-1">
+                                                            Organization
+                                                        </h3>
+                                                        <p className="text-[#25324B] text-base font-medium">
+                                                            {
+                                                                selectedDocument
+                                                                    .referenceData
+                                                                    .organization
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Reference Note */}
+                                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-6">
+                                                <p className="text-blue-800 text-sm text-center">
+                                                    This is a professional
+                                                    reference contact for
+                                                    verification purposes.
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            ) : (
+                                /* Regular PDF handling */
+                                <>
+                                    {/* PDF Link Section */}
+                                    {selectedDocument?.fileUrl && (
+                                        <div className="mb-4">
+                                            <label className="block text-[13px] font-medium text-[#344054] mb-2">
+                                                PDF Document
+                                            </label>
+                                            <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                                <div className="flex items-center gap-2 flex-1">
+                                                    <span className="text-sm font-bold text-[#000000]">
+                                                        {selectedDocument?.type ||
+                                                            'PDF'}
+                                                    </span>
+                                                    <span className="text-[#25324B] text-[13px] font-[500]">
+                                                        Click to view
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={() =>
+                                                        window.open(
+                                                            selectedDocument.fileUrl,
+                                                            '_blank',
+                                                            'noopener,noreferrer',
+                                                        )
+                                                    }
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
+                                                >
+                                                    <ExternalLink className="w-4 h-4" />
+                                                    Open PDF
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* PDF Viewer */}
+                                    {selectedDocument?.fileUrl ? (
+                                        <div className="mb-6">
+                                            <label className="block text-[13px] font-medium text-[#344054] mb-2">
+                                                Document Preview
+                                            </label>
+                                            <div className="border border-gray-200 rounded-lg h-[500px] bg-gray-50">
+                                                <iframe
+                                                    src={`${selectedDocument.fileUrl}#view=fitH`}
+                                                    className="w-full h-full rounded-lg"
+                                                    title="Document Preview"
+                                                    sandbox="allow-same-origin allow-scripts"
+                                                    style={{ border: 'none' }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="mb-6">
+                                            <div className="flex items-center justify-center px-3 py-8 border border-gray-200 rounded-lg bg-gray-50">
+                                                <div className="text-center">
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="text-sm font-bold text-[#000000]">
+                                                            {selectedDocument?.type ||
+                                                                'PDF'}
+                                                        </span>
+                                                        <span className="text-[#25324B] text-[13px] font-[500]">
+                                                            Document not
+                                                            available for
+                                                            preview
+                                                        </span>
+                                                        <IoIosArrowForward
+                                                            color="#25324B"
+                                                            size={20}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
 
                             {/* Document Status */}
@@ -1204,26 +1442,28 @@ const DoctorDetails = () => {
                                 </div>
                             )}
 
-                            {/* Accept/Decline Buttons with API Integration */}
+                            {/* Accept/Decline Buttons */}
                             <div className="flex flex-col sm:flex-row gap-3">
-                                <button
+                                <Button
+                                    variant="solid"
                                     onClick={handleAccept}
                                     disabled={approvalLoading}
-                                    className="flex-1 bg-[#0F9297] h-[45px] text-white rounded-md font-medium transition-colors hover:bg-[#0d7a7f] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 h-11 text-white rounded-md font-medium transition-colors hover:bg-[#0d7a7f] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {approvalLoading
                                         ? 'Processing...'
                                         : 'Accept Document'}
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     onClick={handleDecline}
-                                    disabled={approvalLoading}
-                                    className="flex-1 bg-[#DC3454] h-[45px] text-white rounded-md font-medium transition-colors hover:bg-[#c42d49] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={declineLoading}
+                                    className="flex-1 h-11 text-white rounded-md font-medium transition-colors hover:bg-[#c42d49] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                    style={{ background: '#DC3454' }}
                                 >
-                                    {approvalLoading
+                                    {declineLoading
                                         ? 'Processing...'
                                         : 'Decline Document'}
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>
