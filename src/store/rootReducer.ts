@@ -12,8 +12,10 @@ import jobReducer from '../views/sales/ProductForm/store/JobsSlice'
 import settingsReducer from '../views/account/Settings/store/SettingsSlice'
 import projectDashboardReducer, { ProjectDashboardState } from '../views/project/ProjectDashboard/store/projectDashboardSlice'
 import kycFormReducer, { KycFormState } from '../views/account/KycForm/store/kycFormSlice'
-import tempDataReducer from '../views/account/KycForm/store/tempDataSlice' // Added this import
+import tempDataReducer from '../views/account/KycForm/store/tempDataSlice'
 import salesProductListReducer from '../views/sales/ProductList/store/productListSlice'
+import documentReducer from "../views/account/KycForm/store/documentSlice" // ✅ KYC document reducer
+import documentsReducer from '../views/crm/Doctor/store/documentSlice' // ✅ NEW: Main documents reducer
 import RtkQueryService from '@/services/RtkQueryService'
 import adminDashboardReducer, { AdminDashboardState } from '@/views/crm/CrmDashboard/store'
 
@@ -282,6 +284,50 @@ interface TempDataState {
     personalInformation: any | null // Replace 'any' with your PersonalInformation type
 }
 
+// ✅ KYC Document state interface (existing)
+interface DocumentState {
+  documents: Array<{
+    id: string
+    title: string
+    content?: string
+    files?: string[]
+    createdAt: string
+    updatedAt: string
+    status: 'draft' | 'published' | 'archived'
+  }>
+  loading: boolean
+  error: string | null
+  currentDocument: any | null
+  uploadProgress: number
+}
+
+// ✅ NEW: Main Documents state interface
+interface DocumentsState {
+  documents: Array<{
+    id: string
+    title: string
+    type: string
+    status: 'pending' | 'approved' | 'rejected' | 'under_review'
+    createdAt: string
+    updatedAt: string
+    userId: string
+    fileUrl?: string
+    metadata?: Record<string, any>
+  }>
+  loading: boolean
+  error: string | null
+  pagination: {
+    currentPage: number
+    totalPages: number
+    totalItems: number
+    limit: number
+  }
+  filters: {
+    search: string
+    status: string
+  }
+}
+
 export type RootState = {
     auth: AuthState
     base: BaseState
@@ -297,8 +343,10 @@ export type RootState = {
     settings: SettingsState
     projectDashboard: ProjectDashboardState
     accountDetailForm: KycFormState
-    tempData: TempDataState // ✅ Added this line
+    tempData: TempDataState
     salesProductList: SalesProductListState
+    document: DocumentState // ✅ KYC document state
+    documents: DocumentsState // ✅ NEW: Main documents state
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
     [RtkQueryService.reducerPath]: any
@@ -322,9 +370,11 @@ const staticReducers = {
     settings: settingsReducer,
     projectDashboard: projectDashboardReducer,
     accountDetailForm: kycFormReducer,
-    tempData: tempDataReducer, // ✅ Added this line
+    tempData: tempDataReducer,
     adminDashboard: adminDashboardReducer,
     salesProductList: salesProductListReducer,
+    document: documentReducer, // ✅ KYC document reducer
+    documents: documentsReducer, // ✅ NEW: Main documents reducer
     [RtkQueryService.reducerPath]: RtkQueryService.reducer,
 }
 

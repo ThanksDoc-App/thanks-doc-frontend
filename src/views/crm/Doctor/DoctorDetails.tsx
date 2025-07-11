@@ -5,6 +5,7 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronDown,
+    ExternalLink,
 } from 'lucide-react'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import { FaStar } from 'react-icons/fa'
@@ -26,29 +27,24 @@ import {
     clearPaymentHistoryError,
     clearUserAccountError,
 } from './store/doctorSlice'
+import {
+    getDocumentsByUser,
+    selectDocuments,
+    selectDocumentsLoading,
+    selectDocumentsError,
+    clearError,
+} from './store/documentSlice'
+import { apiApproveRejectDocument } from '@/services/CrmService'
 import { Button } from '@/components/ui'
 import DoctorTool from './components/DoctorTool'
-import { log } from 'console'
-
-const documents = [
-    {
-        id: 1,
-        name: 'Right to Work in the UK (Passport/Visa if applicable)',
-        type: 'PDF',
-    },
-    { id: 2, name: 'GP CV', type: 'PDF' },
-    { id: 3, name: 'Occupational Health Clearance', type: 'PDF' },
-    { id: 4, name: 'Professional References – 2 references', type: 'PDF' },
-    { id: 5, name: 'Appraisal & Revalidation Evidence', type: 'PDF' },
-    { id: 6, name: 'Mandatory Training Certificates', type: 'PDF' },
-    { id: 7, name: 'DBS Certificate', type: 'PDF' },
-    { id: 8, name: 'Medical Indemnity Insurance', type: 'PDF' },
-]
 
 interface DocumentItem {
     id: number
     name: string
     type: string
+    fileUrl?: string
+    status?: string
+    documentId?: string
 }
 
 const DoctorDetails = () => {
@@ -58,6 +54,7 @@ const DoctorDetails = () => {
         useState<DocumentItem | null>(null)
     const [activeTab, setActiveTab] = useState('jobs')
     const [jobActions, setJobActions] = useState<{ [key: string]: boolean }>({})
+    const [approvalLoading, setApprovalLoading] = useState(false)
 
     // Jobs pagination state
     const [currentJobsPage, setCurrentJobsPage] = useState(1)
@@ -79,12 +76,18 @@ const DoctorDetails = () => {
     const paymentLoading = useAppSelector(selectPaymentHistoryLoading)
     const paymentError = useAppSelector(selectPaymentHistoryError)
 
-    // ✅ User account selectors
+    // User account selectors
     const userAccount = useAppSelector(selectUserAccount)
     const userAccountLoading = useAppSelector(selectUserAccountLoading)
     const userAccountError = useAppSelector(selectUserAccountError)
 
+    // Documents Redux selectors
+    const documents = useAppSelector(selectDocuments)
+    const documentsLoading = useAppSelector(selectDocumentsLoading)
+    const documentsError = useAppSelector(selectDocumentsError)
+
     console.log('userAccount', userAccount)
+    console.log('documents', documents)
 
     useEffect(() => {
         if (location.state?.doctorData) {
@@ -97,12 +100,25 @@ const DoctorDetails = () => {
         }
     }, [location.state, id, doctorsData])
 
-    // ✅ Fetch user account when doctor is loaded
+    // Fetch user account when doctor is loaded
     useEffect(() => {
         if (doctor?._id) {
             dispatch(fetchUserAccount(doctor._id))
         }
     }, [dispatch, doctor?._id])
+
+    // Fetch documents when documents tab is active
+    useEffect(() => {
+        if (doctor?._id && activeTab === 'documents') {
+            dispatch(
+                getDocumentsByUser({
+                    userId: doctor._id,
+                    page: 1,
+                    limit: 10,
+                }),
+            )
+        }
+    }, [dispatch, doctor?._id, activeTab])
 
     // Fetch payment history when doctor is loaded or filter changes
     useEffect(() => {
@@ -193,8 +209,40 @@ const DoctorDetails = () => {
         return pages
     }
 
-    const handleViewDocument = (document: DocumentItem): void => {
-        setSelectedDocument(document)
+    // Enhanced file matching function
+    const findCorrespondingFile = (item: any, files: any[]) => {
+        if (!item.content?.documentRef || !files) return null
+
+        // Extract the base filename without extension
+        const documentRef = item.content.documentRef
+        const baseRef = documentRef.replace('.pdf', '')
+
+        // Find file that contains this base reference
+        return files.find((file) => {
+            if (!file.public_id) return false
+
+            // Extract filename from public_id path
+            const fileName = file.public_id.split('/').pop() || ''
+
+            // Check if the filename contains the base reference
+            return fileName.includes(baseRef)
+        })
+    }
+
+    // Enhanced handleViewDocument to support both API documents and modal with PDF viewer
+    const handleViewDocument = (
+        document: any,
+        fileUrl?: string,
+        documentId?: string,
+    ): void => {
+        setSelectedDocument({
+            id: document.id || Math.random(),
+            name: document.name || document.label || document.title,
+            type: document.type || 'PDF',
+            fileUrl: fileUrl,
+            status: document.status,
+            documentId: documentId,
+        })
         setIsModalOpen(true)
     }
 
@@ -203,12 +251,71 @@ const DoctorDetails = () => {
         setSelectedDocument(null)
     }
 
-    const handleAccept = () => {
-        handleCloseModal()
+    // Enhanced approve/reject functions with API integration
+    const handleAccept = async () => {
+        if (!selectedDocument?.documentId) {
+            console.error('No document ID available for approval')
+            return
+        }
+
+        try {
+            setApprovalLoading(true)
+            await apiApproveRejectDocument(
+                selectedDocument.documentId,
+                'approved',
+            )
+
+            // Refresh documents after approval
+            if (doctor?._id) {
+                dispatch(
+                    getDocumentsByUser({
+                        userId: doctor._id,
+                        page: 1,
+                        limit: 10,
+                    }),
+                )
+            }
+
+            console.log('Document approved successfully')
+            handleCloseModal()
+        } catch (error) {
+            console.error('Error approving document:', error)
+        } finally {
+            setApprovalLoading(false)
+        }
     }
 
-    const handleDecline = () => {
-        handleCloseModal()
+    const handleDecline = async () => {
+        if (!selectedDocument?.documentId) {
+            console.error('No document ID available for rejection')
+            return
+        }
+
+        try {
+            setApprovalLoading(true)
+            await apiApproveRejectDocument(
+                selectedDocument.documentId,
+                'rejected',
+            )
+
+            // Refresh documents after rejection
+            if (doctor?._id) {
+                dispatch(
+                    getDocumentsByUser({
+                        userId: doctor._id,
+                        page: 1,
+                        limit: 10,
+                    }),
+                )
+            }
+
+            console.log('Document rejected successfully')
+            handleCloseModal()
+        } catch (error) {
+            console.error('Error rejecting document:', error)
+        } finally {
+            setApprovalLoading(false)
+        }
     }
 
     const handleJobActionMenu = (jobId: string) => {
@@ -259,7 +366,50 @@ const DoctorDetails = () => {
         )
     }
 
-    // console.log("bankDetails", bankDetails);
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case 'approved':
+                return {
+                    className:
+                        'bg-green-100 text-green-800 border border-green-200',
+                    text: 'Approved',
+                }
+            case 'rejected':
+                return {
+                    className: 'bg-red-100 text-red-800 border border-red-200',
+                    text: 'Rejected',
+                }
+            case 'pending':
+                return {
+                    className:
+                        'bg-yellow-100 text-yellow-800 border border-yellow-200',
+                    text: 'Pending',
+                }
+            case 'under_review':
+                return {
+                    className:
+                        'bg-blue-100 text-blue-800 border border-blue-200',
+                    text: 'Under Review',
+                }
+            case 'accepted':
+                return {
+                    className:
+                        'bg-green-100 text-green-800 border border-green-200',
+                    text: 'Accepted',
+                }
+            case 'declined':
+                return {
+                    className: 'bg-red-100 text-red-800 border border-red-200',
+                    text: 'Declined',
+                }
+            default:
+                return {
+                    className:
+                        'bg-gray-100 text-gray-800 border border-gray-200',
+                    text: 'Unknown',
+                }
+        }
+    }
 
     return (
         <div className="p-4">
@@ -358,7 +508,7 @@ const DoctorDetails = () => {
                         </div>
                     </div>
 
-                    {/* ✅ Enhanced Bank Details Section with Real Data */}
+                    {/* Enhanced Bank Details Section with Real Data */}
                     <div className="mt-3">
                         <div className="flex items-center justify-between mb-2">
                             <p className="text-[#25324B] text-[14px] font-[600]">
@@ -439,23 +589,6 @@ const DoctorDetails = () => {
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Account Creation Date */}
-                                {/* {userAccount.createdAt && (
-                                    <div className="flex gap-3 mt-3">
-                                        <BsPhone />
-                                        <div>
-                                            <p className="text-[#7C8493] text-[11.5px] font-[400]">
-                                                Account Created
-                                            </p>
-                                            <p className="text-[#25324B] text-[11.5px]">
-                                                {formatDate(
-                                                    userAccount.createdAt,
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )} */}
                             </>
                         ) : !userAccountLoading ? (
                             <div className="text-[#7C8493] text-[11.5px] italic">
@@ -796,36 +929,162 @@ const DoctorDetails = () => {
                         </div>
                     )}
 
-                    {/* Documents List */}
+                    {/* Documents List with Fixed File Matching */}
                     {activeTab === 'documents' && (
                         <div className="space-y-3">
-                            {documents.map((document) => (
-                                <div
-                                    key={document.id}
-                                    className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-sm transition-shadow"
-                                >
-                                    <p className="text-sm font-medium text-gray-800 flex-1">
-                                        {document.name}
-                                    </p>
-                                    <button
-                                        onClick={() =>
-                                            handleViewDocument(document)
-                                        }
-                                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors w-full sm:w-auto"
-                                    >
-                                        View
-                                    </button>
+                            {/* Error Display */}
+                            {documentsError && (
+                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-red-600 text-sm">
+                                            {documentsError}
+                                        </span>
+                                        <button
+                                            onClick={() =>
+                                                dispatch(clearError())
+                                            }
+                                            className="text-red-400 hover:text-red-600"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
-                            ))}
+                            )}
+
+                            {/* Loading State */}
+                            {documentsLoading ? (
+                                <div className="flex items-center justify-center h-64">
+                                    <div className="text-gray-500">
+                                        Loading documents...
+                                    </div>
+                                </div>
+                            ) : documents.length === 0 ? (
+                                <div className="flex items-center justify-center h-64">
+                                    <div className="text-gray-500">
+                                        No documents found for this doctor
+                                    </div>
+                                </div>
+                            ) : (
+                                // Fixed Documents Display with Proper File Matching
+                                documents.flatMap((doc) =>
+                                    doc.content.documents.map((item, index) => {
+                                        const statusBadge = getStatusBadge(
+                                            doc.status,
+                                        )
+
+                                        // Use the enhanced file matching function
+                                        const correspondingFile =
+                                            findCorrespondingFile(
+                                                item,
+                                                doc.files,
+                                            )
+
+                                        return (
+                                            <div
+                                                key={`${doc._id}-${index}`}
+                                                className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-sm transition-shadow"
+                                            >
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-gray-800">
+                                                        {item.label ||
+                                                            item.title}
+                                                    </p>
+
+                                                    {/* Show additional info for reference documents */}
+                                                    {item.content.fullName && (
+                                                        <p className="text-xs text-gray-600 mt-1">
+                                                            Contact:{' '}
+                                                            {
+                                                                item.content
+                                                                    .fullName
+                                                            }{' '}
+                                                            (
+                                                            {item.content.email}
+                                                            )
+                                                        </p>
+                                                    )}
+
+                                                    {/* Show expiry date if available */}
+                                                    {item.content
+                                                        .expiryDate && (
+                                                        <p className="text-xs text-gray-600 mt-1">
+                                                            Expires:{' '}
+                                                            {formatDate(
+                                                                item.content
+                                                                    .expiryDate,
+                                                            )}
+                                                        </p>
+                                                    )}
+
+                                                    {/* Show document title if available */}
+                                                    {item.content
+                                                        .documentTitle && (
+                                                        <p className="text-xs text-gray-600 mt-1">
+                                                            Title:{' '}
+                                                            {
+                                                                item.content
+                                                                    .documentTitle
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex items-center gap-3">
+                                                    {/* Status Badge */}
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-xs font-medium ${statusBadge.className}`}
+                                                    >
+                                                        {statusBadge.text}
+                                                    </span>
+
+                                                    {/* Conditional View Button based on document type */}
+                                                    {item.content.fullName ? (
+                                                        // For reference documents (no PDF), show contact info
+                                                        <div className="bg-gray-100 px-4 py-2 rounded text-sm text-gray-600">
+                                                            Contact Info
+                                                        </div>
+                                                    ) : correspondingFile ? (
+                                                        // For documents with PDF files
+                                                        <button
+                                                            onClick={() => {
+                                                                handleViewDocument(
+                                                                    {
+                                                                        id: index,
+                                                                        name:
+                                                                            item.label ||
+                                                                            item.title,
+                                                                        type: 'PDF',
+                                                                        status: doc.status,
+                                                                    },
+                                                                    correspondingFile.url,
+                                                                    doc._id,
+                                                                )
+                                                            }}
+                                                            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors w-full sm:w-auto"
+                                                        >
+                                                            View PDF
+                                                        </button>
+                                                    ) : (
+                                                        // For documents without files
+                                                        <div className="bg-gray-100 px-4 py-2 rounded text-sm text-gray-600">
+                                                            No File
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )
+                                    }),
+                                )
+                            )}
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Modal with PDF Viewer and Accept/Decline */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-[#2155A329] bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-[90vw] md:max-w-[45vw] md:w-[45vw] p-5 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] p-5 max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between p-4">
                             <h3 className="text-[17px] font-semibold text-[#272D37]">
                                 View Document
@@ -841,43 +1100,129 @@ const DoctorDetails = () => {
                         <div className="p-6 mt-[-20px]">
                             <div className="mb-4">
                                 <label className="block text-[13px] font-medium text-[#344054] mb-2">
-                                    Name
+                                    Document Name
                                 </label>
                                 <input
                                     type="text"
                                     value={selectedDocument?.name || ''}
                                     readOnly
-                                    className="w-full px-3 py-2 border border-[#D6DDEB] rounded-md text-[#25324B] text-[13px]"
+                                    className="w-full px-3 py-2 border border-[#D6DDEB] rounded-md text-[#25324B] text-[13px] bg-gray-50"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-between px-3 py-4 border border-gray-200 mb-6 w-fit">
-                                <div className="flex items-center gap-4 ">
-                                    <span className="text-sm font-bold text-[#000000]">
-                                        {selectedDocument?.type}
-                                    </span>
-                                    <span className="text-[#25324B] text-[13px] font-[500]">
-                                        View Document
-                                    </span>
-                                    <IoIosArrowForward
-                                        color="#25324B"
-                                        size={20}
-                                    />
+                            {/* PDF Link Section - Clickable link to open in new tab */}
+                            {selectedDocument?.fileUrl && (
+                                <div className="mb-4">
+                                    <label className="block text-[13px] font-medium text-[#344054] mb-2">
+                                        PDF Document
+                                    </label>
+                                    <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                        <div className="flex items-center gap-2 flex-1">
+                                            <span className="text-sm font-bold text-[#000000]">
+                                                {selectedDocument?.type ||
+                                                    'PDF'}
+                                            </span>
+                                            <span className="text-[#25324B] text-[13px] font-[500]">
+                                                Click to view
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() =>
+                                                window.open(
+                                                    selectedDocument.fileUrl,
+                                                    '_blank',
+                                                )
+                                            }
+                                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
+                                        >
+                                            <ExternalLink className="w-4 h-4" />
+                                            Open PDF
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
-                            <div className="flex flex-col sm:flex-row h-[90px] gap-3">
+                            {/* PDF Viewer Section */}
+                            {selectedDocument?.fileUrl ? (
+                                <div className="mb-6">
+                                    <label className="block text-[13px] font-medium text-[#344054] mb-2">
+                                        Document Preview
+                                    </label>
+                                    <div className="border border-gray-200 rounded-lg h-[500px] bg-gray-50">
+                                        <iframe
+                                            src={`${selectedDocument.fileUrl}#view=fitH`}
+                                            className="w-full h-full rounded-lg"
+                                            title="Document Preview"
+                                            style={{ border: 'none' }}
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="mb-6">
+                                    <div className="flex items-center justify-center px-3 py-8 border border-gray-200 rounded-lg bg-gray-50">
+                                        <div className="text-center">
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-sm font-bold text-[#000000]">
+                                                    {selectedDocument?.type ||
+                                                        'PDF'}
+                                                </span>
+                                                <span className="text-[#25324B] text-[13px] font-[500]">
+                                                    Document not available for
+                                                    preview
+                                                </span>
+                                                <IoIosArrowForward
+                                                    color="#25324B"
+                                                    size={20}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Document Status */}
+                            {selectedDocument?.status && (
+                                <div className="mb-4">
+                                    <label className="block text-[13px] font-medium text-[#344054] mb-2">
+                                        Current Status
+                                    </label>
+                                    <div className="flex items-center">
+                                        <span
+                                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                getStatusBadge(
+                                                    selectedDocument.status,
+                                                ).className
+                                            }`}
+                                        >
+                                            {
+                                                getStatusBadge(
+                                                    selectedDocument.status,
+                                                ).text
+                                            }
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Accept/Decline Buttons with API Integration */}
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 <button
                                     onClick={handleAccept}
-                                    className="flex-1 bg-[#0F9297] h-[40px] text-white rounded-md font-medium transition-colors"
+                                    disabled={approvalLoading}
+                                    className="flex-1 bg-[#0F9297] h-[45px] text-white rounded-md font-medium transition-colors hover:bg-[#0d7a7f] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Accept
+                                    {approvalLoading
+                                        ? 'Processing...'
+                                        : 'Accept Document'}
                                 </button>
                                 <button
                                     onClick={handleDecline}
-                                    className="flex-1 bg-[#DC3454] h-[40px] text-white rounded-md font-medium transition-colors"
+                                    disabled={approvalLoading}
+                                    className="flex-1 bg-[#DC3454] h-[45px] text-white rounded-md font-medium transition-colors hover:bg-[#c42d49] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Decline
+                                    {approvalLoading
+                                        ? 'Processing...'
+                                        : 'Decline Document'}
                                 </button>
                             </div>
                         </div>

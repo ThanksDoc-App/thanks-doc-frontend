@@ -32,6 +32,8 @@ type FormFieldsName = {
     name: string
 }
 
+type PaymentModalType = 'payment' | 'success' | 'failure' | null
+
 const PriceInput = (props: InputProps & { field: any }) => {
     return <Input {...props} value={props.field.value} suffix="GBP" />
 }
@@ -55,11 +57,12 @@ const NumericFormatInput = ({
 }
 
 const PricingFields = () => {
-    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+    const [modalType, setModalType] = useState<PaymentModalType>(null)
     const [createdJobId, setCreatedJobId] = useState<string | null>(null)
+    const [paymentDetails, setPaymentDetails] = useState<any>(null)
 
     // Get live form state
-    const { values, touched, errors, setFieldValue } =
+    const { values, touched, errors, setFieldValue, resetForm } =
         useFormikContext<FormFieldsName>()
 
     // Redux hooks with proper typing
@@ -137,7 +140,7 @@ const PricingFields = () => {
 
                 if (jobId) {
                     setCreatedJobId(jobId)
-                    setIsPaymentModalOpen(true)
+                    setModalType('payment')
                 } else {
                     console.error('No job ID returned from job creation')
                 }
@@ -228,8 +231,18 @@ const PricingFields = () => {
                 })
 
                 if (checkoutUrl && typeof checkoutUrl === 'string') {
+                    // Store payment details for potential success/failure handling
+                    setPaymentDetails({
+                        jobId: createdJobId,
+                        amount: values.price,
+                        service: values.service,
+                        date: values.date,
+                        time: values.time,
+                        sessionId: response?.data?.data?.session_id || 'N/A',
+                    })
+
                     // Clean up state before navigation
-                    setIsPaymentModalOpen(false)
+                    setModalType(null)
                     setCreatedJobId(null)
                     dispatch(resetPaymentState())
 
@@ -241,19 +254,49 @@ const PricingFields = () => {
                         type: typeof checkoutUrl,
                         fullResponse: response,
                     })
+                    // Show failure modal
+                    setModalType('failure')
                 }
             } else {
                 console.error('Payment action rejected:', resultAction.payload)
+                // Show failure modal
+                setModalType('failure')
             }
         } catch (error) {
             console.error('Error in handleConfirmPayment:', error)
+            // Show failure modal
+            setModalType('failure')
         }
     }
 
     const closeModal = () => {
-        setIsPaymentModalOpen(false)
+        setModalType(null)
         setCreatedJobId(null)
+        setPaymentDetails(null)
         dispatch(clearPaymentError())
+    }
+
+    const handleSuccessClose = () => {
+        closeModal()
+        resetForm() // Reset the form after successful payment
+    }
+
+    // Mock functions to simulate payment success/failure (for testing)
+    const simulatePaymentSuccess = () => {
+        setPaymentDetails({
+            jobId: 'test-job-123',
+            amount: values.price,
+            service: values.service,
+            date: values.date,
+            time: values.time,
+            sessionId: 'test-session-456',
+            transactionId: 'txn_' + Date.now(),
+        })
+        setModalType('success')
+    }
+
+    const simulatePaymentFailure = () => {
+        setModalType('failure')
     }
 
     return (
@@ -305,14 +348,34 @@ const PricingFields = () => {
                         Error: {createJobError}
                     </div>
                 )}
+
+                {/* Test buttons for demonstration */}
+                <div className="flex gap-2 mt-4">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={simulatePaymentSuccess}
+                        type="button"
+                    >
+                        Test Success Modal
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={simulatePaymentFailure}
+                        type="button"
+                    >
+                        Test Failure Modal
+                    </Button>
+                </div>
             </AdaptableCard>
 
             {/* Payment Modal */}
-            {isPaymentModalOpen && (
+            {modalType === 'payment' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center">
                     {/* Backdrop */}
                     <div
-                        className="fixed inset-0 bg-black bg-opacity-50"
+                        className="fixed inset-0 bg-[#2155A329] bg-opacity-50"
                         onClick={closeModal}
                     />
 
@@ -375,6 +438,101 @@ const PricingFields = () => {
                                         {paymentLoading
                                             ? 'Processing Payment...'
                                             : 'Continue'}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Payment Success Modal */}
+            {modalType === 'success' && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    {/* Backdrop */}
+                    <div className="fixed inset-0 bg-[#2155A329] bg-opacity-50" />
+
+                    {/* Modal Content - ✅ Changed from max-w-sm to max-w-md */}
+                    <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+                        {/* ✅ Changed padding from p-8 to p-6 to match payment modal */}
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-2 mt-[-10px]">
+                                <h4 className="text-lg font-semibold">
+                                    Success{' '}
+                                </h4>
+                            </div>
+                            <hr className="mb-4" />
+                            <div className="flex flex-col items-center text-center">
+                                {/* Success Icon */}
+                                <div className="w-24 h-24 mb-6 rounded-full flex items-center justify-center">
+                                    <img
+                                        src="/img/others/payment_sucess.png"
+                                        alt="Success Icon"
+                                        className="w-full h-full object-contain"
+                                    />
+                                </div>
+
+                                <h4 className="text-[17px] font-semibold text-[#515B6F] mb-8">
+                                    Job successfully created{' '}
+                                </h4>
+
+                                <div className="w-full">
+                                    <Button
+                                        variant="solid"
+                                        onClick={handleSuccessClose}
+                                        className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-medium"
+                                        type="button"
+                                    >
+                                        Go Home
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Payment Failure Modal */}
+            {modalType === 'failure' && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    {/* Backdrop */}
+                    <div className="fixed inset-0 bg-[#2155A329] bg-opacity-50" />
+
+                    {/* Modal Content - ✅ Changed from max-w-sm to max-w-md */}
+                    <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+                        {/* ✅ Changed padding from p-8 to p-6 to match payment modal */}
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-2 mt-[-10px]">
+                                <h4 className="text-lg font-semibold">
+                                    Failure{' '}
+                                </h4>
+                            </div>
+                            <hr className="mb-4" />
+                            <div className="flex flex-col items-center text-center">
+                                {/* Failure Icon */}
+                                <div className="w-24 h-24 mb-6 rounded-full flex items-center justify-center">
+                                    <img
+                                        src="/img/others/payment_failed.png"
+                                        alt="Failed Icon"
+                                        className="w-full h-full object-contain"
+                                    />
+                                </div>
+
+                                <h4 className="text-[17px] font-semibold text-[#515B6F] mb-8">
+                                    Job creation failed, please try again
+                                </h4>
+
+                                <div className="w-full">
+                                    <Button
+                                        variant="solid"
+                                        onClick={() => {
+                                            closeModal()
+                                            setModalType('payment')
+                                        }}
+                                        className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-medium"
+                                        type="button"
+                                    >
+                                        Try again
                                     </Button>
                                 </div>
                             </div>

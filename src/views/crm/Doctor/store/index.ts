@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch, TypedUseSelectorHook, useSelector } from 'react-redux';
 import doctorReducer from './doctorSlice';
+import documentsReducer from "./documentSlice";
 
 export const store = configureStore({
   reducer: {
     doctor: doctorReducer,
+    documents: documentsReducer,
     // other reducers here...
   },
 });

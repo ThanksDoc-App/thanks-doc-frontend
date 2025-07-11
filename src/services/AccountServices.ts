@@ -48,6 +48,23 @@ export async function apiGetAccountFormData<T>(data: Partial<T>) {
         url: '/api/v1/user',
         method: 'patch',
         data,
-    });
+    })
 }
 
+// ------------------------------------------
+// Document POST Endpoint
+// ------------------------------------------
+
+export interface DocumentPayload {
+    title: string
+    content?: string // JSON stringified object or array
+    files?: string[] // Optional array of file IDs/paths
+}
+
+export async function apiPostDocument<T = any>(data: DocumentPayload) {
+    return ApiService.fetchData<T>({
+        url: '/api/v1/documents',
+        method: 'post',
+        data: data as unknown as Record<string, unknown>,
+    })
+}

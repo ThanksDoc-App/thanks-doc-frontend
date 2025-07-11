@@ -22,6 +22,13 @@ import {
 import useThemeClass from '@/utils/hooks/useThemeClass'
 import { useState } from 'react'
 import * as Yup from 'yup'
+import { useAppDispatch, useAppSelector } from '@/store'
+import {
+    createDocumentWithFiles,
+    selectDocumentLoading,
+    selectDocumentError,
+    clearError,
+} from '../store/documentSlice'
 import type { Identification as IdentificationType } from '../store'
 import type { PropsWithChildren } from 'react'
 
@@ -69,7 +76,6 @@ export const settingIntergrationData = {
             type: 'Approved',
             active: false,
         },
-
         {
             name: 'Current Performers List',
             desc: 'Current Performers List',
@@ -125,7 +131,7 @@ const documentTypes = settingIntergrationData.available.map((item) => ({
 
 // Define document types that require name/email instead of file upload
 const referenceDocumentTypes = [
-    'professionalreferences1', // Added Professional References 1
+    'professionalreferences1',
     'professionalreferences2',
     'appraisalrevalidationevidence',
 ]
@@ -136,23 +142,25 @@ const titleDocumentTypes = ['mandatorytrainingcertificates']
 // Generate validation schema dynamically
 const generateValidationSchema = () => {
     const schema: any = {
-        documentType: Yup.string(), // not required
-        expiryDate: Yup.string(), // not required
-        titleField: Yup.string(), // not required
+        documentType: Yup.string(),
     }
 
     documentTypes.forEach((doc) => {
         const fieldName = doc.value
         if (referenceDocumentTypes.includes(fieldName)) {
-            // For reference documents, add fullName and email fields
             schema[`${fieldName}FullName`] = Yup.string()
             schema[`${fieldName}Email`] = Yup.string().email(
                 'Invalid email format',
             )
         } else {
-            // For regular documents, add front and back fields
-            schema[`${fieldName}Front`] = Yup.string()
-            schema[`${fieldName}Back`] = Yup.string()
+            // Single document field instead of front/back
+            schema[`${fieldName}Document`] = Yup.mixed()
+
+            if (titleDocumentTypes.includes(fieldName)) {
+                schema[`${fieldName}Title`] = Yup.string()
+            } else {
+                schema[`${fieldName}ExpiryDate`] = Yup.string()
+            }
         }
     })
 
@@ -161,37 +169,38 @@ const generateValidationSchema = () => {
 
 const validationSchema = generateValidationSchema()
 
-// Generate document upload descriptions
-const documentUploadDescription = settingIntergrationData.available.reduce(
-    (acc, item) => {
-        const key = item.name.toLowerCase().replace(/\s+/g, '')
-        if (referenceDocumentTypes.includes(key)) {
-            acc[key] = [
-                `Provide accurate contact information for ${item.name}`,
-                `Ensure the full name matches official records`,
-                `Email address must be valid and active`,
-            ]
-        } else {
-            acc[key] = [
-                `Uploaded ${item.name} image must be clearly visible & complete`,
-                `${item.name} must be in valid period`,
-                `Provided ${item.name} must include all required information`,
-            ]
-        }
-        return acc
-    },
-    {} as Record<string, string[]>,
-)
-
+// ✅ Enhanced DocumentUploadField with PDF support
 const DocumentUploadField = (props: DocumentUploadFieldProps) => {
     const { label, name, children, touched, errors } = props
 
     const onSetFormFile = (
         form: FormikProps<IdentificationType>,
         field: FieldInputProps<IdentificationType>,
-        file: File[],
+        files: File[],
     ) => {
-        form.setFieldValue(field.name, URL.createObjectURL(file[0]))
+        if (files.length > 0) {
+            const file = files[0]
+            // ✅ Validate file type - PDF only
+            const allowedTypes = ['application/pdf']
+            if (!allowedTypes.includes(file.type)) {
+                form.setFieldError(field.name, 'Only PDF files are allowed')
+                return
+            }
+
+            // ✅ Validate file size (10MB limit for PDFs)
+            const maxSize = 10 * 1024 * 1024 // 10MB
+            if (file.size > maxSize) {
+                form.setFieldError(
+                    field.name,
+                    'File size must be less than 10MB',
+                )
+                return
+            }
+
+            form.setFieldValue(field.name, file)
+        } else {
+            form.setFieldValue(field.name, null)
+        }
     }
 
     return (
@@ -207,30 +216,48 @@ const DocumentUploadField = (props: DocumentUploadFieldProps) => {
                         className="cursor-pointer h-[300px]"
                         showList={false}
                         uploadLimit={1}
+                        accept="application/pdf"
                         onChange={(files) => onSetFormFile(form, field, files)}
                         onFileRemove={(files) =>
                             onSetFormFile(form, field, files)
                         }
                     >
                         {field.value ? (
-                            <img
-                                className="p-3 max-h-[300px]"
-                                src={field.value}
-                                alt=""
-                            />
+                            <div className="p-3 text-center">
+                                <div className="flex flex-col items-center">
+                                    <svg
+                                        className="w-16 h-16 text-red-500 mb-2"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path d="M4 18h12V6l-4-4H4v16zM9 2h2v4h4v2H9V2z" />
+                                    </svg>
+                                    <p className="font-semibold text-gray-800 dark:text-white">
+                                        {field.value.name}
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        {(
+                                            field.value.size /
+                                            1024 /
+                                            1024
+                                        ).toFixed(2)}{' '}
+                                        MB
+                                    </p>
+                                </div>
+                            </div>
                         ) : (
                             <div className="text-center">
                                 {children}
                                 <p className="font-semibold">
                                     <span className="text-gray-800 dark:text-white">
-                                        Drop your image here, or{' '}
+                                        Drop your PDF here, or{' '}
                                     </span>
                                     <span className="text-blue-500">
                                         browse
                                     </span>
                                 </p>
                                 <p className="mt-1 opacity-60 dark:text-white">
-                                    Support: jpeg, png
+                                    Support: PDF only (Max 10MB)
                                 </p>
                             </div>
                         )}
@@ -305,8 +332,14 @@ const Identification = ({
                 acc[`${doc.value}FullName`] = ''
                 acc[`${doc.value}Email`] = ''
             } else {
-                acc[`${doc.value}Front`] = ''
-                acc[`${doc.value}Back`] = ''
+                // Single document field instead of front/back
+                acc[`${doc.value}Document`] = null
+
+                if (titleDocumentTypes.includes(doc.value)) {
+                    acc[`${doc.value}Title`] = ''
+                } else {
+                    acc[`${doc.value}ExpiryDate`] = ''
+                }
             }
             return acc
         }, {} as any),
@@ -319,6 +352,11 @@ const Identification = ({
     const [currentPage, setCurrentPage] = useState(0)
     const itemsPerPage = 3
     const totalPages = Math.ceil(documentTypes.length / itemsPerPage)
+
+    // Redux hooks
+    const dispatch = useAppDispatch()
+    const documentLoading = useAppSelector(selectDocumentLoading)
+    const documentError = useAppSelector(selectDocumentError)
 
     const getCurrentPageItems = () => {
         const startIndex = currentPage * itemsPerPage
@@ -338,11 +376,120 @@ const Identification = ({
         }
     }
 
-    const onNext = (
+    // ✅ Enhanced onNext function with single PDF support
+    const onNext = async (
         values: FormModel,
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
-        onNextChange?.(values, 'identification', setSubmitting)
+        try {
+            setSubmitting(true)
+            dispatch(clearError())
+
+            // Create structured documents array
+            const documentsData: any[] = []
+            const allFiles: File[] = []
+
+            documentTypes.forEach((docType) => {
+                const fieldName = docType.value
+                const documentLabel = docType.label
+
+                if (referenceDocumentTypes.includes(fieldName)) {
+                    // For documents with full name and email
+                    const fullName = values[`${fieldName}FullName`]
+                    const email = values[`${fieldName}Email`]
+
+                    if (fullName || email) {
+                        documentsData.push({
+                            label: documentLabel,
+                            content: {
+                                fullName: fullName || '',
+                                email: email || '',
+                            },
+                        })
+                    }
+                } else if (titleDocumentTypes.includes(fieldName)) {
+                    // For "Mandatory Training Certificates"
+                    const documentFile = values[`${fieldName}Document`]
+                    const certificateTitle = values[`${fieldName}Title`]
+
+                    if (documentFile || certificateTitle) {
+                        const documentEntry: any = {
+                            title: documentLabel,
+                            content: {
+                                documentTitle: certificateTitle || '',
+                            },
+                        }
+
+                        // Handle PDF file upload
+                        if (documentFile) {
+                            const fileName = `${fieldName}_${Date.now()}.pdf`
+                            documentEntry.content.documentRef = fileName
+                            allFiles.push(
+                                new File([documentFile], fileName, {
+                                    type: documentFile.type,
+                                }),
+                            )
+                        }
+
+                        documentsData.push(documentEntry)
+                    }
+                } else {
+                    // For other documents
+                    const documentFile = values[`${fieldName}Document`]
+                    const expiryDate = values[`${fieldName}ExpiryDate`]
+
+                    if (documentFile || expiryDate) {
+                        const documentEntry: any = {
+                            label: documentLabel,
+                            content: {
+                                expiryDate: expiryDate || '',
+                            },
+                        }
+
+                        // Handle PDF file upload
+                        if (documentFile) {
+                            const fileName = `${fieldName}_${Date.now()}.pdf`
+                            documentEntry.content.documentRef = fileName
+                            allFiles.push(
+                                new File([documentFile], fileName, {
+                                    type: documentFile.type,
+                                }),
+                            )
+                        }
+
+                        documentsData.push(documentEntry)
+                    }
+                }
+            })
+
+            // Create clean payload that matches Swagger spec exactly
+            const result = await dispatch(
+                createDocumentWithFiles({
+                    title: `Document Submission - ${new Date().toLocaleDateString()}`,
+                    additionalFields: {
+                        documents: documentsData,
+                        metadata: {
+                            submittedAt: new Date().toISOString(),
+                            selectedDocumentType: values.documentType,
+                            userAgent: navigator.userAgent,
+                            timestamp: Date.now(),
+                        },
+                    },
+                    files: allFiles,
+                }),
+            )
+
+            if (createDocumentWithFiles.fulfilled.match(result)) {
+                console.log('Document upload successful:', result.payload)
+                onNextChange?.(values, 'identification', setSubmitting)
+            } else {
+                console.error('Document upload failed:', result.payload)
+                setSubmitting(false)
+            }
+        } catch (error) {
+            console.error('Error in onNext:', error)
+            setSubmitting(false)
+        }
     }
 
     const onBack = () => {
@@ -361,17 +508,30 @@ const Identification = ({
         <>
             <div className="mb-8">
                 <h3 className="mb-2">Identification</h3>
-                <p>Upload relevant document to verify your identity.</p>
+                <p>Upload relevant PDF documents to verify your identity.</p>
+                {/* ✅ Enhanced error display */}
+                {documentError && (
+                    <div className="mt-2 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                        <div className="flex justify-between items-center">
+                            <span>
+                                Error creating document: {documentError}
+                            </span>
+                            <button
+                                onClick={() => dispatch(clearError())}
+                                className="text-red-500 hover:text-red-700"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
             <Formik
                 enableReinitialize
                 initialValues={data}
                 validationSchema={validationSchema}
                 onSubmit={(values, { setSubmitting }) => {
-                    setSubmitting(true)
-                    setTimeout(() => {
-                        onNext(values, setSubmitting)
-                    }, 1000)
+                    onNext(values, setSubmitting)
                 }}
             >
                 {({ values, touched, errors, isSubmitting }) => {
@@ -390,7 +550,6 @@ const Identification = ({
                                     <Field name="documentType">
                                         {({ field, form }: FieldProps) => (
                                             <div className="relative">
-                                                {/* Navigation Arrows */}
                                                 <div className="flex items-center justify-between mb-4">
                                                     <button
                                                         type="button"
@@ -452,7 +611,6 @@ const Identification = ({
                                                     </button>
                                                 </div>
 
-                                                {/* Document Type Selector */}
                                                 <Segment
                                                     className="flex xl:items-center flex-col xl:flex-row gap-4"
                                                     value={[field.value]}
@@ -516,13 +674,11 @@ const Identification = ({
                                     </Field>
                                 </FormItem>
 
-                                {/* Conditional rendering based on document type */}
                                 {values.documentType &&
                                     !isReferenceDocument(
                                         values.documentType,
                                     ) && (
                                         <>
-                                            {/* Show title field for title documents, expiry date for others */}
                                             {isTitleDocument(
                                                 values.documentType,
                                             ) ? (
@@ -530,7 +686,9 @@ const Identification = ({
                                                     label="Document Title"
                                                     className="mb-6"
                                                 >
-                                                    <Field name="titleField">
+                                                    <Field
+                                                        name={`${values.documentType}Title`}
+                                                    >
                                                         {({
                                                             field,
                                                         }: FieldProps) => (
@@ -547,7 +705,9 @@ const Identification = ({
                                                     label="Document Expiry Date"
                                                     className="mb-6"
                                                 >
-                                                    <Field name="expiryDate">
+                                                    <Field
+                                                        name={`${values.documentType}ExpiryDate`}
+                                                    >
                                                         {({
                                                             field,
                                                             form,
@@ -573,48 +733,29 @@ const Identification = ({
                                                 </FormItem>
                                             )}
 
-                                            <div className="grid xl:grid-cols-2 gap-4">
-                                                <DocumentUploadField
-                                                    name={
-                                                        `${values.documentType}Front` as keyof IdentificationType
-                                                    }
-                                                    label={`${documentTypes.find(
-                                                        (d) =>
-                                                            d.value ===
-                                                            values.documentType,
-                                                    )?.label} Front`}
-                                                    {...validatedProps}
+                                            {/* Single document upload instead of front/back */}
+                                            <DocumentUploadField
+                                                name={
+                                                    `${values.documentType}Document` as keyof IdentificationType
+                                                }
+                                                label={`${documentTypes.find(
+                                                    (d) =>
+                                                        d.value ===
+                                                        values.documentType,
+                                                )?.label} Document`}
+                                                {...validatedProps}
+                                            >
+                                                <svg
+                                                    className="mx-auto mb-3 w-12 h-12 text-gray-400"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 20 20"
                                                 >
-                                                    <DoubleSidedImage
-                                                        className="mx-auto mb-3"
-                                                        src="/img/thumbs/id-card-front.png"
-                                                        darkModeSrc="/img/thumbs/id-card-front-dark.png"
-                                                        alt=""
-                                                    />
-                                                </DocumentUploadField>
-                                                <DocumentUploadField
-                                                    name={
-                                                        `${values.documentType}Back` as keyof IdentificationType
-                                                    }
-                                                    label={`${documentTypes.find(
-                                                        (d) =>
-                                                            d.value ===
-                                                            values.documentType,
-                                                    )?.label} Back`}
-                                                    {...validatedProps}
-                                                >
-                                                    <DoubleSidedImage
-                                                        className="mx-auto mb-3"
-                                                        src="/img/thumbs/id-card-back.png"
-                                                        darkModeSrc="/img/thumbs/id-card-back-dark.png"
-                                                        alt=""
-                                                    />
-                                                </DocumentUploadField>
-                                            </div>
+                                                    <path d="M4 18h12V6l-4-4H4v16zM9 2h2v4h4v2H9V2z" />
+                                                </svg>
+                                            </DocumentUploadField>
                                         </>
                                     )}
 
-                                {/* Reference document fields */}
                                 {values.documentType &&
                                     isReferenceDocument(
                                         values.documentType,
@@ -631,7 +772,9 @@ const Identification = ({
                                         Back
                                     </Button>
                                     <Button
-                                        loading={isSubmitting}
+                                        loading={
+                                            isSubmitting || documentLoading
+                                        }
                                         variant="solid"
                                         type="submit"
                                     >

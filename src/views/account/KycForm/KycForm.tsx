@@ -40,10 +40,33 @@ const DetailForm = () => {
         (state) => state.accountDetailForm.data.formData,
     )
 
+    // ✅ Check if all KYC steps are completed
+    const isKycCompleted = useMemo(() => {
+        // Check if steps 0, 1, 2, and 3 are all completed
+        return (
+            stepStatus[0]?.status === 'complete' &&
+            stepStatus[1]?.status === 'complete' &&
+            stepStatus[2]?.status === 'complete' &&
+            stepStatus[3]?.status === 'complete'
+        )
+    }, [stepStatus])
+
     useEffect(() => {
         dispatch(getForm())
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    // ✅ Auto-redirect to AccountReview if KYC is completed
+    useEffect(() => {
+        if (isKycCompleted && currentStep < 4) {
+            dispatch(setCurrentStep(4))
+            dispatch(
+                setStepStatus({
+                    [4]: { status: 'current' },
+                }),
+            )
+        }
+    }, [isKycCompleted, currentStep, dispatch])
 
     const handleNextChange = (
         values:
@@ -55,13 +78,25 @@ const DetailForm = () => {
     ) => {
         const nextStep = currentStep + 1
         dispatch(setFormData({ [name]: values }))
-        dispatch(
-            setStepStatus({
-                [currentStep]: { status: 'complete' },
-                [nextStep]: { status: 'current' },
-            }),
-        )
-        dispatch(setCurrentStep(nextStep))
+
+        // ✅ If this is the last step (step 3), mark it as complete and go to review
+        if (currentStep === 3) {
+            dispatch(
+                setStepStatus({
+                    [currentStep]: { status: 'complete' },
+                    [4]: { status: 'current' },
+                }),
+            )
+            dispatch(setCurrentStep(4))
+        } else {
+            dispatch(
+                setStepStatus({
+                    [currentStep]: { status: 'complete' },
+                    [nextStep]: { status: 'current' },
+                }),
+            )
+            dispatch(setCurrentStep(nextStep))
+        }
     }
 
     const handleBackChange = () => {
@@ -70,7 +105,7 @@ const DetailForm = () => {
     }
 
     const currentStepStatus = useMemo(
-        () => stepStatus[currentStep].status,
+        () => stepStatus[currentStep]?.status || 'pending',
         [stepStatus, currentStep],
     )
 

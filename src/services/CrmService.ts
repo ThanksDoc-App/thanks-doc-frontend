@@ -175,3 +175,37 @@ export async function apiPayForJob<T>(id: string) {
         method: 'post',
     });
 }
+
+export async function apiGetDocumentsByUser<
+    T,
+    U extends {
+        userId: string
+        page?: number
+        limit?: number
+        search?: string
+        status?: string
+    }
+>(params: U) {
+    return BaseService.request<T>({
+        url: '/api/v1/documents/by-user',
+        method: 'get',
+        params,
+    });
+}
+
+/**
+ * Approve or reject a document.
+ *
+ * @param id      The document’s ID (path param)
+ * @param status  "approved" | "rejected" (request body)
+ */
+export async function apiApproveRejectDocument<T>(
+    id: string,
+    status: 'approved' | 'rejected',
+) {
+    return BaseService.request<T>({
+        url: `/api/v1/documents/${id}/approve-reject`,
+        method: 'post',
+        data: { status },
+    });
+}
