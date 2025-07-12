@@ -12,8 +12,8 @@ import {
     toggleDeleteConfirmation,
     useAppDispatch,
     useAppSelector,
+    updateJobStatus,
 } from '../store'
-import { updateJobStatus } from '../store/salesProductListSlice' // ✅ Import the updateJobStatus action
 import useThemeClass from '@/utils/hooks/useThemeClass'
 import ProductDeleteConfirmation from './ProductDeleteConfirmation'
 import { useNavigate } from 'react-router-dom'
