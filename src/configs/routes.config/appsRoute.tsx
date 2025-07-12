@@ -54,6 +54,14 @@ const appsRoute: Routes = [
         authority: [ADMIN],
     },
     {
+        key: 'appsCrm.business.details', // This keeps the parent relationship
+        path: `${APP_PREFIX_PATH}/crm/business/:id`,
+        component: lazy(
+            () => import('@/views/crm/Business/components/BusinessDetails'),
+        ),
+        authority: [ADMIN, USER],
+    },
+    {
         key: 'appsCrm.create-category',
         path: `${APP_PREFIX_PATH}/crm/create-category`,
         component: lazy(

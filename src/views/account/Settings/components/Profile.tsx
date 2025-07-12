@@ -484,53 +484,59 @@ const Profile = ({ data }: ProfileProps) => {
                                     />
                                 </FormRow>
                             )}
-                            <FormRow
-                                name="address"
-                                label="Your Postcode"
-                                {...validatorProps}
-                                border={false}
-                            >
-                                <Field
-                                    type="text"
-                                    autoComplete="off"
+                            {signedUpAs !== 'super admin' && (
+                                <FormRow
                                     name="address"
-                                    placeholder="Address"
-                                    component={Input}
-                                    prefix={
-                                        <HiOutlineLocationMarker className="text-xl" />
-                                    }
-                                />
-                            </FormRow>
-                            <FormRow
-                                name="specialty"
-                                label="Specialty"
-                                touched={touched}
-                                errors={errors}
-                                border={false}
-                            >
-                                <Field name="specialty">
-                                    {({ field, form }: FieldProps) => (
-                                        <Select
-                                            placeholder="Select specialty"
-                                            field={field}
-                                            form={form}
-                                            options={specialtyOptions}
-                                            isLoading={categoriesLoading}
-                                            value={specialtyOptions.find(
-                                                (option) =>
-                                                    option.value ===
-                                                    values.specialty,
-                                            )}
-                                            onChange={(option) =>
-                                                form.setFieldValue(
-                                                    field.name,
-                                                    option?.value,
-                                                )
-                                            }
-                                        />
-                                    )}
-                                </Field>
-                            </FormRow>
+                                    label="Your Postcode"
+                                    {...validatorProps}
+                                    border={false}
+                                >
+                                    <Field
+                                        type="text"
+                                        autoComplete="off"
+                                        name="address"
+                                        placeholder="Address"
+                                        component={Input}
+                                        prefix={
+                                            <HiOutlineLocationMarker className="text-xl" />
+                                        }
+                                    />
+                                </FormRow>
+                            )}
+
+                            {signedUpAs !== 'super admin' && (
+                                <FormRow
+                                    name="specialty"
+                                    label="Specialty"
+                                    touched={touched}
+                                    errors={errors}
+                                    border={false}
+                                >
+                                    <Field name="specialty">
+                                        {({ field, form }: FieldProps) => (
+                                            <Select
+                                                placeholder="Select specialty"
+                                                field={field}
+                                                form={form}
+                                                options={specialtyOptions}
+                                                isLoading={categoriesLoading}
+                                                value={specialtyOptions.find(
+                                                    (option) =>
+                                                        option.value ===
+                                                        values.specialty,
+                                                )}
+                                                onChange={(option) =>
+                                                    form.setFieldValue(
+                                                        field.name,
+                                                        option?.value,
+                                                    )
+                                                }
+                                            />
+                                        )}
+                                    </Field>
+                                </FormRow>
+                            )}
+
                             <FormRow
                                 name="phone"
                                 label="Phone Number"
@@ -548,24 +554,25 @@ const Profile = ({ data }: ProfileProps) => {
                                     }
                                 />
                             </FormRow>
-                            {signedUpAs !== 'business' && (
-                                <FormRow
-                                    name="gmcNumber"
-                                    label="GMC Number"
-                                    {...validatorProps}
-                                >
-                                    <Field
-                                        type="text"
-                                        autoComplete="off"
+                            {signedUpAs !== 'business' &&
+                                signedUpAs !== 'super admin' && (
+                                    <FormRow
                                         name="gmcNumber"
-                                        placeholder="GMC Number"
-                                        component={Input}
-                                        prefix={
-                                            <HiOutlineClipboard className="text-xl" />
-                                        }
-                                    />
-                                </FormRow>
-                            )}
+                                        label="GMC Number"
+                                        {...validatorProps}
+                                    >
+                                        <Field
+                                            type="text"
+                                            autoComplete="off"
+                                            name="gmcNumber"
+                                            placeholder="GMC Number"
+                                            component={Input}
+                                            prefix={
+                                                <HiOutlineClipboard className="text-xl" />
+                                            }
+                                        />
+                                    </FormRow>
+                                )}
 
                             <div className="mt-4 ltr:text-right">
                                 <Button

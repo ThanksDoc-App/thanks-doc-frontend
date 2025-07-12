@@ -57,7 +57,7 @@ const DoctorTool = ({
             {/* Filter Component with Dropdown */}
             <div className="relative" ref={dropdownRef}>
                 <div
-                    className="flex items-center justify-between gap-2 md:w-[140px] w-full h-[45px] bg-white border border-[#D6DDEB] px-3 transition-colors cursor-pointer hover:border-[#0F9297]"
+                    className="flex items-center justify-between gap-2 md:w-[140px] w-full h-[45px] bg-white border border-[#D6DDEB] whitespace-nowrap px-3 transition-colors cursor-pointer hover:border-[#0F9297]"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
                     <div className="flex items-center gap-2">
@@ -80,7 +80,7 @@ const DoctorTool = ({
                             <button
                                 key={option.value}
                                 onClick={() => handleFilterSelect(option.label)}
-                                className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                                className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors  ${
                                     selectedFilter === option.label
                                         ? 'bg-[#F0F9FF] text-[#0F9297] font-medium'
                                         : 'text-[#25324B]'
