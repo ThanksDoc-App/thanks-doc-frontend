@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
 import DataTable from '@/components/shared/DataTable'
 import { HiOutlinePencil, HiOutlineTrash, HiOutlineEye } from 'react-icons/hi'
 import { FiPackage } from 'react-icons/fi'
+import { BsThreeDotsVertical } from 'react-icons/bs'
 import {
     getProducts,
     setTableData,
@@ -12,10 +13,13 @@ import {
     useAppDispatch,
     useAppSelector,
 } from '../store'
+import { updateJobStatus } from '../store/salesProductListSlice' // ✅ Import the updateJobStatus action
 import useThemeClass from '@/utils/hooks/useThemeClass'
 import ProductDeleteConfirmation from './ProductDeleteConfirmation'
 import { useNavigate } from 'react-router-dom'
 import cloneDeep from 'lodash/cloneDeep'
+import toast from '@/components/ui/toast'
+import Notification from '@/components/ui/Notification'
 import type {
     DataTableResetHandle,
     OnSortParam,
@@ -52,9 +56,9 @@ const inventoryStatusColor: Record<
         textClass: 'text-amber-500',
     },
     2: {
-        label: 'Closed',
-        dotClass: 'bg-red-500',
-        textClass: 'text-red-500',
+        label: 'Completed', // ✅ Changed from 'Closed' to 'Completed'
+        dotClass: 'bg-blue-500',
+        textClass: 'text-blue-500',
     },
 }
 
@@ -62,40 +66,120 @@ const ActionColumn = ({ row }: { row: Product }) => {
     const dispatch = useAppDispatch()
     const { textTheme } = useThemeClass()
     const navigate = useNavigate()
+    const [showDropdown, setShowDropdown] = useState(false)
+
+    // ✅ Get updating status from Redux store
+    const updatingStatus = useAppSelector(
+        (state) => state.salesProductList.updatingStatus,
+    )
 
     const onEdit = () => {
         navigate(`/app/sales/product-edit/${row.id}`)
+        setShowDropdown(false)
     }
 
     const onDelete = () => {
         dispatch(toggleDeleteConfirmation(true))
         dispatch(setSelectedProduct(row.id))
+        setShowDropdown(false)
     }
 
     const onView = () => {
         navigate(`/app/sales/order-details/${row.id}`)
+        setShowDropdown(false)
+    }
+
+    // ✅ Handle mark as completed
+    const onMarkAsCompleted = async () => {
+        try {
+            await dispatch(
+                updateJobStatus({
+                    id: row.id,
+                    status: 'completed',
+                }),
+            ).unwrap()
+
+            toast.push(
+                <Notification title="Success" type="success" duration={2500}>
+                    Job marked as completed successfully
+                </Notification>,
+                {
+                    placement: 'top-center',
+                },
+            )
+        } catch (error) {
+            toast.push(
+                <Notification title="Error" type="danger" duration={2500}>
+                    Failed to update job status
+                </Notification>,
+                {
+                    placement: 'top-center',
+                },
+            )
+        }
+        setShowDropdown(false)
     }
 
     return (
-        <div className="flex justify-end text-lg">
-            {/* <span
-                className="cursor-pointer p-2 hover:text-blue-500"
-                onClick={onView}
-            >
-                <HiOutlineEye />
-            </span> */}
+        <div className="flex justify-end text-lg relative">
             <span
-                className={`cursor-pointer p-2 hover:${textTheme}`}
-                onClick={onEdit}
+                className="cursor-pointer p-2 hover:text-gray-600"
+                onClick={() => setShowDropdown(!showDropdown)}
             >
-                <HiOutlinePencil />
+                <BsThreeDotsVertical />
             </span>
-            <span
-                className="cursor-pointer p-2 hover:text-red-500"
-                onClick={onDelete}
-            >
-                <HiOutlineTrash />
-            </span>
+
+            {/* ✅ Dropdown Menu */}
+            {showDropdown && (
+                <div className="absolute right-0 top-10 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                    <div className="py-1">
+                        <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={onView}
+                        >
+                            <HiOutlineEye className="inline mr-2" />
+                            View Details
+                        </button>
+                        <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={onEdit}
+                        >
+                            <HiOutlinePencil className="inline mr-2" />
+                            Edit
+                        </button>
+
+                        {/* ✅ Mark as Completed option - only show if not already completed */}
+                        {row.status !== 2 && (
+                            <button
+                                className="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 disabled:opacity-50"
+                                onClick={onMarkAsCompleted}
+                                disabled={updatingStatus}
+                            >
+                                {updatingStatus
+                                    ? 'Updating...'
+                                    : 'Mark as Completed'}
+                            </button>
+                        )}
+
+                        <hr className="my-1" />
+                        <button
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                            onClick={onDelete}
+                        >
+                            <HiOutlineTrash className="inline mr-2" />
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ✅ Click outside to close dropdown */}
+            {showDropdown && (
+                <div
+                    className="fixed inset-0 z-0"
+                    onClick={() => setShowDropdown(false)}
+                />
+            )}
         </div>
     )
 }
@@ -137,7 +221,7 @@ const ProductTable = () => {
 
     useEffect(() => {
         fetchData()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-hooks/exhaustive-deps
     }, [pageIndex, pageSize, sort])
 
     useEffect(() => {
@@ -173,11 +257,6 @@ const ProductTable = () => {
                     return <span className="capitalize">{row.category}</span>
                 },
             },
-            // {
-            //     header: 'Quantity',
-            //     accessorKey: 'stock',
-            //     sortable: true,
-            // },
             {
                 header: 'Status',
                 accessorKey: 'status',

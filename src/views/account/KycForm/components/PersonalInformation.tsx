@@ -3,6 +3,8 @@ import InputGroup from '@/components/ui/InputGroup'
 import Button from '@/components/ui/Button'
 import DatePicker from '@/components/ui/DatePicker'
 import Select from '@/components/ui/Select'
+import Notification from '@/components/ui/Notification'
+import toast from '@/components/ui/toast'
 import { FormItem, FormContainer } from '@/components/ui/Form'
 import { Field, Form, Formik } from 'formik'
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
@@ -16,6 +18,18 @@ import type { FieldInputProps, FieldProps } from 'formik'
 import type { PersonalInformation as PersonalInformationType } from '../store'
 import type { ComponentType } from 'react'
 import type { InputProps } from '@/components/ui/Input'
+import { useEffect } from 'react'
+// Add categories imports
+import {
+    fetchCategories,
+    selectCategories,
+    selectCategoriesLoading,
+    selectCategoriesError,
+} from '../../../sales/ProductForm/store/categorySlice'
+// Add KYC form imports - Remove updateForm import since we're not using it here
+import { useAppDispatch, useAppSelector } from '@/store'
+// Add local storage for temporary data
+import { setTempPersonalInfo } from '../store/tempDataSlice' // We'll create this
 
 type CountryOption = {
     label: string
@@ -98,15 +112,8 @@ const PhoneControl = (props: SingleValueProps<CountryOption>) => {
     )
 }
 
-const specialtyOptions = [
-    { label: 'General Practitioner', value: 'general_practitioner' },
-    { label: 'Cardiologist', value: 'cardiologist' },
-    { label: 'Dermatologist', value: 'dermatologist' },
-    { label: 'Pediatrician', value: 'pediatrician' },
-]
-
 const validationSchema = Yup.object().shape({
-    firstName: Yup.string(), // remove .required('First name is required')
+    firstName: Yup.string(),
     lastName: Yup.string(),
     email: Yup.string(),
     nationality: Yup.string(),
@@ -115,7 +122,7 @@ const validationSchema = Yup.object().shape({
     gender: Yup.string(),
     maritalStatus: Yup.string(),
     dialCode: Yup.string(),
-     specialty: Yup.string(), // <-- add this line
+    specialty: Yup.string(),
 })
 
 const PersonalInformation = ({
@@ -130,17 +137,41 @@ const PersonalInformation = ({
         dob: '',
         gender: '',
         maritalStatus: '',
-        specialty: '', // <-- add this line
+        specialty: '',
     },
     onNextChange,
     currentStepStatus,
 }: PersonalInformationProps) => {
-    const onNext = (
-        values: FormModel,
-        setSubmitting: (isSubmitting: boolean) => void,
-    ) => {
-        onNextChange?.(values, 'personalInformation', setSubmitting)
-    }
+    const dispatch = useAppDispatch()
+
+    // Add category selectors
+    const categories = useAppSelector(selectCategories)
+    const categoriesLoading = useAppSelector(selectCategoriesLoading)
+    const categoriesError = useAppSelector(selectCategoriesError)
+
+    // Fetch categories on component mount
+    useEffect(() => {
+        dispatch(fetchCategories())
+    }, [dispatch])
+
+    // Transform categories data for Select component
+    const specialtyOptions = categories.map((category) => ({
+        label: category.name, // Display name
+        value: category._id, // Category ID
+    }))
+
+    // Handle categories error
+    useEffect(() => {
+        if (categoriesError) {
+            toast.push(
+                <Notification
+                    title="Failed to load specialties"
+                    type="danger"
+                />,
+                { placement: 'top-center' },
+            )
+        }
+    }, [categoriesError])
 
     return (
         <>
@@ -152,50 +183,58 @@ const PersonalInformation = ({
                 initialValues={data}
                 enableReinitialize={true}
                 validationSchema={validationSchema}
-                onSubmit={(values, { setSubmitting }) => {
+                onSubmit={async (values, { setSubmitting }) => {
                     setSubmitting(true)
-                    setTimeout(() => {
-                        onNext(values, setSubmitting)
-                    }, 1000)
+                    try {
+                        // Transform the data to match API expectations
+                        const apiData = {
+                            ...values,
+                            category: values.specialty, // Map specialty to category
+                            // Remove specialty field to avoid confusion
+                            specialty: undefined,
+                        }
+
+                        // Store personal information in temporary state instead of calling API
+                        dispatch(setTempPersonalInfo(apiData))
+
+                        // Show success notification for saving locally
+                        toast.push(
+                            <Notification
+                                title="Personal information saved. Continue to address information."
+                                type="success"
+                            />,
+                            { placement: 'top-center' },
+                        )
+
+                        // Proceed to next step without API call
+                        setTimeout(() => {
+                            onNextChange?.(
+                                values,
+                                'personalInformation',
+                                setSubmitting,
+                            )
+                        }, 1000)
+                    } catch (error) {
+                        toast.push(
+                            <Notification
+                                title="Failed to save information"
+                                type="danger"
+                            />,
+                            { placement: 'top-center' },
+                        )
+                        setSubmitting(false)
+                    }
                 }}
             >
-                {({ values, touched, errors, isSubmitting }) => {
+                {({ values, touched, errors, isSubmitting, setSubmitting }) => {
                     return (
                         <Form>
                             <FormContainer>
-                                {/* <FormItem
-                                    label="Nationality"
-                                    invalid={
-                                        errors.nationality &&
-                                        touched.nationality
-                                    }
-                                    errorMessage={errors.nationality}
-                                >
-                                    <Field name="nationality">
-                                        {({ field, form }: FieldProps) => (
-                                            <Select
-                                                placeholder="Nationality"
-                                                field={field}
-                                                form={form}
-                                                options={countryList}
-                                                value={countryList.filter(
-                                                    (country) =>
-                                                        country.value ===
-                                                        values.nationality,
-                                                )}
-                                                onChange={(country) =>
-                                                    form.setFieldValue(
-                                                        field.name,
-                                                        country?.value,
-                                                    )
-                                                }
-                                            />
-                                        )}
-                                    </Field>
-                                </FormItem> */}
                                 <FormItem
                                     label="Specialty"
-                                    invalid={errors.specialty && touched.specialty}
+                                    invalid={
+                                        errors.specialty && touched.specialty
+                                    }
                                     errorMessage={errors.specialty}
                                 >
                                     <Field name="specialty">
@@ -205,6 +244,7 @@ const PersonalInformation = ({
                                                 field={field}
                                                 form={form}
                                                 options={specialtyOptions}
+                                                isLoading={categoriesLoading}
                                                 value={specialtyOptions.find(
                                                     (option) =>
                                                         option.value ===
@@ -261,8 +301,17 @@ const PersonalInformation = ({
                                     </FormItem>
                                     <FormItem
                                         label="Date of Birth"
-                                        invalid={errors.dob && touched.dob}
-                                        errorMessage={errors.dob}
+                                        invalid={
+                                            typeof errors.dob === 'string' &&
+                                            touched.dob
+                                        }
+                                        errorMessage={
+                                            Array.isArray(errors.dob)
+                                                ? errors.dob.join(', ')
+                                                : typeof errors.dob === 'string'
+                                                  ? errors.dob
+                                                  : undefined
+                                        }
                                     >
                                         <Field name="dob" placeholder="Date">
                                             {({ field, form }: FieldProps) => (

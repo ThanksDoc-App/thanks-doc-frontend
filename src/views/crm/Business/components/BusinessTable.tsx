@@ -6,15 +6,54 @@ import {
     ChevronRight,
     ChevronDown,
 } from 'lucide-react'
-// ✅ Import from your main store
-import { useAppDispatch, useAppSelector } from '@/store' // Update this path to your main store
+import { useAppDispatch, useAppSelector } from '@/store'
 import {
     fetchBusinesses,
     selectBusinesses,
     selectBusinessesLoading,
     selectBusinessesError,
-} from '../store/businessSlice' // Update this path to match your businessSlice location
+} from '../store/businessSlice'
 import SkeletonTable from '@/components/shared/SkeletonTable'
+
+// Error Boundary Component
+class TableErrorBoundary extends React.Component<
+    { children: React.ReactNode },
+    { hasError: boolean; error: Error | null }
+> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props)
+        this.state = { hasError: false, error: null }
+    }
+
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error }
+    }
+
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error('Table rendering error:', error, errorInfo)
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="p-4 text-red-500 bg-red-50 rounded">
+                    <h3>Something went wrong with the table rendering.</h3>
+                    <p className="text-sm mt-2">{this.state.error?.message}</p>
+                    <button
+                        onClick={() =>
+                            this.setState({ hasError: false, error: null })
+                        }
+                        className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            )
+        }
+
+        return this.props.children
+    }
+}
 
 const BusinessTable = () => {
     const navigate = useNavigate()
@@ -29,6 +68,9 @@ const BusinessTable = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
     const [showDropdown, setShowDropdown] = useState(false)
+    const [businessActions, setBusinessActions] = useState<{
+        [key: string]: boolean
+    }>({})
 
     // Fetch businesses on component mount
     useEffect(() => {
@@ -36,29 +78,118 @@ const BusinessTable = () => {
         dispatch(fetchBusinesses())
     }, [dispatch])
 
-    // Debug logging
-    // useEffect(() => {
-    //     console.log('📊 Redux State Update:')
-    //     console.log('- Loading:', loading)
-    //     console.log('- Error:', error)
-    //     console.log('- Businesses Data:', businessesData)
-    //     console.log('- Businesses Length:', businessesData?.length)
-    // }, [businessesData, loading, error])
+    // Debug logging to understand data structure
+    useEffect(() => {
+        console.log('📊 Raw businesses data:', businessesData)
+        if (businessesData && businessesData.length > 0) {
+            console.log('📊 First business object:', businessesData[0])
+            console.log('📊 Address field:', businessesData[0].address)
+            console.log('📊 Location field:', businessesData[0].location)
+        }
+    }, [businessesData])
 
-    // Transform API data to match original table structure
-    const BusinessJob = businessesData.map((business, index) => ({
-        id: business._id || index,
-        name: business.name || 'N/A',
-        date: business.createdAt
-            ? new Date(business.createdAt).toLocaleDateString()
-            : 'N/A',
-        address: business.address || business.location || 'Not specified',
-        jobs: business.jobsPosted
-            ? `${business.jobsPosted} jobs`
-            : 'No jobs posted',
-    }))
+    // Helper function to safely extract address
+    const extractAddress = (business: any): string => {
+        // Handle address field
+        if (business.address) {
+            if (typeof business.address === 'string') {
+                return business.address
+            }
+            if (typeof business.address === 'object' && business.address) {
+                return (
+                    business.address.address1 ||
+                    business.address.street ||
+                    business.address.city ||
+                    business.address.full ||
+                    'Address not specified'
+                )
+            }
+        }
 
-    // console.log('🔄 Transformed BusinessJob data:', BusinessJob)
+        // Handle location field
+        if (business.location) {
+            if (typeof business.location === 'string') {
+                return business.location
+            }
+            if (typeof business.location === 'object' && business.location) {
+                return (
+                    business.location.address1 ||
+                    business.location.street ||
+                    business.location.city ||
+                    business.location.full ||
+                    'Location not specified'
+                )
+            }
+        }
+
+        return 'Not specified'
+    }
+
+    // Helper function to safely convert values to strings
+    const safeString = (value: any): string => {
+        if (value === null || value === undefined) {
+            return 'N/A'
+        }
+        if (typeof value === 'string') {
+            return value
+        }
+        if (typeof value === 'number') {
+            return value.toString()
+        }
+        if (typeof value === 'object') {
+            // If it's an object, try to extract meaningful data
+            if (value.name) return value.name
+            if (value.title) return value.title
+            if (value.value) return value.value
+            return 'N/A'
+        }
+        return String(value)
+    }
+
+    // Transform API data to match original table structure with proper error handling
+    const BusinessJob = React.useMemo(() => {
+        if (!businessesData || !Array.isArray(businessesData)) {
+            return []
+        }
+
+        return businessesData.map((business, index) => {
+            try {
+                return {
+                    id: business._id || index,
+                    name: safeString(
+                        typeof business.name !== 'undefined'
+                            ? business.name
+                            : (business as any).businessName,
+                    ),
+                    date: business.createdAt
+                        ? new Date(business.createdAt).toLocaleDateString()
+                        : 'N/A',
+                    address: extractAddress(business),
+                    jobs: business.jobsPosted
+                        ? `${business.jobsPosted} jobs`
+                        : 'No jobs posted',
+                    // Keep reference to full business object
+                    fullData: business,
+                }
+            } catch (err) {
+                console.error(
+                    'Error transforming business data:',
+                    err,
+                    business,
+                )
+                return {
+                    id: index,
+                    name: 'Error loading business',
+                    date: 'N/A',
+                    address: 'N/A',
+                    jobs: 'N/A',
+                    fullData: business,
+                }
+            }
+        })
+    }, [businessesData])
+
+    console.log('🔄 Transformed BusinessJob data:', BusinessJob)
 
     // Calculate pagination
     const totalItems = BusinessJob.length
@@ -67,20 +198,60 @@ const BusinessTable = () => {
     const endIndex = startIndex + itemsPerPage
     const currentData = BusinessJob.slice(startIndex, endIndex)
 
-    // Handle business row click
-    const handleBusinessClick = (businessId: any) => {
-        navigate(`/app/crm/business/${businessId}`)
+    // Handle business row click - pass full business data
+    const handleBusinessClick = (businessData: any) => {
+        navigate(`/app/crm/business/${businessData.id}`, {
+            state: { businessData: businessData.fullData },
+        })
+    }
+
+    // Handle business action menu
+    const handleBusinessActionMenu = (businessId: string) => {
+        setBusinessActions((prev) => ({
+            ...prev,
+            [businessId]: !prev[businessId],
+        }))
+    }
+
+    const handleViewBusiness = (businessId: string) => {
+        setBusinessActions((prev) => ({
+            ...prev,
+            [businessId]: false,
+        }))
+        // Navigate to business details
+        const businessData = BusinessJob.find((b) => b.id === businessId)
+        if (businessData) {
+            handleBusinessClick(businessData)
+        }
+    }
+
+    const handleEditBusiness = (businessId: string) => {
+        setBusinessActions((prev) => ({
+            ...prev,
+            [businessId]: false,
+        }))
+        console.log('Editing business:', businessId)
+        // Add edit business logic here
+    }
+
+    const handleSuspendBusiness = (businessId: string) => {
+        setBusinessActions((prev) => ({
+            ...prev,
+            [businessId]: false,
+        }))
+        console.log('Suspending business:', businessId)
+        // Add suspend business logic here
     }
 
     // Handle page change
-    const handlePageChange = (page: any) => {
+    const handlePageChange = (page: number) => {
         if (page >= 1 && page <= totalPages) {
             setCurrentPage(page)
         }
     }
 
     // Handle items per page change
-    const handleItemsPerPageChange = (items: any) => {
+    const handleItemsPerPageChange = (items: number) => {
         setItemsPerPage(items)
         setCurrentPage(1) // Reset to first page
         setShowDropdown(false)
@@ -88,7 +259,7 @@ const BusinessTable = () => {
 
     // Generate page numbers to display
     const getPageNumbers = () => {
-        const pages = []
+        const pages: (number | string)[] = []
         const maxVisiblePages = 5
 
         if (totalPages <= maxVisiblePages) {
@@ -170,27 +341,70 @@ const BusinessTable = () => {
                         {currentData.map((bus, index) => (
                             <tr
                                 key={bus.id || index}
-                                onClick={() =>
-                                    handleBusinessClick(bus.id || index)
-                                }
+                                onClick={() => handleBusinessClick(bus)}
                                 className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
                                     (index + 1) % 2 === 0 ? 'bg-[#F8F8FD]' : ''
                                 }`}
                             >
-                                <td className="px-6 py-4">{bus.name}</td>
-                                <td className="px-6 py-4">{bus.date}</td>
-                                <td className="px-6 py-4">{bus.address}</td>
-                                <td className="px-6 py-4">{bus.jobs}</td>
+                                {/* Safe string rendering with fallbacks */}
                                 <td className="px-6 py-4">
+                                    {safeString(bus.name)}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {safeString(bus.date)}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {safeString(bus.address)}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {safeString(bus.jobs)}
+                                </td>
+                                <td className="px-6 py-4 relative">
                                     <button
                                         className="p-1 hover:bg-gray-200 rounded"
                                         onClick={(e) => {
                                             e.stopPropagation() // Prevent row click when clicking menu
-                                            // Add your menu logic here
+                                            handleBusinessActionMenu(
+                                                String(bus.id),
+                                            )
                                         }}
                                     >
                                         <MoreHorizontal className="w-5 h-5" />
                                     </button>
+                                    {businessActions[bus.id] && (
+                                        <div className="absolute right-0 mt-2 w-32 bg-white border border-[#D6DDEB] rounded shadow-lg z-10">
+                                            <button
+                                                className="block w-full text-left px-4 py-2 text-[13px] text-[#25324B] hover:bg-gray-50"
+                                                onClick={() =>
+                                                    handleViewBusiness(
+                                                        String(bus.id),
+                                                    )
+                                                }
+                                            >
+                                                View Details
+                                            </button>
+                                            <button
+                                                className="block w-full text-left px-4 py-2 text-[13px] text-[#25324B] hover:bg-gray-50"
+                                                onClick={() =>
+                                                    handleEditBusiness(
+                                                        String(bus.id),
+                                                    )
+                                                }
+                                            >
+                                                Edit Business
+                                            </button>
+                                            <button
+                                                className="block w-full text-left px-4 py-2 text-[13px] text-red-600 hover:bg-gray-50"
+                                                onClick={() =>
+                                                    handleSuspendBusiness(
+                                                        String(bus.id),
+                                                    )
+                                                }
+                                            >
+                                                Suspend
+                                            </button>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))}
@@ -251,7 +465,9 @@ const BusinessTable = () => {
                                     </span>
                                 ) : (
                                     <button
-                                        onClick={() => handlePageChange(page)}
+                                        onClick={() =>
+                                            handlePageChange(page as number)
+                                        }
                                         className={`px-3 py-1 text-[13px] rounded ${
                                             currentPage === page
                                                 ? 'bg-[#0F9297] text-white'
@@ -279,4 +495,13 @@ const BusinessTable = () => {
     )
 }
 
-export default BusinessTable
+// Wrapped component with error boundary
+const WrappedBusinessTable = () => {
+    return (
+        <TableErrorBoundary>
+            <BusinessTable />
+        </TableErrorBoundary>
+    )
+}
+
+export default WrappedBusinessTable

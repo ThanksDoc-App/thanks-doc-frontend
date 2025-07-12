@@ -9,7 +9,8 @@ export async function apiGetAccountSettingData<T>() {
 
 export async function apiGetAccountSettingIntegrationData<T>() {
     return ApiService.fetchData<T>({
-        url: '/account/setting/integration',
+        // url: '/account/setting/integration',
+        url: '/api/v1/documents',
         method: 'get',
     })
 }
@@ -43,9 +44,28 @@ export async function apiGetAccountLogData<
     })
 }
 
-export async function apiGetAccountFormData<T>() {
+export async function apiGetAccountFormData<T>(data: Partial<T>) {
     return ApiService.fetchData<T>({
-        url: '/account/form',
-        method: 'get',
+        url: '/api/v1/user',
+        method: 'patch',
+        data,
+    })
+}
+
+// ------------------------------------------
+// Document POST Endpoint
+// ------------------------------------------
+
+export interface DocumentPayload {
+    title: string
+    content?: string // JSON stringified object or array
+    files?: string[] // Optional array of file IDs/paths
+}
+
+export async function apiPostDocument<T = any>(data: DocumentPayload) {
+    return ApiService.fetchData<T>({
+        url: '/api/v1/documents',
+        method: 'post',
+        data: data as unknown as Record<string, unknown>,
     })
 }

@@ -27,11 +27,12 @@ const appsRoute: Routes = [
         },
     },
     {
-        key: 'appsProject.issue',
-        path: `${APP_PREFIX_PATH}/project/issue`,
+        key: 'appsProject.job-details',
+        path: `${APP_PREFIX_PATH}/project/job-details/:id`, // Changed {id} to :id
         component: lazy(() => import('@/views/project/Issue')),
         authority: [ADMIN, USER],
     },
+
     {
         key: 'appsProject.history',
         path: `${APP_PREFIX_PATH}/project/history`,
@@ -51,6 +52,14 @@ const appsRoute: Routes = [
             () => import('@/views/crm/Business/components/Business'),
         ),
         authority: [ADMIN],
+    },
+    {
+        key: 'appsCrm.business.details', // This keeps the parent relationship
+        path: `${APP_PREFIX_PATH}/crm/business/:id`,
+        component: lazy(
+            () => import('@/views/crm/Business/components/BusinessDetails'),
+        ),
+        authority: [ADMIN, USER],
     },
     {
         key: 'appsCrm.create-category',
@@ -139,6 +148,14 @@ const appsRoute: Routes = [
         key: 'appsSales.dashboard',
         path: `${APP_PREFIX_PATH}/sales/dashboard`,
         component: lazy(() => import('@/views/sales/SalesDashboard')),
+        authority: [ADMIN, USER],
+    },
+    {
+        key: 'appsSales.history',
+        path: `${APP_PREFIX_PATH}/sales/history`,
+        component: lazy(
+            () => import('@/views/sales/SalesHistory/SalesHistory'),
+        ),
         authority: [ADMIN, USER],
     },
     {

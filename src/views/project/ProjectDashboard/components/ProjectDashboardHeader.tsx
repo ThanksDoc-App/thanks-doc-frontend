@@ -9,7 +9,13 @@ const ProjectDashboardHeader = ({
 }: ProjectDashboardHeaderProps) => {
     return (
         <div>
-            <h4 className="mb-1">Hello, Dr {userName}!</h4>
+            <h4 className="mb-1">
+                Hello, Dr{' '}
+                {userName
+                    ? userName.charAt(0).toUpperCase() + userName.slice(1)
+                    : 'User'}
+                !
+            </h4>
             <p>Explore jobs around you.</p>
         </div>
     )

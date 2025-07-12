@@ -12,10 +12,18 @@ const SalesDashboardHeader = ({
 }: SalesDashboardHeaderProps) => {
     const navigate = useNavigate()
 
+    const localUserName = JSON.parse(
+        localStorage.getItem('userdetails') || '{}',
+    )?.data?.name
+
     return (
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-                <h4 className="mb-1">Hello, Maria</h4>
+                <h4 className="mb-1">
+                    Hello,{' '}
+                    {localUserName?.charAt(0).toUpperCase() +
+                        localUserName?.slice(1)}
+                </h4>
                 <p>Explore jobs around you.</p>
             </div>
             <Button

@@ -3,70 +3,99 @@ import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
-import Switcher from '@/components/ui/Switcher'
 import Avatar from '@/components/ui/Avatar'
 import Card from '@/components/ui/Card'
 import isEmpty from 'lodash/isEmpty'
-import { apiGetAccountSettingIntegrationData } from '@/services/AccountServices'
 import cloneDeep from 'lodash/cloneDeep'
+import { apiGetAccountSettingIntegrationData } from '@/services/AccountServices'
 
-type IntegrationDetail = {
+type DocumentDetail = {
+    _id: string
+    title: string
     name: string
     desc: string
     img: string
     type: string
     active: boolean
-    installed?: boolean
+    status: 'approved' | 'rejected' | 'pending'
+    content: {
+        type: string
+        documentType?: string
+        certificateTitle?: string
+        hasFile?: boolean
+        submittedAt?: string
+        fullName?: string
+    }
+    user: {
+        _id: string
+        name: string
+        email: string
+    }
+    createdAt: string
+    updatedAt: string
+    files?: any[]
 }
 
-type IntegrationType = {
-    installed: IntegrationDetail[]
-    available: IntegrationDetail[]
+type DocumentsType = {
+    installed: DocumentDetail[]
+    available: DocumentDetail[]
 }
 
-type GetAccountSettingIntegrationDataResponse = IntegrationType
+type GetAccountSettingIntegrationDataResponse = {
+    data: {
+        documents: DocumentDetail[]
+        totalDocuments: number
+        totalPages: number | null
+        currentPage: number | null
+    }
+    message: string
+    status: boolean
+    statusCode: number
+}
 
 const Integration = () => {
-    const [data, setData] = useState<Partial<IntegrationType>>({})
+    const [data, setData] = useState<Partial<DocumentsType>>({})
     const [viewIntegration, setViewIntegration] = useState(false)
     const [intergrationDetails, setIntergrationDetails] = useState<
-        Partial<IntegrationDetail>
+        Partial<DocumentDetail>
     >({})
     const [installing, setInstalling] = useState(false)
-
-    // const fetchData = async () => {
-    //     const response =
-    //         await apiGetAccountSettingIntegrationData<GetAccountSettingIntegrationDataResponse>()
-    //     setData(response.data)
-    // }
 
     const fetchData = async () => {
         const response =
             await apiGetAccountSettingIntegrationData<GetAccountSettingIntegrationDataResponse>()
-        console.log('Full API response:', response) // Add this
-        console.log('Response data:', response.data) // And this
-        setData(response.data)
-    }
 
-    // console.log('data', data)
+        const documents = response.data.data.documents.map((doc) => ({
+            ...doc,
+            name: doc.content.certificateTitle || doc.title,
+            desc: doc.content.documentType || doc.content.type,
+            // img: `/img/other/doc.png?text=${doc.content.type
+            //     .charAt(0)
+            //     .toUpperCase()}`,
+            type: doc.status,
+            active: true,
+        }))
+
+        setData({
+            available: documents,
+            installed: [],
+        })
+    }
 
     useEffect(() => {
         if (isEmpty(data)) {
             fetchData()
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const handleToggle = (
         bool: boolean,
         name: string,
-        category: keyof IntegrationType,
+        category: keyof DocumentsType,
     ) => {
         setData((prevState) => {
-            const nextState = cloneDeep(prevState as IntegrationType)
-            const nextCategoryValue = (prevState as IntegrationType)[
-                category
-            ].map((app) => {
+            const nextState = cloneDeep(prevState as DocumentsType)
+            const nextCategoryValue = nextState[category].map((app) => {
                 if (app?.name === name) {
                     app.active = !bool
                 }
@@ -78,7 +107,7 @@ const Integration = () => {
     }
 
     const onViewIntegrationOpen = (
-        details: IntegrationDetail,
+        details: DocumentDetail,
         installed: boolean,
     ) => {
         setViewIntegration(true)
@@ -89,12 +118,12 @@ const Integration = () => {
         setViewIntegration(false)
     }
 
-    const handleInstall = (details: IntegrationDetail) => {
+    const handleInstall = (details: DocumentDetail) => {
         setInstalling(true)
         setTimeout(() => {
             setData((prevState) => {
                 const nextState = cloneDeep(prevState)
-                const nextAvailableApp = prevState?.available?.filter(
+                const nextAvailableApp = nextState?.available?.filter(
                     (app) => app.name !== details.name,
                 )
                 nextState.available = nextAvailableApp
@@ -103,22 +132,71 @@ const Integration = () => {
             })
             setInstalling(false)
             onViewIntegrationClose()
-            toast.push(<Notification title="App installed" type="success" />, {
-                placement: 'top-center',
-            })
+            toast.push(
+                <Notification title="Document viewed" type="success" />,
+                {
+                    placement: 'top-center',
+                },
+            )
         }, 1000)
+    }
+
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'approved':
+                return {
+                    className:
+                        'text-[#34C759] text-[700] border border-[#34C759] rounded-full',
+                    text: 'Approved',
+                }
+            case 'rejected':
+                return {
+                    className:
+                        'text-red-800 text-[700] border border-red-200 rounded-full',
+                    text: 'Rejected',
+                }
+            case 'pending':
+                return {
+                    className:
+                        'text-[#FF9500] text-[700] border border-[#FF9500] rounded-full',
+                    text: 'Pending',
+                }
+            case 'under_review':
+                return {
+                    className:
+                        'text-blue-800 text-[700] border border-blue-200 rounded-full',
+                    text: 'Under Review',
+                }
+            case 'accepted':
+                return {
+                    className:
+                        'text-green-800 text-[700] border border-green-200 rounded-full',
+                    text: 'Accepted',
+                }
+            case 'declined':
+                return {
+                    className:
+                        'text-[#FF3B30] text-[700] border border-[#FF3B30] rounded-full',
+                    text: 'Declined',
+                }
+            default:
+                return {
+                    className: 'text-gray-800 border border-gray-200',
+                    text: status.charAt(0).toUpperCase() + status.slice(1),
+                }
+        }
     }
 
     return (
         <>
             <div className="mt-4">
                 <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-lg">My Documentsww</h4>
+                    <h4 className="font-semibold text-lg">My Documents</h4>
                 </div>
                 <div className="grid lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 mt-4">
                     {data?.available?.map((app) => (
                         <Card
-                            key={app.name}
+                            key={app._id}
                             bodyClass="p-0"
                             footerClass="flex justify-end p-2"
                             footer={
@@ -133,28 +211,36 @@ const Integration = () => {
                                 </Button>
                             }
                         >
-                            <div className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center">
+                            <div className="p-6 flex flex-col h-full">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center flex-1 min-w-0">
                                         <Avatar
-                                            className="bg-transparent dark:bg-transparent"
-                                            src={app.img}
+                                            className="bg-transparent dark:bg-transparent flex-shrink-0"
+                                            src="/img/others/doc.png"
                                         />
-                                        <div className="ltr:ml-2 rtl:mr-2">
-                                            <h6>{app.name}</h6>
+                                        <div className="ltr:ml-2 rtl:mr-2 flex-1 min-w-0">
+                                            <h6 className="truncate">
+                                                {app.name}
+                                            </h6>
                                         </div>
                                     </div>
-                                    {/* Tag added here */}
-                                    <span className="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-1 rounded">
-                                        {app.type}
+                                    <span
+                                        className={`inline-block text-xs font-semibold px-2 py-1 rounded whitespace-nowrap ml-2 flex-shrink-0 ${
+                                            getStatusColor(app.status).className
+                                        }`}
+                                    >
+                                        {getStatusColor(app.status).text}
                                     </span>
                                 </div>
-                                <p className="mt-6">{app.desc}</p>
+                                <p className="mt-auto text-sm text-gray-600 dark:text-gray-300">
+                                    {app.desc}
+                                </p>
                             </div>
                         </Card>
                     ))}
                 </div>
             </div>
+
             <Dialog
                 width={650}
                 isOpen={viewIntegration}
@@ -168,13 +254,75 @@ const Integration = () => {
                     />
                     <div className="ltr:ml-3 rtl:mr-3">
                         <h6>{intergrationDetails.name}</h6>
-                        <span>{intergrationDetails.type}</span>
+                        {intergrationDetails.content?.fullName && (
+                            <p className="text-xs text-gray-600 mt-1">
+                                Reference:{' '}
+                                {intergrationDetails.content.fullName}
+                            </p>
+                        )}
+                        {intergrationDetails.user?.email && (
+                            <p className="text-xs text-gray-600 mt-1">
+                                Email: {intergrationDetails.user.email}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <div className="mt-6">
                     <span className="font-semibold text-gray-900 dark:text-gray-100">
                         Preview of {intergrationDetails.name}
                     </span>
+                    <div className="mt-4 space-y-2">
+                        <div className="flex justify-between">
+                            <span className="text-sm text-gray-500">
+                                Status:
+                            </span>
+                            <span
+                                className={`text-xs font-semibold px-2 py-1 rounded ${
+                                    getStatusColor(
+                                        intergrationDetails.status || '',
+                                    ).className
+                                }`}
+                            >
+                                {
+                                    getStatusColor(
+                                        intergrationDetails.status || '',
+                                    ).text
+                                }
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-sm text-gray-500">
+                                Created:
+                            </span>
+                            <span className="text-sm">
+                                {intergrationDetails.createdAt
+                                    ? new Date(
+                                          intergrationDetails.createdAt,
+                                      ).toLocaleDateString()
+                                    : 'N/A'}
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-sm text-gray-500">
+                                Updated:
+                            </span>
+                            <span className="text-sm">
+                                {intergrationDetails.updatedAt
+                                    ? new Date(
+                                          intergrationDetails.updatedAt,
+                                      ).toLocaleDateString()
+                                    : 'N/A'}
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-sm text-gray-500">
+                                Submitted by:
+                            </span>
+                            <span className="text-sm">
+                                {intergrationDetails.user?.name}
+                            </span>
+                        </div>
+                    </div>
                 </div>
                 <div className="text-right mt-6">
                     <Button
@@ -184,13 +332,21 @@ const Integration = () => {
                     >
                         Cancel
                     </Button>
-                    {intergrationDetails?.installed ? (
-                        <Button disabled variant="solid">
-                            Update
+                    {intergrationDetails?.content?.hasFile ? (
+                        <Button variant="solid" loading={installing}>
+                            Download
                         </Button>
                     ) : (
-                        <Button variant="solid" loading={installing}>
-                            Update
+                        <Button
+                            variant="solid"
+                            loading={installing}
+                            onClick={() =>
+                                handleInstall(
+                                    intergrationDetails as DocumentDetail,
+                                )
+                            }
+                        >
+                            View Details
                         </Button>
                     )}
                 </div>

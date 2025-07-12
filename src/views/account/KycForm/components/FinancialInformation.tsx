@@ -2,6 +2,8 @@ import Input from '@/components/ui/Input'
 import Checkbox from '@/components/ui/Checkbox'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
+import Notification from '@/components/ui/Notification'
+import toast from '@/components/ui/toast'
 import { FormItem, FormContainer } from '@/components/ui/Form'
 import { Field, Form, Formik, getIn, FieldInputProps, FieldProps } from 'formik'
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
@@ -16,6 +18,14 @@ import * as Yup from 'yup'
 import type { ComponentType } from 'react'
 import type { FinancialInformation as FinancialInformationType } from '../store'
 import type { InputProps } from '@/components/ui/Input'
+// Add these imports for API integration
+import { useAppDispatch, useAppSelector } from '@/store'
+import {
+    addUserAccount,
+    resetAddAccountStatus,
+    clearAddAccountError,
+} from '@/views/account/Settings/store/SettingsSlice'
+import { useEffect } from 'react'
 
 type FormModel = FinancialInformationType
 
@@ -58,6 +68,31 @@ const NumericFormatInput = ({
     )
 }
 
+const validationSchema = Yup.object().shape({
+    sortCode: Yup.string()
+        .required('Sort code is required')
+        .matches(/^[\d-]+$/, 'Sort code must contain only digits and dashes')
+        .min(6, 'Sort code must be at least 6 characters'),
+    accountNumber: Yup.string()
+        .required('Account number is required')
+        .matches(
+            /^[\d\s-]+$/,
+            'Account number must contain only digits, spaces, and dashes',
+        )
+        .test(
+            'length',
+            'Account number must be between 4 and 34 digits',
+            function (value) {
+                if (!value) return false
+                const cleanValue = value.replace(/[\s-]/g, '')
+                return cleanValue.length >= 4 && cleanValue.length <= 34
+            },
+        ),
+    accountName: Yup.string()
+        .required('Account name is required')
+        .min(2, 'Account name must be at least 2 characters'),
+})
+
 const FinancialInformation = ({
     data = {
         taxResident: '',
@@ -77,23 +112,89 @@ const FinancialInformation = ({
             state: '',
             zipCode: '',
         },
+        // Add bank details fields
+        sortCode: '',
+        accountNumber: '',
+        accountName: '',
     },
     onNextChange,
     onBackChange,
     currentStepStatus,
 }: FinancialInformationProps) => {
-    const onNext = (
+    const dispatch = useAppDispatch()
+    const { addAccountLoading, addAccountSuccess, addAccountError } =
+        useAppSelector((state) => state.settings)
+
+    const onNext = async (
         values: FormModel,
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
-        onNextChange?.(values, 'financialInformation', setSubmitting)
+        try {
+            // Clean the account number by removing spaces and dashes for processing
+            const cleanAccountNumber =
+                values.accountNumber?.replace(/[\s-]/g, '') || ''
+
+            // Create the payload structure for bank details using the same format as Billing component
+            const bankDetailsPayload = {
+                accountName: values.accountName,
+                sortCode: values.sortCode,
+                accountNumber: cleanAccountNumber,
+            }
+
+            console.log('Bank details payload being sent:', bankDetailsPayload)
+
+            // Call the addUserAccount action (same as Billing component)
+            await dispatch(addUserAccount(bankDetailsPayload)).unwrap()
+
+            // Show success notification
+            toast.push(
+                <Notification
+                    title="Bank account added successfully"
+                    type="success"
+                />,
+                { placement: 'top-center' },
+            )
+
+            // Call the next change handler
+            onNextChange?.(values, 'financialInformation', setSubmitting)
+        } catch (error) {
+            // Show error notification
+            toast.push(
+                <Notification
+                    title="Failed to add bank account"
+                    type="danger"
+                />,
+                { placement: 'top-center' },
+            )
+            console.error('Failed to add account:', error)
+            setSubmitting(false)
+        }
     }
 
     const onBack = () => {
         onBackChange?.()
     }
 
-     return (
+    // Clear error when component unmounts
+    useEffect(() => {
+        return () => {
+            if (addAccountError) {
+                dispatch(clearAddAccountError())
+            }
+        }
+    }, [addAccountError, dispatch])
+
+    // Handle success state
+    useEffect(() => {
+        if (addAccountSuccess) {
+            // Reset the success state after showing notification
+            setTimeout(() => {
+                dispatch(resetAddAccountStatus())
+            }, 3000)
+        }
+    }, [addAccountSuccess, dispatch])
+
+    return (
         <>
             <div className="mb-8">
                 <h3 className="mb-2">Bank Details</h3>
@@ -105,47 +206,98 @@ const FinancialInformation = ({
             <Formik
                 enableReinitialize
                 initialValues={data}
-                onSubmit={(values, { setSubmitting }) => {
+                validationSchema={validationSchema}
+                onSubmit={async (values, { setSubmitting }) => {
                     setSubmitting(true)
-                    setTimeout(() => {
-                        onNext(values, setSubmitting)
-                    }, 1000)
+                    console.log('Form submitted with values:', values)
+
+                    try {
+                        await onNext(values, setSubmitting)
+                    } catch (error) {
+                        console.error('Submit error:', error)
+                        setSubmitting(false)
+                    }
                 }}
             >
                 {({ values, touched, errors, isSubmitting }) => {
                     return (
                         <Form>
                             <FormContainer>
-                                   <div className="flex flex-col md:flex-row gap-4">
-                                    <FormItem label="Sort code" asterisk={false} className="flex-1">
+                                {/* Error Display */}
+                                {addAccountError && (
+                                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-red-600 text-sm">
+                                                {addAccountError}
+                                            </span>
+                                            <button
+                                                onClick={() =>
+                                                    dispatch(
+                                                        clearAddAccountError(),
+                                                    )
+                                                }
+                                                className="text-red-400 hover:text-red-600"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <FormItem
+                                    label="Account Name"
+                                    invalid={
+                                        errors.accountName &&
+                                        touched.accountName
+                                    }
+                                    errorMessage={errors.accountName}
+                                >
+                                    <Field
+                                        name="accountName"
+                                        as={Input}
+                                        placeholder="Enter your account name"
+                                        disabled={addAccountLoading}
+                                    />
+                                </FormItem>
+                                <div className="flex flex-col md:flex-row gap-4">
+                                    <FormItem
+                                        label="Sort Code"
+                                        invalid={
+                                            errors.sortCode && touched.sortCode
+                                        }
+                                        errorMessage={errors.sortCode}
+                                        className="flex-1"
+                                    >
                                         <Field
-                                            name="bankName"
+                                            name="sortCode"
                                             as={Input}
-                                            placeholder="Enter your sort code"
+                                            placeholder="12-34-56"
+                                            disabled={addAccountLoading}
                                         />
                                     </FormItem>
-                                    <FormItem label="Account Number" asterisk={false} className="flex-1">
+                                    <FormItem
+                                        label="Account Number"
+                                        invalid={
+                                            errors.accountNumber &&
+                                            touched.accountNumber
+                                        }
+                                        errorMessage={errors.accountNumber}
+                                        className="flex-1"
+                                    >
                                         <Field
                                             name="accountNumber"
                                             as={Input}
                                             placeholder="Enter your account number"
+                                            disabled={addAccountLoading}
                                         />
                                     </FormItem>
                                 </div>
-                                <FormItem label="Account Name" asterisk={false}>
-                                    <Field
-                                        name="accountType"
-                                        as={Input}
-                                        placeholder="Enter your account name"
-                                    />
-                                </FormItem>
-                                {/* --- End Bank Account Fields --- */}
                                 <div className="flex justify-end gap-2">
                                     <Button type="button" onClick={onBack}>
                                         Back
                                     </Button>
                                     <Button
-                                        loading={isSubmitting}
+                                        loading={addAccountLoading}
                                         variant="solid"
                                         type="submit"
                                     >

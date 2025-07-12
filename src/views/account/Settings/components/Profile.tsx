@@ -25,6 +25,22 @@ import {
 import * as Yup from 'yup'
 import type { OptionProps, ControlProps } from 'react-select'
 import type { FormikProps, FieldInputProps, FieldProps } from 'formik'
+import { useDispatch, useSelector } from 'react-redux'
+import {
+    updateUserProfile,
+    changeProfileImage,
+    getUserProfile,
+} from '../store/SettingsSlice'
+import { RootState } from '@/store'
+import { useEffect, useState } from 'react'
+// Add categories imports
+import {
+    fetchCategories,
+    selectCategories,
+    selectCategoriesLoading,
+    selectCategoriesError,
+} from '../../../sales/ProductForm/store/categorySlice'
+import { useAppDispatch, useAppSelector } from '@/store'
 
 export type ProfileFormModel = {
     name: string
@@ -35,8 +51,8 @@ export type ProfileFormModel = {
     timeZone: string
     lang: string
     syncData: boolean
-    gmcNumber?: number
-    specialty?: string // <-- Add specialty
+    gmcNumber?: string
+    specialty?: string
 }
 
 type ProfileProps = {
@@ -52,15 +68,14 @@ type LanguageOption = {
 const { Control } = components
 
 const validationSchema = Yup.object().shape({
-    name: Yup.string()
-        .required('User Name Required'),
+    name: Yup.string().required('User Name Required'),
     email: Yup.string().email('Invalid email').required('Email Required'),
     title: Yup.string(),
     avatar: Yup.string(),
     lang: Yup.string(),
     timeZone: Yup.string(),
     syncData: Yup.bool(),
-    specialty: Yup.string(), // <-- Add specialty (not required)
+    specialty: Yup.string(),
 })
 
 const langOptions: LanguageOption[] = [
@@ -68,16 +83,6 @@ const langOptions: LanguageOption[] = [
     { value: 'ch', label: '中文', imgPath: '/img/countries/cn.png' },
     { value: 'jp', label: '日本语', imgPath: '/img/countries/jp.png' },
     { value: 'fr', label: 'French', imgPath: '/img/countries/fr.png' },
-]
-
-// Add specialty options
-const specialtyOptions = [
-    { label: 'General Practitioner', value: 'general_practitioner' },
-    { label: 'Cardiologist', value: 'cardiologist' },
-    { label: 'Dermatologist', value: 'dermatologist' },
-    { label: 'Pediatrician', value: 'pediatrician' },
-    { label: 'Psychiatrist', value: 'psychiatrist' },
-    { label: 'Other', value: 'other' },
 ]
 
 const CustomSelectOption = ({
@@ -104,54 +109,64 @@ const CustomSelectOption = ({
     )
 }
 
-// const CustomControl = ({
-//     children,
-//     ...props
-// }: ControlProps<LanguageOption>) => {
-//     const selected = props.getValue()[0]
-//     return (
-//         <Control {...props}>
-//             {selected && (
-//                 <Avatar
-//                     className="ltr:ml-4 rtl:mr-4"
-//                     shape="circle"
-//                     size={18}
-//                     src={selected.imgPath}
-//                 />
-//             )}
-//             {children}
-//         </Control>
-//     )
-// }
-
 const Profile = ({ data }: ProfileProps) => {
-    const userDetails = JSON.parse(localStorage.getItem('userdetails') || '{}')
-    const signedUpAs = userDetails?.data?.signedUpAs
+    const dispatch = useAppDispatch()
 
-    // OLD: Static initial values
-    // const data = {
-    //     name: '',
-    //     email: '',
-    //     phone: '',
-    //     address: '',
-    //     avatar: '',
-    //     timeZone: '',
-    //     lang: '',
-    //     syncData: false,
-    // }
+    const {
+        updateUserLoading,
+        updateUserSuccess,
+        updateUserError,
+        profileImageLoading,
+        profileImageSuccess,
+        profileImageError,
+        profileImageData,
+        // ✅ Add profile data selectors
+        getProfileLoading,
+        getProfileSuccess,
+        getProfileError,
+        profileData,
+    } = useSelector((state: RootState) => state.settings)
 
-    // ✅ NEW: Use localStorage values as default, override with props if passed
+    // Add category selectors
+    const categories = useAppSelector(selectCategories)
+    const categoriesLoading = useAppSelector(selectCategoriesLoading)
+    const categoriesError = useAppSelector(selectCategoriesError)
+
+    // State to store the selected image file
+    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(
+        null,
+    )
+
+    // ✅ Fetch profile data on component mount
+    useEffect(() => {
+        console.log('🚀 Profile component mounted - triggering getUserProfile')
+        dispatch(getUserProfile())
+    }, [dispatch])
+
+    // Fetch categories on component mount
+    useEffect(() => {
+        dispatch(fetchCategories())
+    }, [dispatch])
+
+    // Transform categories data for Select component
+    const specialtyOptions = categories.map((category) => ({
+        label: category.name, // Display name
+        value: category._id, // Category ID
+    }))
+
+    // ✅ Use API data instead of localStorage
+    // ✅ Use API data instead of localStorage
     const defaultData: ProfileFormModel = {
-        name: userDetails?.data?.name || '',
-        email: userDetails?.data?.email || '',
-        phone: userDetails?.data?.phone || '',
-        address: userDetails?.data?.address || '',
-        avatar: userDetails?.data?.profile_image || '',
-        gmcNumber: userDetails?.data?.gmcNumber || '',
+        name: profileData?.data?.name || '', // ✅ Name prefilled
+        email: profileData?.data?.email || '', // ✅ Email prefilled
+        phone: profileData?.data?.phone || '', // ✅ Phone prefilled
+        address: profileData?.location?.address1 || '', // ✅ Address prefilled
+        avatar: profileData?.data?.profileImage?.url || '', // ✅ Profile image prefilled
+        gmcNumber: profileData?.data?.gmcNumber || '', // ✅ GMC Number prefilled
         timeZone: '',
         lang: '',
         syncData: false,
-         specialty: userDetails?.data?.specialty || '', // <-- Add specialty
+        specialty: profileData?.data?.category?._id || '', // ✅ Specialty prefilled
     }
 
     const initialData = {
@@ -159,23 +174,158 @@ const Profile = ({ data }: ProfileProps) => {
         ...data,
     }
 
+    // Handle categories error
+    useEffect(() => {
+        if (categoriesError) {
+            toast.push(
+                <Notification
+                    title="Failed to load specialties"
+                    type="danger"
+                />,
+                { placement: 'top-center' },
+            )
+        }
+    }, [categoriesError])
+
+    // Handle profile fetch error
+    useEffect(() => {
+        if (getProfileError) {
+            toast.push(<Notification title={getProfileError} type="danger" />, {
+                placement: 'top-center',
+            })
+        }
+    }, [getProfileError])
+
+    // Handle profile image upload success/error
+    useEffect(() => {
+        if (profileImageSuccess && profileImageData) {
+            toast.push(
+                <Notification
+                    title="Profile image updated successfully"
+                    type="success"
+                />,
+                { placement: 'top-center' },
+            )
+        }
+        if (profileImageError) {
+            toast.push(
+                <Notification title={profileImageError} type="danger" />,
+                { placement: 'top-center' },
+            )
+        }
+    }, [profileImageSuccess, profileImageError, profileImageData])
+
     const onSetFormFile = (
         form: FormikProps<ProfileFormModel>,
         field: FieldInputProps<ProfileFormModel>,
         file: File[],
     ) => {
-        form.setFieldValue(field.name, URL.createObjectURL(file[0]))
+        if (file.length > 0) {
+            // Store the selected file for later upload
+            setSelectedImageFile(file[0])
+
+            // Update the form field with the local URL for immediate preview
+            form.setFieldValue(field.name, URL.createObjectURL(file[0]))
+        } else {
+            // Clear the selected file if no file is selected
+            setSelectedImageFile(null)
+        }
     }
 
-    const onFormSubmit = (
+    const onFormSubmit = async (
         values: ProfileFormModel,
         setSubmitting: (isSubmitting: boolean) => void,
     ) => {
-        console.log('values', values)
-        toast.push(<Notification title={'Profile updated'} type="success" />, {
-            placement: 'top-center',
-        })
-        setSubmitting(false)
+        console.log('Form values:', values)
+
+        try {
+            // First, upload the profile image if a new one is selected
+            if (selectedImageFile) {
+                const formData = new FormData()
+                formData.append('image', selectedImageFile)
+
+                // Dispatch the profile image upload action and wait for it
+                await dispatch(changeProfileImage(formData)).unwrap()
+            }
+
+            // ✅ Use API data instead of localStorage
+            const signedUpAs = profileData?.signedUpAs
+
+            let updatePayload: any
+
+            if (signedUpAs === 'doctor') {
+                updatePayload = {
+                    name: values.name,
+                    phone: values.phone,
+                    gmcNumber: values.gmcNumber?.toString() || '',
+                    location: {
+                        address1: values.address,
+                    },
+                    category: values.specialty || '',
+                }
+            } else if (signedUpAs === 'business') {
+                updatePayload = {
+                    businessName: values.name,
+                    phone: values.phone,
+                    location: {
+                        address1: values.address,
+                    },
+                    category: values.specialty || '',
+                }
+            } else {
+                // admin or other cases
+                updatePayload = {
+                    name: values.name,
+                    email: values.email,
+                    phone: values.phone,
+                    location: {
+                        address1: values.address,
+                    },
+                    category: values.specialty || '',
+                }
+            }
+
+            // Dispatch the Redux action for profile update
+            await dispatch(updateUserProfile(updatePayload)).unwrap()
+
+            // Clear the selected image file after successful submission
+            setSelectedImageFile(null)
+
+            // ✅ Refresh profile data after successful update
+            dispatch(getUserProfile())
+        } catch (error) {
+            console.error('Error updating profile:', error)
+            toast.push(
+                <Notification title="Failed to update profile" type="danger" />,
+                { placement: 'top-center' },
+            )
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    // ✅ Show loading state while fetching profile
+    if (getProfileLoading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2">Loading profile...</span>
+            </div>
+        )
+    }
+
+    // ✅ Show error state if profile fetch failed
+    if (getProfileError && !profileData) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="text-center">
+                    <p className="text-red-500 mb-4">Failed to load profile</p>
+                    <Button onClick={() => dispatch(getUserProfile())}>
+                        Retry
+                    </Button>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -185,13 +335,60 @@ const Profile = ({ data }: ProfileProps) => {
             validationSchema={validationSchema}
             onSubmit={(values, { setSubmitting }) => {
                 setSubmitting(true)
-                setTimeout(() => {
-                    onFormSubmit(values, setSubmitting)
-                }, 1000)
+                onFormSubmit(values, setSubmitting)
             }}
         >
-            {({ values, touched, errors, isSubmitting, resetForm }) => {
+            {({
+                values,
+                touched,
+                errors,
+                isSubmitting,
+                resetForm,
+                setFieldValue,
+            }) => {
+                // Handle success and error notifications with status check
+                useEffect(() => {
+                    if (
+                        updateUserSuccess &&
+                        updateUserSuccess.status === true
+                    ) {
+                        toast.push(
+                            <Notification
+                                title={'Profile updated successfully'}
+                                type="success"
+                            />,
+                            {
+                                placement: 'top-center',
+                            },
+                        )
+                    }
+                    if (updateUserError) {
+                        toast.push(
+                            <Notification
+                                title={updateUserError}
+                                type="danger"
+                            />,
+                            {
+                                placement: 'top-center',
+                            },
+                        )
+                    }
+                }, [updateUserSuccess, updateUserError])
+
+                // Update avatar field when profile image upload is successful
+                useEffect(() => {
+                    if (profileImageSuccess && profileImageData?.url) {
+                        setFieldValue('avatar', profileImageData.url)
+                    }
+                }, [profileImageSuccess, profileImageData, setFieldValue])
+
                 const validatorProps = { touched, errors }
+                const isLoading =
+                    isSubmitting || updateUserLoading || profileImageLoading
+
+                // ✅ Get signedUpAs from API data
+                const signedUpAs = profileData?.data?.signedUpAs
+
                 return (
                     <Form>
                         <FormContainer>
@@ -211,33 +408,41 @@ const Profile = ({ data }: ProfileProps) => {
                                             ? { src: field.value }
                                             : {}
                                         return (
-                                            <Upload
-                                                className="cursor-pointer"
-                                                showList={false}
-                                                uploadLimit={1}
-                                                onChange={(files) =>
-                                                    onSetFormFile(
-                                                        form,
-                                                        field,
-                                                        files,
-                                                    )
-                                                }
-                                                onFileRemove={(files) =>
-                                                    onSetFormFile(
-                                                        form,
-                                                        field,
-                                                        files,
-                                                    )
-                                                }
-                                            >
-                                                <Avatar
-                                                    className="border-2 border-white dark:border-gray-800 shadow-lg"
-                                                    size={60}
-                                                    shape="circle"
-                                                    icon={<HiOutlineUser />}
-                                                    {...avatarProps}
-                                                />
-                                            </Upload>
+                                            <div className="relative">
+                                                <Upload
+                                                    className="cursor-pointer"
+                                                    showList={false}
+                                                    uploadLimit={1}
+                                                    onChange={(files) =>
+                                                        onSetFormFile(
+                                                            form,
+                                                            field,
+                                                            files,
+                                                        )
+                                                    }
+                                                    onFileRemove={(files) =>
+                                                        onSetFormFile(
+                                                            form,
+                                                            field,
+                                                            files,
+                                                        )
+                                                    }
+                                                    disabled={isLoading}
+                                                >
+                                                    <Avatar
+                                                        className="border-2 border-white dark:border-gray-800 shadow-lg"
+                                                        size={60}
+                                                        shape="circle"
+                                                        icon={<HiOutlineUser />}
+                                                        {...avatarProps}
+                                                    />
+                                                </Upload>
+                                                {profileImageLoading && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         )
                                     }}
                                 </Field>
@@ -279,47 +484,59 @@ const Profile = ({ data }: ProfileProps) => {
                                     />
                                 </FormRow>
                             )}
-                            <FormRow
-                                name="address"
-                                label="Your Postcode"
-                                {...validatorProps}
-                                border={false}
-                            >
-                                <Field
-                                    type="text"
-                                    autoComplete="off"
+                            {signedUpAs !== 'super admin' && (
+                                <FormRow
                                     name="address"
-                                    placeholder="Address"
-                                    component={Input}
-                                    prefix={
-                                        <HiOutlineLocationMarker className="text-xl" />
-                                    }
-                                />
-                            </FormRow>
-                            <FormRow
-                            name="specialty"
-                            label="Specialty"
-                            touched={touched}
-                            errors={errors}
-                            border={false}
-                            >
-                            <Field name="specialty">
-                                {({ field, form }: FieldProps) => (
-                                    <Select
-                                        placeholder="Select specialty"
-                                        field={field}
-                                        form={form}
-                                        options={specialtyOptions}
-                                        value={specialtyOptions.find(
-                                            (option) => option.value === values.specialty
-                                        )}
-                                        onChange={(option) =>
-                                            form.setFieldValue(field.name, option?.value)
+                                    label="Your Postcode"
+                                    {...validatorProps}
+                                    border={false}
+                                >
+                                    <Field
+                                        type="text"
+                                        autoComplete="off"
+                                        name="address"
+                                        placeholder="Address"
+                                        component={Input}
+                                        prefix={
+                                            <HiOutlineLocationMarker className="text-xl" />
                                         }
                                     />
-                                )}
-                            </Field>
-                            </FormRow>
+                                </FormRow>
+                            )}
+
+                            {signedUpAs !== 'super admin' && (
+                                <FormRow
+                                    name="specialty"
+                                    label="Specialty"
+                                    touched={touched}
+                                    errors={errors}
+                                    border={false}
+                                >
+                                    <Field name="specialty">
+                                        {({ field, form }: FieldProps) => (
+                                            <Select
+                                                placeholder="Select specialty"
+                                                field={field}
+                                                form={form}
+                                                options={specialtyOptions}
+                                                isLoading={categoriesLoading}
+                                                value={specialtyOptions.find(
+                                                    (option) =>
+                                                        option.value ===
+                                                        values.specialty,
+                                                )}
+                                                onChange={(option) =>
+                                                    form.setFieldValue(
+                                                        field.name,
+                                                        option?.value,
+                                                    )
+                                                }
+                                            />
+                                        )}
+                                    </Field>
+                                </FormRow>
+                            )}
+
                             <FormRow
                                 name="phone"
                                 label="Phone Number"
@@ -337,39 +554,45 @@ const Profile = ({ data }: ProfileProps) => {
                                     }
                                 />
                             </FormRow>
-                            {signedUpAs !== 'business' && (
-                                <FormRow
-                                    name="gmcNumber"
-                                    label="GMC Number"
-                                    {...validatorProps}
-                                >
-                                    <Field
-                                        type="text"
-                                        autoComplete="off"
-                                        name="gmcNumber" // ✅ Corrected
-                                        placeholder="GMC Number"
-                                        component={Input}
-                                        prefix={
-                                            <HiOutlineClipboard className="text-xl" />
-                                        }
-                                    />
-                                </FormRow>
-                            )}
+                            {signedUpAs !== 'business' &&
+                                signedUpAs !== 'super admin' && (
+                                    <FormRow
+                                        name="gmcNumber"
+                                        label="GMC Number"
+                                        {...validatorProps}
+                                    >
+                                        <Field
+                                            type="text"
+                                            autoComplete="off"
+                                            name="gmcNumber"
+                                            placeholder="GMC Number"
+                                            component={Input}
+                                            prefix={
+                                                <HiOutlineClipboard className="text-xl" />
+                                            }
+                                        />
+                                    </FormRow>
+                                )}
 
                             <div className="mt-4 ltr:text-right">
                                 <Button
                                     className="ltr:mr-2 rtl:ml-2"
                                     type="button"
-                                    onClick={() => resetForm()}
+                                    onClick={() => {
+                                        resetForm()
+                                        setSelectedImageFile(null)
+                                    }}
+                                    disabled={isLoading}
                                 >
                                     Reset
                                 </Button>
                                 <Button
                                     variant="solid"
-                                    loading={isSubmitting}
+                                    loading={isLoading}
                                     type="submit"
+                                    disabled={isLoading}
                                 >
-                                    {isSubmitting ? 'Updating' : 'Update'}
+                                    {isLoading ? 'Updating...' : 'Update'}
                                 </Button>
                             </div>
                         </FormContainer>

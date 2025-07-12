@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Table from '@/components/ui/Table'
@@ -22,7 +22,7 @@ type Task = {
     priority: number
     date?: string
     amount?: number
-    location?: string // Add location property
+    location?: string
     assignees: {
         id: string
         name: string
@@ -64,6 +64,21 @@ const PriorityTag = ({ priority }: { priority: number }) => {
 
 const MyTasks = ({ data = [] }: MyTasksProps) => {
     const navigate = useNavigate()
+    const [searchTerm, setSearchTerm] = useState('')
+
+    // Filter data based on search term
+    const filteredData = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return data
+        }
+        const searchLower = searchTerm.toLowerCase()
+        return data.filter((task) => {
+            return (
+                task.taskSubject?.toLowerCase().includes(searchLower) ||
+                task.location?.toLowerCase().includes(searchLower)
+            )
+        })
+    }, [data, searchTerm])
 
     const columns: ColumnDef<Task>[] = useMemo(
         () => [
@@ -99,19 +114,17 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
                     return <span>{date || '10 July, 2025'}</span>
                 },
             },
-            // {
-            //     header: 'Status',
-            //     accessorKey: 'priority',
-            //     cell: (props) => {
-            //         const { priority } = props.row.original
-            //         return <PriorityTag priority={priority} />
-            //     },
-            // },
             {
                 header: 'Action',
                 accessorKey: 'Action',
                 cell: (props) => (
-                    <Button size="sm" color="primary" onClick={onViewAllTask}>
+                    <Button
+                        size="sm"
+                        color="primary"
+                        onClick={() =>
+                            onViewJobDetails(props.row.original.taskId)
+                        }
+                    >
                         Details
                     </Button>
                 ),
@@ -121,19 +134,28 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
     )
 
     const table = useReactTable({
-        data,
+        data: filteredData,
         columns,
         getCoreRowModel: getCoreRowModel(),
     })
 
     const onViewAllTask = () => {
-        navigate('/app/project/issue')
+        navigate('/app/project/job-details')
+    }
+
+    const onViewJobDetails = (id: string) => {
+        // Fixed: proper string typing
+        navigate(`/app/project/job-details/${id}`)
+    }
+
+    const handleSearch = () => {
+        console.log('Searching for:', searchTerm)
     }
 
     return (
         <Card>
             <div className="flex items-center justify-between mb-6">
-                <h4>Explore Jobs</h4>
+                <h4>Explore Jobs ({filteredData.length})</h4>
             </div>
             <InputGroup className="mb-4">
                 <Input
@@ -141,8 +163,17 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
                         <HiOutlineLocationMarker className="text-xl text-indigo-600 cursor-pointer" />
                     }
                     placeholder="Enter postcode or location..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                            handleSearch()
+                        }
+                    }}
                 />
-                <Button color="primary">Search</Button>
+                <Button color="primary" onClick={handleSearch}>
+                    Search
+                </Button>
             </InputGroup>
             <Table>
                 <THead>
@@ -172,7 +203,9 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
                                 className="text-center py-8"
                             >
                                 <span className="text-gray-400">
-                                    No jobs found
+                                    {searchTerm
+                                        ? `No jobs found matching "${searchTerm}"`
+                                        : 'No jobs found'}
                                 </span>
                             </Td>
                         </Tr>

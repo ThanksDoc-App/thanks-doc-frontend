@@ -18,7 +18,9 @@ const ProjectDashboard = () => {
     const dashboardData = useAppSelector(
         (state) => state.projectDashboard.data.dashboardData,
     )
-    const loading = useAppSelector((state) => state.projectDashboard.loading)
+    const loading = useAppSelector(
+        (state) => state.projectDashboard.data.loading,
+    ) // Fixed: added .data
 
     // Old logic: only used dashboardData?.userName
     // <ProjectDashboardHeader

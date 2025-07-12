@@ -9,6 +9,10 @@ import { HiOutlineUser, HiOutlineCog, HiOutlineLogout } from 'react-icons/hi'
 import { FiActivity } from 'react-icons/fi'
 import type { CommonProps } from '@/@types/common'
 import type { JSX } from 'react'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/store'
+import { useEffect } from 'react'
+import { getUserProfile } from '@/views/account/Settings/store/SettingsSlice'
 
 type DropdownList = {
     label: string
@@ -27,25 +31,39 @@ const dropdownItemList: DropdownList[] = [
         path: '/app/account/settings/profile',
         icon: <HiOutlineCog />,
     },
-    {
-        label: 'Activity Log',
-        path: '/app/account/activity-log',
-        icon: <FiActivity />,
-    },
+    // {
+    //     label: 'Activity Log',
+    //     path: '/app/account/activity-log',
+    //     icon: <FiActivity />,
+    // },
 ]
 
 const _UserDropdown = ({ className }: CommonProps) => {
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
 
-    // ✅ Get user from localStorage
+    // ✅ Get profile data from Redux instead of localStorage
+    const { profileData, getProfileLoading } = useSelector(
+        (state: RootState) => state.settings,
+    )
+
+    // ✅ Fetch profile data on component mount
+    useEffect(() => {
+        if (!profileData) {
+            dispatch(getUserProfile())
+        }
+    }, [dispatch, profileData])
+
+    // ✅ Fallback to localStorage if API data is not available yet
     const localUser =
         JSON.parse(localStorage.getItem('userdetails') || '{}')?.data || {}
 
-    const avatar = localUser.profileImage || ''
-    const userName = localUser.name || 'Anonymous'
-    const email = localUser.email || ''
-    const authority = [localUser.role]
+    // ✅ Use API data first, then fallback to localStorage
+    const avatar =
+        profileData?.data?.profileImage?.url || localUser.profileImage || ''
+    const userName = profileData?.data?.name || localUser.name || 'Anonymous'
+    const email = profileData?.data?.email || localUser.email || ''
+    const authority = [profileData?.data?.role || localUser.role || 'guest']
 
     const handleSignOut = () => {
         localStorage.clear()
