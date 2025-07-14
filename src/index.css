@@ -1,1 +1,18 @@
 @import './assets/styles/app.css';
+
+
+/* Hide scrollbars across the entire app */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Optional: Prevent scroll behavior entirely (if desired) */
+/* html, body {
+  overflow: hidden; /* This will disable scrolling completely 
+} */
+

@@ -126,7 +126,11 @@ const Settings = () => {
     return (
         <Container>
             <AdaptableCard>
-                <Tabs value={currentTab} onChange={(val) => onTabChange(val)}>
+                <Tabs
+                    value={currentTab}
+                    onChange={(val) => onTabChange(val)}
+                    className="whitespace-nowrap"
+                >
                     <TabList>
                         {filteredTabs.map((key) => (
                             <TabNav key={key} value={key}>
@@ -135,7 +139,7 @@ const Settings = () => {
                         ))}
                     </TabList>
                 </Tabs>
-                <div className="px-4 py-6">
+                <div className="px-4 py-6 whitespace-nowrap">
                     <Suspense fallback={<></>}>
                         {currentTab === 'profile' && (
                             <Profile

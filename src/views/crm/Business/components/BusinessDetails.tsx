@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux' // Add these imports
-import type { AppDispatch } from '../../../store' // Adjust the path as needed
+import { useDispatch, useSelector } from 'react-redux'
+import type { AppDispatch } from '../../../store'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import { CiMail } from 'react-icons/ci'
 import { BsPhone } from 'react-icons/bs'
@@ -13,7 +13,6 @@ import {
     X,
 } from 'lucide-react'
 
-// Import your Redux actions and selectors
 import {
     fetchPaymentHistory,
     selectPaymentHistory,
@@ -75,7 +74,6 @@ const BusinessDetails = () => {
 
     const getDateJoined = () => {
         if (!businessData) return 'Unknown Date'
-
         if (businessData.createdAt) {
             return new Date(businessData.createdAt).toLocaleDateString()
         }
@@ -98,6 +96,15 @@ const BusinessDetails = () => {
         }
     }, [dispatch, businessData?._id, currentJobsPage, jobsPerPage])
 
+    // Debug: Log the payment history data
+    useEffect(() => {
+        console.log('Payment History from Redux:', paymentHistory)
+        console.log('Loading:', paymentHistoryLoading)
+        console.log('Error:', paymentHistoryError)
+    }, [paymentHistory, paymentHistoryLoading, paymentHistoryError])
+
+    const navigate = useNavigate()
+
     // Handle back navigation
     const handleGoBack = () => {
         navigate(-1)
@@ -108,6 +115,8 @@ const BusinessDetails = () => {
     const startIndex = (currentJobsPage - 1) * jobsPerPage
     const endIndex = startIndex + jobsPerPage
     const currentJobsData = paymentHistory.slice(startIndex, endIndex)
+
+    console.log('currentJobsData', currentJobsData)
 
     // Generate page numbers for pagination
     const generatePageNumbers = (current: any, total: any) => {
@@ -182,18 +191,9 @@ const BusinessDetails = () => {
         dispatch(clearPaymentHistoryError())
     }
 
-    // Format currency
-    const formatCurrency = (amount: number, currency = 'NGN') => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: currency,
-            minimumFractionDigits: 0,
-        }).format(amount)
-    }
-
     // Format date
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-NG', {
+        return new Date(dateString).toLocaleDateString('en-GB', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -352,136 +352,123 @@ const BusinessDetails = () => {
                             </div>
                         ) : (
                             <div className="bg-white">
-                                <table className="w-full border border-[#D6DDEB]">
-                                    <thead className="border-b border-gray-200">
-                                        <tr>
-                                            <th className="px-4 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
-                                                Job{' '}
-                                            </th>
-                                            <th className="px-4 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
-                                                Location{' '}
-                                            </th>
-                                            <th className="px-4 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
-                                                Payment{' '}
-                                            </th>
-                                            <th className="px-4 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
-                                                Date{' '}
-                                            </th>
-                                            <th className="px-4 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
-                                                Status{' '}
-                                            </th>
-                                            <th className="px-4 py-4 w-12">
-                                                Action
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {currentJobsData.length === 0 ? (
+                                {/* Responsive Table Wrapper */}
+                                <div className="overflow-x-auto bg-white scrollbar-hidden">
+                                    <table className="min-w-[600px] w-full border border-[#D6DDEB]">
+                                        <thead className="border-b border-gray-200">
                                             <tr>
-                                                <td
-                                                    colSpan={6}
-                                                    className="px-4 py-8 text-center text-gray-500"
-                                                >
-                                                    No jobs found for this
-                                                    business
-                                                </td>
+                                                <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
+                                                    Job
+                                                </th>
+                                                <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
+                                                    Location
+                                                </th>
+                                                <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
+                                                    Payment
+                                                </th>
+                                                <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
+                                                    Date
+                                                </th>
+                                                <th className="px-6 py-4 w-12">
+                                                    Action
+                                                </th>
                                             </tr>
-                                        ) : (
-                                            currentJobsData.map(
-                                                (job, index) => (
-                                                    <tr
-                                                        key={job._id}
-                                                        className={`hover:bg-gray-50 text-[#25324B] text-[13px] transition-colors ${
-                                                            (index + 1) % 2 ===
-                                                            0
-                                                                ? 'bg-[#F8F8FD]'
-                                                                : ''
-                                                        }`}
+                                        </thead>
+                                        <tbody>
+                                            {currentJobsData.length === 0 ? (
+                                                <tr>
+                                                    <td
+                                                        colSpan={5}
+                                                        className="px-6 py-8 text-center text-gray-500"
                                                     >
-                                                        <td className="px-4 py-4">
-                                                            <div>
-                                                                <p className="font-medium">
-                                                                    {job.title}
-                                                                </p>
-                                                                <p className="text-[#7C8493] text-[11px]">
-                                                                    {job.jobId}
-                                                                </p>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-4">
-                                                            {job.location ||
-                                                                'N/A'}
-                                                        </td>
-                                                        <td className="px-4 py-4">
-                                                            {job.amount
-                                                                ? formatCurrency(
-                                                                      job.amount,
-                                                                      job.currency,
-                                                                  )
-                                                                : 'N/A'}
-                                                        </td>
-                                                        <td className="px-4 py-4">
-                                                            {job.paymentDate
-                                                                ? formatDate(
-                                                                      job.paymentDate,
-                                                                  )
-                                                                : 'N/A'}
-                                                        </td>
-                                                        <td className="px-4 py-4">
-                                                            <span
-                                                                className={`px-2 py-1 rounded-full text-[11px] font-medium ${
-                                                                    job.status ===
-                                                                        'paid' ||
-                                                                    job.status ===
-                                                                        'completed'
-                                                                        ? 'bg-green-100 text-green-800'
-                                                                        : job.status ===
-                                                                            'pending'
-                                                                          ? 'bg-yellow-100 text-yellow-800'
-                                                                          : 'bg-red-100 text-red-800'
-                                                                }`}
-                                                            >
-                                                                {job.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-4 relative">
-                                                            <button
-                                                                onClick={(
-                                                                    e,
-                                                                ) => {
-                                                                    e.stopPropagation()
-                                                                    handleJobActionMenu(
-                                                                        job._id,
-                                                                    )
-                                                                }}
-                                                                className="p-1 hover:bg-gray-200 rounded"
-                                                            >
-                                                                <MoreHorizontal className="w-5 h-5" />
-                                                            </button>
-                                                            {jobActions[
-                                                                job._id
-                                                            ] && (
-                                                                <div className="absolute right-0 mt-2 w-32 bg-white border border-[#D6DDEB] rounded shadow-lg z-10">
-                                                                    <button
-                                                                        className="block w-full text-left px-4 py-2 text-[13px] text-[#25324B] hover:bg-gray-50"
-                                                                        onClick={() =>
-                                                                            handleMarkAsPaid(
-                                                                                job._id,
-                                                                            )
+                                                        No jobs found for this
+                                                        business
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                currentJobsData.map(
+                                                    (job, index) => (
+                                                        <tr
+                                                            key={job._id}
+                                                            className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap transition-colors ${
+                                                                (index + 1) %
+                                                                    2 ===
+                                                                0
+                                                                    ? 'bg-[#F8F8FD]'
+                                                                    : ''
+                                                            }`}
+                                                        >
+                                                            <td className="px-6 py-4">
+                                                                <div>
+                                                                    <p className="font-medium">
+                                                                        {
+                                                                            job.title
                                                                         }
-                                                                    >
-                                                                        Mark as
-                                                                        paid
-                                                                    </button>
+                                                                    </p>
                                                                 </div>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ),
-                                            )
-                                        )}
-                                    </tbody>
-                                </table>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                {job.location ||
+                                                                    'N/A'}
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex gap-1">
+                                                                    {job.amount}
+                                                                    <p>
+                                                                        {' '}
+                                                                        {
+                                                                            job.currency
+                                                                        }
+                                                                    </p>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                {job.paymentDate
+                                                                    ? formatDate(
+                                                                          job.paymentDate,
+                                                                      )
+                                                                    : 'N/A'}
+                                                            </td>
+                                                            <td className="px-6 py-4 relative">
+                                                                <button
+                                                                    onClick={(
+                                                                        e,
+                                                                    ) => {
+                                                                        e.stopPropagation()
+                                                                        handleJobActionMenu(
+                                                                            job._id,
+                                                                        )
+                                                                    }}
+                                                                    className="p-1 hover:bg-gray-200 rounded"
+                                                                >
+                                                                    <MoreHorizontal className="w-5 h-5" />
+                                                                </button>
+                                                                {jobActions[
+                                                                    job._id
+                                                                ] && (
+                                                                    <div className="absolute right-0 mt-2 w-32 bg-white border border-[#D6DDEB] rounded shadow-lg z-10">
+                                                                        <button
+                                                                            className="block w-full text-left px-4 py-2 text-[13px] text-[#25324B] hover:bg-gray-50"
+                                                                            onClick={() =>
+                                                                                handleMarkAsPaid(
+                                                                                    job._id,
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            Mark
+                                                                            as
+                                                                            paid
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
 
@@ -593,18 +580,6 @@ const BusinessDetails = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Debug info (remove in production) */}
-            {/* {process.env.NODE_ENV === 'development' && (
-                <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">
-                        Debug Info (Development Only)
-                    </h3>
-                    <pre className="text-xs text-gray-600 overflow-auto">
-                        {JSON.stringify(businessData, null, 2)}
-                    </pre>
-                </div>
-            )} */}
         </div>
     )
 }

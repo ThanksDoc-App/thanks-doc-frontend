@@ -22,7 +22,7 @@ interface Business {
   jobsPosted?: number;
 }
 
-// Add Payment History interface
+// Payment History interface
 interface PaymentHistoryItem {
   _id: string;
   title: string;
@@ -38,7 +38,6 @@ interface BusinessState {
   data: Business[];
   loading: boolean;
   error: string | null;
-  // Add payment history state
   paymentHistory: PaymentHistoryItem[];
   paymentHistoryLoading: boolean;
   paymentHistoryError: string | null;
@@ -48,7 +47,6 @@ const initialState: BusinessState = {
   data: [],
   loading: false,
   error: null,
-  // Initialize payment history state
   paymentHistory: [],
   paymentHistoryLoading: false,
   paymentHistoryError: null,
@@ -95,7 +93,7 @@ export const fetchBusinesses = createAsyncThunk(
   }
 );
 
-// Add new async thunk for payment history
+// Updated fetchPaymentHistory with correct data access
 export const fetchPaymentHistory = createAsyncThunk(
   'business/fetchPaymentHistory',
   async (
@@ -114,29 +112,37 @@ export const fetchPaymentHistory = createAsyncThunk(
         throw new Error('No payment history data in response');
       }
 
-      // Handle different response structures
+      // Fix: Access the correct nested structure based on your API response
       let paymentData;
-      if (response.data.data && Array.isArray(response.data.data)) {
-        paymentData = response.data.data;
+      if (response.data.data && response.data.data.payments && Array.isArray(response.data.data.payments)) {
+        paymentData = response.data.data.payments;
+      } else if (response.data.payments && Array.isArray(response.data.payments)) {
+        paymentData = response.data.payments;
       } else if (Array.isArray(response.data)) {
         paymentData = response.data;
       } else {
         throw new Error('Payment history data not found in expected response structure');
       }
 
-      // Transform the data to match our interface
+      // Transform the data to match your interface with correct field mapping
       const transformedData = paymentData.map((payment: any) => ({
-        _id: payment._id || payment.id,
-        title: payment.jobTitle || payment.title || 'N/A',
-        jobId: payment.jobId || payment.id,
-        location: payment.location || 'N/A',
-        amount: payment.amount || 0,
-        currency: payment.currency || 'NGN',
-        paymentDate: payment.paymentDate || payment.createdAt,
-        status: payment.status || 'pending'
+        _id: payment._id,
+        title: payment.job?.name || 'N/A',
+        jobId: payment.job?._id || payment._id,
+        location: payment.job?.location ? 
+          `${payment.job.location.city}, ${payment.job.location.country}` : 'N/A',
+        amount: payment.amount,
+        currency: payment.currency?.toUpperCase() || 'GBP',
+        paymentDate: payment.transactionDate || payment.createdAt,
+        status: payment.status === 'succeeded' ? 'paid' : payment.status
       }));
 
-      return transformedData;
+      return {
+        payments: transformedData,
+        totalPayments: response.data.data?.totalPayments || transformedData.length,
+        totalPages: response.data.data?.totalPages || 1,
+        currentPage: response.data.data?.currentPage || 1
+      };
     } catch (error: any) {
       return thunkAPI.rejectWithValue(
         error?.response?.data?.message || error?.message || 'Failed to fetch payment history'
@@ -155,7 +161,6 @@ const businessSlice = createSlice({
     clearPaymentHistoryError: (state) => {
       state.paymentHistoryError = null;
     },
-    // Add action to update payment status
     updatePaymentStatus: (state, action) => {
       const { jobId, status } = action.payload;
       const paymentIndex = state.paymentHistory.findIndex(payment => payment._id === jobId);
@@ -180,13 +185,13 @@ const businessSlice = createSlice({
         state.error = action.payload as string;
         state.data = [];
       })
-      // Payment history cases
+      // Payment history cases - Updated to handle the new response structure
       .addCase(fetchPaymentHistory.pending, (state) => {
         state.paymentHistoryLoading = true;
         state.paymentHistoryError = null;
       })
       .addCase(fetchPaymentHistory.fulfilled, (state, action) => {
-        state.paymentHistory = action.payload;
+        state.paymentHistory = action.payload.payments;
         state.paymentHistoryLoading = false;
       })
       .addCase(fetchPaymentHistory.rejected, (state, action) => {
@@ -212,7 +217,7 @@ export const selectBusinessesError = (state: { business?: BusinessState }) => {
   return state.business?.error || null;
 };
 
-// New payment history selectors
+// Payment history selectors
 export const selectPaymentHistory = (state: { business?: BusinessState }) => {
   return state.business?.paymentHistory || [];
 };
