@@ -142,25 +142,14 @@ const baseConfig: NavigationTree[] = [
         ],
       },
       {
-         key: 'appsAccount.settings',
-            path: `${APP_PREFIX_PATH}/account/settings/profile`,
-            title: 'Settings',
-            translateKey: 'nav.appsAccount.settings',
-            icon: 'settings_icon',
-            type: NAV_ITEM_TYPE_ITEM,
-            authority: [DOCTOR, BUSINESS, ADMIN, USER],
-            subMenu: [],
-          // {
-          //   key: 'appsAccount.kycForm',
-          //   path: `${APP_PREFIX_PATH}/account/kyc-form`,
-          //   title: 'KYC Form',
-          //   translateKey: 'nav.appsAccount.kycForm',
-          //   icon: '',
-          //   type: NAV_ITEM_TYPE_ITEM,
-          //   authority: [DOCTOR, BUSINESS, ADMIN, USER],
-          //   subMenu: [],
-          // },
-        
+        key: 'appsAccount.settings',
+        path: `${APP_PREFIX_PATH}/account/settings/profile`,
+        title: 'Settings',
+        translateKey: 'nav.appsAccount.settings',
+        icon: 'settings_icon',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [DOCTOR, BUSINESS, ADMIN, USER],
+        subMenu: [],
       },
     ],
   },
@@ -207,12 +196,9 @@ export const getAppsNavigationConfig = (userRole?: string): NavigationTree[] => 
             children[0].icon = item.icon
           }
           newSubMenu.push(...children)
-        } else if (item.key === 'apps.account') {
-          const filteredAccount = structuredClone(item)
-          filteredAccount.subMenu = filteredAccount.subMenu?.filter(
-            subItem => subItem.key !== 'appsAccount.kycForm'
-          )
-          newSubMenu.push(filteredAccount)
+        } else if (item.key === 'appsAccount.settings') {
+          // Always include settings for super admin
+          newSubMenu.push(item)
         }
       }
     } else {
@@ -224,7 +210,8 @@ export const getAppsNavigationConfig = (userRole?: string): NavigationTree[] => 
           continue
         }
         
-        if (item.key === 'apps.account') {
+        if (item.key === 'appsAccount.settings') {
+          // Always include settings for all users
           newSubMenu.push(item)
         } else if (item.key === 'apps.crm') {
           if (signedUpAs !== 'doctor' && signedUpAs !== 'business') {
@@ -376,41 +363,3 @@ export const updateNavigationAfterAuth = (userDetails: any) => {
 
 // Default export for backward compatibility
 export default getAppsNavigationConfig()
-
-// Usage in your authentication logic:
-/*
-const handleLogin = async (credentials) => {
-  try {
-    const response = await loginAPI(credentials)
-    
-    // Update navigation after successful login
-    updateNavigationAfterAuth(response.data)
-    
-    // Navigate to dashboard or appropriate route
-    navigate('/dashboard')
-  } catch (error) {
-    console.error('Login failed:', error)
-  }
-}
-*/
-
-// Usage in your Navigation component:
-/*
-import { useNavigationConfig } from './navigation.config'
-
-const NavigationComponent = () => {
-  const { config, isLoading, refreshConfig } = useNavigationConfig()
-  
-  if (isLoading) {
-    return <div>Loading navigation...</div>
-  }
-  
-  return (
-    <nav>
-      {config.map(item => (
-        <NavigationItem key={item.key} item={item} />
-      ))}
-    </nav>
-  )
-}
-*/

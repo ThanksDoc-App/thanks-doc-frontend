@@ -5,6 +5,7 @@ import {
     apiGetUserProfile,
     apiAddUserAccount,
     apiUpdateDocument,
+    apiDeleteDocument, // Updated function
 } from '@/services/CommonService'
 
 // Define interfaces
@@ -56,12 +57,17 @@ export interface AddAccountPayload {
     sortCode: string
 }
 
-// Updated interface to match Swagger specification
 export interface UpdateDocumentPayload {
     title?: string
     content?: string
-    files?: string[] // Array of file identifiers as per Swagger spec
-    filesToDelete?: string[] // Added missing field for file deletion
+    file?: File | string
+    files?: string[]
+}
+
+// Add interface for delete document payload
+export interface DeleteDocumentPayload {
+    documentId: string
+    filesToDelete: string[]
 }
 
 interface SettingsState {
@@ -88,6 +94,10 @@ interface SettingsState {
     updateDocumentSuccess: boolean
     updateDocumentError: string | null
     updateDocumentData: any
+    deleteDocumentLoading: boolean
+    deleteDocumentSuccess: boolean
+    deleteDocumentError: string | null
+    deleteDocumentData: any
 }
 
 const initialState: SettingsState = {
@@ -111,6 +121,10 @@ const initialState: SettingsState = {
     updateDocumentSuccess: false,
     updateDocumentError: null,
     updateDocumentData: null,
+    deleteDocumentLoading: false,
+    deleteDocumentSuccess: false,
+    deleteDocumentError: null,
+    deleteDocumentData: null,
 }
 
 // Async thunks
@@ -171,7 +185,6 @@ export const addUserAccount = createAsyncThunk(
     },
 )
 
-// Fixed updateDocument thunk with proper error handling
 export const updateDocument = createAsyncThunk(
     'settings/updateDocument',
     async (
@@ -188,6 +201,28 @@ export const updateDocument = createAsyncThunk(
                 error.response?.data?.message ||
                     error.message ||
                     'Failed to update document',
+            )
+        }
+    },
+)
+
+// Updated delete document thunk
+export const deleteDocument = createAsyncThunk(
+    'settings/deleteDocument',
+    async (payload: DeleteDocumentPayload, { rejectWithValue }) => {
+        try {
+            console.log('Deleting files with payload:', payload)
+            const response = await apiDeleteDocument(
+                payload.documentId,
+                payload.filesToDelete,
+            )
+            return { ...payload, ...response.data }
+        } catch (error: any) {
+            console.error('Delete document error:', error)
+            return rejectWithValue(
+                error.response?.data?.message ||
+                    error.message ||
+                    'Failed to delete document',
             )
         }
     },
@@ -232,6 +267,13 @@ const settingsSlice = createSlice({
         },
         clearUpdateDocumentError: (state) => {
             state.updateDocumentError = null
+        },
+        resetDeleteDocumentStatus: (state) => {
+            state.deleteDocumentSuccess = false
+            state.deleteDocumentError = null
+        },
+        clearDeleteDocumentError: (state) => {
+            state.deleteDocumentError = null
         },
     },
     extraReducers: (builder) => {
@@ -297,7 +339,7 @@ const settingsSlice = createSlice({
                 state.addAccountLoading = false
                 state.addAccountError = action.payload as string
             })
-            // Update document - Enhanced with better error handling
+            // Update document
             .addCase(updateDocument.pending, (state) => {
                 state.updateDocumentLoading = true
                 state.updateDocumentSuccess = false
@@ -311,6 +353,21 @@ const settingsSlice = createSlice({
             .addCase(updateDocument.rejected, (state, action) => {
                 state.updateDocumentLoading = false
                 state.updateDocumentError = action.payload as string
+            })
+            // Delete document
+            .addCase(deleteDocument.pending, (state) => {
+                state.deleteDocumentLoading = true
+                state.deleteDocumentSuccess = false
+                state.deleteDocumentError = null
+            })
+            .addCase(deleteDocument.fulfilled, (state, action) => {
+                state.deleteDocumentLoading = false
+                state.deleteDocumentSuccess = true
+                state.deleteDocumentData = action.payload
+            })
+            .addCase(deleteDocument.rejected, (state, action) => {
+                state.deleteDocumentLoading = false
+                state.deleteDocumentError = action.payload as string
             })
     },
 })
@@ -326,6 +383,8 @@ export const {
     clearAddAccountError,
     resetUpdateDocumentStatus,
     clearUpdateDocumentError,
+    resetDeleteDocumentStatus,
+    clearDeleteDocumentError,
 } = settingsSlice.actions
 
 export default settingsSlice.reducer

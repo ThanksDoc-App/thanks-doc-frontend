@@ -5,15 +5,19 @@ import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import Avatar from '@/components/ui/Avatar'
 import Card from '@/components/ui/Card'
-import { X } from 'lucide-react'
+import { X, Trash2 } from 'lucide-react'
 import isEmpty from 'lodash/isEmpty'
 import cloneDeep from 'lodash/cloneDeep'
 import { apiGetAccountSettingIntegrationData } from '@/services/AccountServices'
 import {
     updateDocument,
+    deleteDocument,
     resetUpdateDocumentStatus,
+    resetDeleteDocumentStatus,
     clearUpdateDocumentError,
+    clearDeleteDocumentError,
     UpdateDocumentPayload,
+    DeleteDocumentPayload,
 } from '../store/settingsSlice'
 
 // Modal Component
@@ -167,6 +171,9 @@ const Integration = () => {
         updateDocumentSuccess,
         updateDocumentError,
         updateDocumentData,
+        deleteDocumentLoading,
+        deleteDocumentSuccess,
+        deleteDocumentError,
     } = useSelector((state: any) => state.settings)
 
     const [data, setData] = useState<Partial<DocumentsType>>({})
@@ -178,6 +185,7 @@ const Integration = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [updateTitle, setUpdateTitle] = useState('')
     const [updateContent, setUpdateContent] = useState('')
+    const [showDeleteSuccess, setShowDeleteSuccess] = useState(false) // Add this state
 
     // State for reference document fields
     const [referenceFullName, setReferenceFullName] = useState('')
@@ -223,6 +231,46 @@ const Integration = () => {
         }
     }, [updateDocumentError, dispatch])
 
+    // Handle delete document success
+    useEffect(() => {
+        if (deleteDocumentSuccess) {
+            toast.push(
+                <Notification
+                    title="File deleted successfully"
+                    type="success"
+                />,
+                {
+                    placement: 'top-center',
+                },
+            )
+            setShowDeleteSuccess(true) // Show success message
+            fetchData() // Refresh the data
+            dispatch(resetDeleteDocumentStatus())
+
+            // Hide success message after 3 seconds
+            setTimeout(() => {
+                setShowDeleteSuccess(false)
+            }, 3000)
+        }
+    }, [deleteDocumentSuccess, dispatch])
+
+    // Handle delete document error
+    useEffect(() => {
+        if (deleteDocumentError) {
+            toast.push(
+                <Notification
+                    title="Delete failed"
+                    type="danger"
+                    description={deleteDocumentError}
+                />,
+                {
+                    placement: 'top-center',
+                },
+            )
+            dispatch(clearDeleteDocumentError())
+        }
+    }, [deleteDocumentError, dispatch])
+
     const fetchData = async () => {
         const response =
             await apiGetAccountSettingIntegrationData<GetAccountSettingIntegrationDataResponse>()
@@ -263,7 +311,7 @@ const Integration = () => {
             setReferenceEmail(details.content.email || '')
         }
 
-        // Ensure content is always valid JSON string
+        // Ensure content is always valid JSON string (from original code)
         let contentValue = '{}'
         if (details.content) {
             try {
@@ -292,8 +340,12 @@ const Integration = () => {
         setUpdateContent('')
         setReferenceFullName('')
         setReferenceEmail('')
+        setShowDeleteSuccess(false) // Reset success message when closing modal
         if (updateDocumentError) {
             dispatch(clearUpdateDocumentError())
+        }
+        if (deleteDocumentError) {
+            dispatch(clearDeleteDocumentError())
         }
     }
 
@@ -324,7 +376,7 @@ const Integration = () => {
             payload.title = updateTitle.trim()
             payload.content = JSON.stringify(referenceContent)
         } else {
-            // For other documents, use existing logic
+            // For other documents, use existing logic from original code
             let validatedContent = updateContent.trim()
             if (validatedContent) {
                 try {
@@ -354,7 +406,7 @@ const Integration = () => {
 
             // Only add files for non-reference documents
             if (selectedFile) {
-                payload.files = selectedFile // Send the File object directly
+                payload.files = selectedFile // Send the File object directly (from original)
             }
         }
 
@@ -384,6 +436,27 @@ const Integration = () => {
         if (file) {
             setSelectedFile(file)
         }
+    }
+
+    // Updated delete function to use the new API structure
+    const handleDeleteFile = (filePublicId: string) => {
+        if (!intergrationDetails._id) {
+            toast.push(
+                <Notification title="No document selected" type="danger" />,
+                {
+                    placement: 'top-center',
+                },
+            )
+            return
+        }
+
+        const deletePayload: DeleteDocumentPayload = {
+            documentId: intergrationDetails._id,
+            filesToDelete: [filePublicId], // Array of file public_ids to delete
+        }
+
+        console.log('Deleting file with payload:', deletePayload)
+        dispatch(deleteDocument(deletePayload))
     }
 
     const getStatusColor = (status: string) => {
@@ -483,7 +556,7 @@ const Integration = () => {
                 )}
             </div>
 
-            {/* Modal with simplified UI - no file deletion functionality */}
+            {/* Modal with file upload AND delete functionality */}
             <Modal
                 isOpen={viewIntegration}
                 onClose={onViewIntegrationClose}
@@ -497,25 +570,9 @@ const Integration = () => {
                         src={intergrationDetails.img}
                         size="md"
                     />
-                    <div className="flex-1 min-w-0 mt-[-60px] ml-[-30px]">
-                        <h6 className="text-sm sm:text-base font-semibold truncate">
-                            {intergrationDetails.name}
-                        </h6>
-                        {intergrationDetails.content?.fullName && (
-                            <p className="text-xs text-gray-600 mt-1 truncate">
-                                Reference:{' '}
-                                {intergrationDetails.content.fullName}
-                            </p>
-                        )}
-                        {intergrationDetails.user?.email && (
-                            <p className="text-xs text-gray-600 mt-1 truncate">
-                                User Email: {intergrationDetails.user.email}
-                            </p>
-                        )}
-                    </div>
                 </div>
 
-                <div className="mt-4 sm:mt-6">
+                <div className="mt-[-30px]">
                     <span className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100">
                         Update {intergrationDetails.name}
                     </span>
@@ -571,7 +628,7 @@ const Integration = () => {
                             </div>
                         </>
                     ) : (
-                        // Regular document fields - WITH file upload
+                        // Regular document fields - WITH file upload and JSON content
                         <>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -591,6 +648,80 @@ const Integration = () => {
                                     document structure is prefilled.
                                 </p>
                             </div>
+
+                            {/* Show existing files if they exist */}
+                            {intergrationDetails.files &&
+                                intergrationDetails.files.length > 0 && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Existing Files
+                                        </label>
+                                        <div className="space-y-2">
+                                            {intergrationDetails.files.map(
+                                                (file) => (
+                                                    <div
+                                                        key={file.public_id}
+                                                        className="flex items-center justify-between p-2 border rounded"
+                                                    >
+                                                        <span className="text-sm truncate">
+                                                            {file.filename}
+                                                        </span>
+                                                        <div className="flex items-center space-x-2">
+                                                            <Button
+                                                                size="xs"
+                                                                variant="plain"
+                                                                onClick={() =>
+                                                                    handleDeleteFile(
+                                                                        file.public_id,
+                                                                    )
+                                                                }
+                                                                className="text-red-600"
+                                                                loading={
+                                                                    deleteDocumentLoading
+                                                                }
+                                                                disabled={
+                                                                    deleteDocumentLoading
+                                                                }
+                                                            >
+                                                                <Trash2
+                                                                    size={14}
+                                                                />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+
+                                        {/* Success message under existing files */}
+                                        {showDeleteSuccess && (
+                                            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                                                <div className="flex items-center">
+                                                    <svg
+                                                        className="w-4 h-4 text-green-600 mr-2"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 20 20"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                    <span className="text-sm text-green-800 font-medium">
+                                                        File deleted
+                                                        successfully!
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-green-600 mt-1">
+                                                    The file has been
+                                                    permanently removed from the
+                                                    document.
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                             {/* File upload section - ONLY for non-reference documents */}
                             <div>
@@ -618,6 +749,12 @@ const Integration = () => {
                     {updateDocumentError && (
                         <div className="text-red-600 text-sm">
                             {updateDocumentError}
+                        </div>
+                    )}
+
+                    {deleteDocumentError && (
+                        <div className="text-red-600 text-sm">
+                            {deleteDocumentError}
                         </div>
                     )}
                 </div>

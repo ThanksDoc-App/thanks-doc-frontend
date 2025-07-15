@@ -292,3 +292,15 @@ export async function apiUpdateDocument<T = any>(
 }
 
 // ... rest of your existing API functions
+export async function apiDeleteDocument(documentId: string, filesToDelete: string[]) {
+    return ApiService.fetchData<{
+        status: boolean
+        message?: string
+    }>({
+        url: `/api/v1/documents/${documentId}/files`,
+        method: 'delete',
+        data: {
+            filesToDelete: filesToDelete
+        }
+    })
+}
