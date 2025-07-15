@@ -77,9 +77,12 @@ const SideNav = () => {
         <>
             {larger.md && (
                 <div
-                    style={
-                        sideNavCollapse ? sideNavCollapseStyle : sideNavStyle
-                    }
+                    style={{
+                        ...(sideNavCollapse
+                            ? sideNavCollapseStyle
+                            : sideNavStyle),
+                        height: '100%',
+                    }}
                     className={classNames(
                         'side-nav',
                         sideNavColor(),
@@ -97,15 +100,12 @@ const SideNav = () => {
                             }
                         />
                     </div>
-                    {sideNavCollapse ? (
-                        menuContent
-                    ) : (
-                        <div className="side-nav-content">
-                            <ScrollBar autoHide direction={direction}>
-                                {menuContent}
-                            </ScrollBar>
-                        </div>
-                    )}
+                    {/* Always wrap menuContent in ScrollBar and side-nav-content */}
+                    <div className="side-nav-content mt-[20px]">
+                        {/* <ScrollBar autoHide direction={direction}> */}
+                        {menuContent}
+                        {/* </ScrollBar> */}
+                    </div>
                 </div>
             )}
         </>

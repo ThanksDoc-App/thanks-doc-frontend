@@ -421,21 +421,21 @@ const DocumentViewModal = ({
                             <div className="mb-4">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
-                                        <Button
+                                        <button
                                             onClick={handleOpenInNewTab}
                                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
                                         >
                                             <ExternalLink className="w-4 h-4" />
                                             Open in New Tab
-                                        </Button>
-                                        <Button
+                                        </button>
+                                        <button
                                             onClick={handleDownload}
                                             disabled={isLoading}
                                             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
                                         >
                                             <Download className="w-4 h-4" />
                                             Download
-                                        </Button>
+                                        </button>
                                     </div>
 
                                     {document?.status && (

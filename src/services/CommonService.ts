@@ -238,3 +238,57 @@ export async function apiAddUserAccount(data: {
         data,
     })
 }
+
+// ✅ Fixed API function to properly handle multipart/form-data according to Swagger spec
+
+
+export type UpdateDocumentPayload = {
+    title?: string
+    content?: string
+    files?: File  // Single File object for actual upload
+    filesToDelete?: string[]
+}
+
+export async function apiUpdateDocument<T = any>(
+    id: string,
+    payload: UpdateDocumentPayload,
+) {
+    const formData = new FormData()
+    
+    if (payload.title !== undefined) {
+        formData.append('title', payload.title)
+    }
+    
+    if (payload.content !== undefined) {
+        formData.append('content', payload.content)
+    }
+    
+    // Handle actual file upload
+    if (payload.files) {
+        formData.append('files', payload.files)
+    }
+    
+    // Handle files to delete
+    if (payload.filesToDelete && payload.filesToDelete.length > 0) {
+        payload.filesToDelete.forEach(fileId => {
+            formData.append('filesToDelete', fileId)
+        })
+    }
+    
+    // Debug logging
+    console.log('FormData contents:')
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value)
+    }
+    
+    return ApiService.fetchData<T>({
+        url: `/api/v1/documents/${id}`,
+        method: 'PUT',
+        data: formData,
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    })
+}
+
+// ... rest of your existing API functions

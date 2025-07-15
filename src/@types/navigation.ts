@@ -4,8 +4,9 @@ export interface NavigationTree {
     isExternalLink?: boolean
     title: string
     translateKey: string
-    icon: string
+    icon?: any    
     type: 'title' | 'collapse' | 'item'
     authority: string[]
-    subMenu: NavigationTree[]
+    subMenu?: NavigationTree[]
 }
+

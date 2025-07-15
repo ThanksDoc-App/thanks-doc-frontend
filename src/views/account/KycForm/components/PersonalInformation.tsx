@@ -18,7 +18,7 @@ import type { FieldInputProps, FieldProps } from 'formik'
 import type { PersonalInformation as PersonalInformationType } from '../store'
 import type { ComponentType } from 'react'
 import type { InputProps } from '@/components/ui/Input'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 // Add categories imports
 import {
     fetchCategories,
@@ -26,8 +26,10 @@ import {
     selectCategoriesLoading,
     selectCategoriesError,
 } from '../../../sales/ProductForm/store/categorySlice'
-// Add KYC form imports - Remove updateForm import since we're not using it here
+// Add profile imports
+import { getUserProfile } from '../../../account/Settings/store/SettingsSlice'
 import { useAppDispatch, useAppSelector } from '@/store'
+import { RootState } from '@/store'
 // Add local storage for temporary data
 import { setTempPersonalInfo } from '../store/tempDataSlice' // We'll create this
 
@@ -149,10 +151,61 @@ const PersonalInformation = ({
     const categoriesLoading = useAppSelector(selectCategoriesLoading)
     const categoriesError = useAppSelector(selectCategoriesError)
 
-    // Fetch categories on component mount
+    // ✅ Get profile data from Redux state
+    const { profileData, getProfileLoading } = useAppSelector(
+        (state: RootState) => state.settings,
+    )
+
+    // ✅ Get user type from localStorage
+    const userDetails = useMemo(() => {
+        try {
+            return JSON.parse(localStorage.getItem('userdetails') || '{}')
+        } catch (error) {
+            console.error('Error parsing userdetails from localStorage:', error)
+            return {}
+        }
+    }, [])
+
+    const signedUpAs = userDetails?.data?.signedUpAs || ''
+    const isBusiness = signedUpAs === 'business'
+
+    // ✅ Fetch profile data on component mount
     useEffect(() => {
-        dispatch(fetchCategories())
-    }, [dispatch])
+        if (!profileData) {
+            dispatch(getUserProfile())
+        }
+    }, [dispatch, profileData])
+
+    // Fetch categories on component mount (only for non-business users)
+    useEffect(() => {
+        if (!isBusiness) {
+            dispatch(fetchCategories())
+        }
+    }, [dispatch, isBusiness])
+
+    // ✅ Create prefilled data from profile API response
+    const prefilledData = useMemo(() => {
+        if (!profileData?.data) return data
+
+        const profile = profileData.data
+
+        return {
+            ...data,
+            firstName: profile.name?.split(' ')[0] || data.firstName,
+            lastName:
+                profile.name?.split(' ').slice(1).join(' ') || data.lastName,
+            email: profile.email || data.email,
+            phoneNumber: profile.phone || data.phoneNumber,
+            dob: profile.dateOfBirth
+                ? dayjs(profile.dateOfBirth).format('YYYY-MM-DD')
+                : isBusiness && profile.createdAt
+                  ? dayjs(profile.createdAt).format('YYYY-MM-DD')
+                  : data.dob,
+            maritalStatus: profile.maritalStatus || data.maritalStatus,
+            countryCode: profile.countryCode || data.dialCode,
+            specialty: profile.category?._id || data.specialty,
+        }
+    }, [profileData, data, isBusiness])
 
     // Transform categories data for Select component
     const specialtyOptions = categories.map((category) => ({
@@ -162,7 +215,7 @@ const PersonalInformation = ({
 
     // Handle categories error
     useEffect(() => {
-        if (categoriesError) {
+        if (categoriesError && !isBusiness) {
             toast.push(
                 <Notification
                     title="Failed to load specialties"
@@ -171,7 +224,7 @@ const PersonalInformation = ({
                 { placement: 'top-center' },
             )
         }
-    }, [categoriesError])
+    }, [categoriesError, isBusiness])
 
     return (
         <>
@@ -180,7 +233,7 @@ const PersonalInformation = ({
                 <p>Basic information for an account opening</p>
             </div>
             <Formik
-                initialValues={data}
+                initialValues={prefilledData} // ✅ Use prefilled data
                 enableReinitialize={true}
                 validationSchema={validationSchema}
                 onSubmit={async (values, { setSubmitting }) => {
@@ -189,7 +242,10 @@ const PersonalInformation = ({
                         // Transform the data to match API expectations
                         const apiData = {
                             ...values,
-                            category: values.specialty, // Map specialty to category
+                            // Only include category for non-business users
+                            ...(isBusiness
+                                ? {}
+                                : { category: values.specialty }),
                             // Remove specialty field to avoid confusion
                             specialty: undefined,
                         }
@@ -230,36 +286,43 @@ const PersonalInformation = ({
                     return (
                         <Form>
                             <FormContainer>
-                                <FormItem
-                                    label="Specialty"
-                                    invalid={
-                                        errors.specialty && touched.specialty
-                                    }
-                                    errorMessage={errors.specialty}
-                                >
-                                    <Field name="specialty">
-                                        {({ field, form }: FieldProps) => (
-                                            <Select
-                                                placeholder="Select specialty"
-                                                field={field}
-                                                form={form}
-                                                options={specialtyOptions}
-                                                isLoading={categoriesLoading}
-                                                value={specialtyOptions.find(
-                                                    (option) =>
-                                                        option.value ===
-                                                        values.specialty,
-                                                )}
-                                                onChange={(option) =>
-                                                    form.setFieldValue(
-                                                        field.name,
-                                                        option?.value,
-                                                    )
-                                                }
-                                            />
-                                        )}
-                                    </Field>
-                                </FormItem>
+                                {/* ✅ Only show specialty field for non-business users */}
+                                {!isBusiness && (
+                                    <FormItem
+                                        label="Specialty"
+                                        invalid={
+                                            errors.specialty &&
+                                            touched.specialty
+                                        }
+                                        errorMessage={errors.specialty}
+                                    >
+                                        <Field name="specialty">
+                                            {({ field, form }: FieldProps) => (
+                                                <Select
+                                                    placeholder="Select specialty"
+                                                    field={field}
+                                                    form={form}
+                                                    options={specialtyOptions}
+                                                    isLoading={
+                                                        categoriesLoading
+                                                    }
+                                                    value={specialtyOptions.find(
+                                                        (option) =>
+                                                            option.value ===
+                                                            values.specialty,
+                                                    )}
+                                                    onChange={(option) =>
+                                                        form.setFieldValue(
+                                                            field.name,
+                                                            option?.value,
+                                                        )
+                                                    }
+                                                />
+                                            )}
+                                        </Field>
+                                    </FormItem>
+                                )}
+
                                 <div className="md:grid grid-cols-2 gap-4">
                                     <FormItem
                                         label="Phone Number"
@@ -299,8 +362,13 @@ const PersonalInformation = ({
                                             </Field>
                                         </InputGroup>
                                     </FormItem>
+
                                     <FormItem
-                                        label="Date of Birth"
+                                        label={
+                                            isBusiness
+                                                ? 'Date of Creation'
+                                                : 'Date of Birth'
+                                        } // ✅ Dynamic label based on user type
                                         invalid={
                                             typeof errors.dob === 'string' &&
                                             touched.dob
@@ -319,6 +387,11 @@ const PersonalInformation = ({
                                                     field={field}
                                                     form={form}
                                                     value={field.value}
+                                                    placeholder={
+                                                        isBusiness
+                                                            ? 'Select date of creation'
+                                                            : 'Select date of birth'
+                                                    }
                                                     onChange={(date) => {
                                                         form.setFieldValue(
                                                             field.name,
@@ -332,9 +405,12 @@ const PersonalInformation = ({
                                         </Field>
                                     </FormItem>
                                 </div>
+
                                 <div className="flex justify-end gap-2">
                                     <Button
-                                        loading={isSubmitting}
+                                        loading={
+                                            isSubmitting || getProfileLoading
+                                        }
                                         variant="solid"
                                         type="submit"
                                     >

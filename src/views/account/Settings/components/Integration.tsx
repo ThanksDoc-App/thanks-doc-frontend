@@ -1,4 +1,5 @@
 import { useState, useEffect, ReactNode } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
@@ -8,6 +9,12 @@ import { X } from 'lucide-react'
 import isEmpty from 'lodash/isEmpty'
 import cloneDeep from 'lodash/cloneDeep'
 import { apiGetAccountSettingIntegrationData } from '@/services/AccountServices'
+import {
+    updateDocument,
+    resetUpdateDocumentStatus,
+    clearUpdateDocumentError,
+    UpdateDocumentPayload,
+} from '../store/settingsSlice'
 
 // Modal Component
 interface ModalProps {
@@ -61,13 +68,10 @@ const Modal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
-            {/* Backdrop */}
             <div
                 className="fixed inset-0 bg-[#2155A329] bg-opacity-50 transition-opacity"
                 onClick={onClose}
             />
-
-            {/* Modal */}
             <div
                 className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto w-full ${className}`}
                 style={{
@@ -75,7 +79,6 @@ const Modal = ({
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
                 {title && (
                     <div className="flex items-center justify-between p-3 sm:p-4 md:p-6 border-b border-gray-200 dark:border-gray-700">
                         <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 pr-4">
@@ -91,18 +94,6 @@ const Modal = ({
                     </div>
                 )}
 
-                {/* Close button when no title */}
-                {!title && (
-                    <button
-                        onClick={onClose}
-                        className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors z-10 p-1"
-                    >
-                        <X size={18} className="sm:hidden" />
-                        <X size={20} className="hidden sm:block" />
-                    </button>
-                )}
-
-                {/* Content */}
                 <div
                     className={
                         title
@@ -117,7 +108,7 @@ const Modal = ({
     )
 }
 
-// Types remain the same...
+// Types
 type DocumentDetail = {
     _id: string
     title: string
@@ -134,6 +125,7 @@ type DocumentDetail = {
         hasFile?: boolean
         submittedAt?: string
         fullName?: string
+        email?: string
     }
     user: {
         _id: string
@@ -142,7 +134,11 @@ type DocumentDetail = {
     }
     createdAt: string
     updatedAt: string
-    files?: any[]
+    files?: Array<{
+        public_id: string
+        url: string
+        filename: string
+    }>
 }
 
 type DocumentsType = {
@@ -164,12 +160,68 @@ type GetAccountSettingIntegrationDataResponse = {
 
 // Integration Component
 const Integration = () => {
+    const dispatch = useDispatch()
+
+    const {
+        updateDocumentLoading,
+        updateDocumentSuccess,
+        updateDocumentError,
+        updateDocumentData,
+    } = useSelector((state: any) => state.settings)
+
     const [data, setData] = useState<Partial<DocumentsType>>({})
     const [viewIntegration, setViewIntegration] = useState(false)
     const [intergrationDetails, setIntergrationDetails] = useState<
         Partial<DocumentDetail>
     >({})
     const [installing, setInstalling] = useState(false)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [updateTitle, setUpdateTitle] = useState('')
+    const [updateContent, setUpdateContent] = useState('')
+
+    // State for reference document fields
+    const [referenceFullName, setReferenceFullName] = useState('')
+    const [referenceEmail, setReferenceEmail] = useState('')
+
+    // Handle update document success
+    useEffect(() => {
+        if (updateDocumentSuccess) {
+            toast.push(
+                <Notification
+                    title="Document updated successfully"
+                    type="success"
+                />,
+                {
+                    placement: 'top-center',
+                },
+            )
+            fetchData()
+            setSelectedFile(null)
+            setUpdateTitle('')
+            setUpdateContent('')
+            setReferenceFullName('')
+            setReferenceEmail('')
+            dispatch(resetUpdateDocumentStatus())
+            onViewIntegrationClose()
+        }
+    }, [updateDocumentSuccess, dispatch])
+
+    // Handle update document error
+    useEffect(() => {
+        if (updateDocumentError) {
+            toast.push(
+                <Notification
+                    title="Update failed"
+                    type="danger"
+                    description={updateDocumentError}
+                />,
+                {
+                    placement: 'top-center',
+                },
+            )
+            dispatch(clearUpdateDocumentError())
+        }
+    }, [updateDocumentError, dispatch])
 
     const fetchData = async () => {
         const response =
@@ -195,57 +247,143 @@ const Integration = () => {
         }
     }, [])
 
-    const handleToggle = (
-        bool: boolean,
-        name: string,
-        category: keyof DocumentsType,
-    ) => {
-        setData((prevState) => {
-            const nextState = cloneDeep(prevState as DocumentsType)
-            const nextCategoryValue = nextState[category].map((app) => {
-                if (app?.name === name) {
-                    app.active = !bool
-                }
-                return app
-            })
-            nextState[category] = nextCategoryValue
-            return nextState
-        })
-    }
-
     const onViewIntegrationOpen = (
         details: DocumentDetail,
         installed: boolean,
     ) => {
         setViewIntegration(true)
         setIntergrationDetails({ ...details, installed })
+
+        // Pre-populate the update form with current values
+        setUpdateTitle(details.title || details.name || '')
+
+        // Handle reference document specific fields
+        if (details.content?.type === 'reference') {
+            setReferenceFullName(details.content.fullName || '')
+            setReferenceEmail(details.content.email || '')
+        }
+
+        // Ensure content is always valid JSON string
+        let contentValue = '{}'
+        if (details.content) {
+            try {
+                contentValue = JSON.stringify(details.content, null, 2)
+            } catch (error) {
+                try {
+                    const parsed = JSON.parse(details.content as any)
+                    contentValue = JSON.stringify(parsed, null, 2)
+                } catch (parseError) {
+                    contentValue = JSON.stringify(
+                        { text: details.content },
+                        null,
+                        2,
+                    )
+                }
+            }
+        }
+
+        setUpdateContent(contentValue)
     }
 
     const onViewIntegrationClose = () => {
         setViewIntegration(false)
+        setSelectedFile(null)
+        setUpdateTitle('')
+        setUpdateContent('')
+        setReferenceFullName('')
+        setReferenceEmail('')
+        if (updateDocumentError) {
+            dispatch(clearUpdateDocumentError())
+        }
     }
 
-    const handleInstall = (details: DocumentDetail) => {
-        setInstalling(true)
-        setTimeout(() => {
-            setData((prevState) => {
-                const nextState = cloneDeep(prevState)
-                const nextAvailableApp = nextState?.available?.filter(
-                    (app) => app.name !== details.name,
-                )
-                nextState.available = nextAvailableApp
-                nextState?.installed?.push(details)
-                return nextState
-            })
-            setInstalling(false)
-            onViewIntegrationClose()
+    const handleUpdateDocument = () => {
+        if (!intergrationDetails._id) {
             toast.push(
-                <Notification title="Document viewed" type="success" />,
+                <Notification title="No document selected" type="danger" />,
                 {
                     placement: 'top-center',
                 },
             )
-        }, 1000)
+            return
+        }
+
+        const payload: UpdateDocumentPayload = {}
+
+        // Handle different document types
+        if (intergrationDetails.content?.type === 'reference') {
+            // For reference documents, build content from form fields
+            const referenceContent = {
+                type: 'reference',
+                documentType: intergrationDetails.content.documentType,
+                fullName: referenceFullName.trim(),
+                email: referenceEmail.trim(),
+                submittedAt: intergrationDetails.content.submittedAt,
+            }
+
+            payload.title = updateTitle.trim()
+            payload.content = JSON.stringify(referenceContent)
+        } else {
+            // For other documents, use existing logic
+            let validatedContent = updateContent.trim()
+            if (validatedContent) {
+                try {
+                    JSON.parse(validatedContent)
+                } catch (error) {
+                    toast.push(
+                        <Notification
+                            title="Invalid JSON content"
+                            type="danger"
+                            description="Please ensure content is valid JSON format"
+                        />,
+                        {
+                            placement: 'top-center',
+                        },
+                    )
+                    return
+                }
+            }
+
+            if (updateTitle.trim()) {
+                payload.title = updateTitle.trim()
+            }
+
+            if (validatedContent) {
+                payload.content = validatedContent
+            }
+
+            // Only add files for non-reference documents
+            if (selectedFile) {
+                payload.files = selectedFile // Send the File object directly
+            }
+        }
+
+        // Check if we have any changes to make
+        if (Object.keys(payload).length === 0) {
+            toast.push(
+                <Notification title="No changes to update" type="warning" />,
+                {
+                    placement: 'top-center',
+                },
+            )
+            return
+        }
+
+        console.log('Payload being sent:', payload)
+
+        dispatch(
+            updateDocument({
+                id: intergrationDetails._id!,
+                payload: payload,
+            }),
+        )
+    }
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (file) {
+            setSelectedFile(file)
+        }
     }
 
     const getStatusColor = (status: string) => {
@@ -268,24 +406,6 @@ const Integration = () => {
                         'text-[#FF9500] text-[700] border border-[#FF9500] rounded-full',
                     text: 'Pending',
                 }
-            case 'under_review':
-                return {
-                    className:
-                        'text-blue-800 text-[700] border border-blue-200 rounded-full',
-                    text: 'Under Review',
-                }
-            case 'accepted':
-                return {
-                    className:
-                        'text-green-800 text-[700] border border-green-200 rounded-full',
-                    text: 'Accepted',
-                }
-            case 'declined':
-                return {
-                    className:
-                        'text-[#FF3B30] text-[700] border border-[#FF3B30] rounded-full',
-                    text: 'Declined',
-                }
             default:
                 return {
                     className: 'text-gray-800 border border-gray-200',
@@ -303,7 +423,6 @@ const Integration = () => {
                     </h4>
                 </div>
 
-                {/* Responsive Grid - Single column on mobile, preserve desktop layout */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 mt-4">
                     {data?.available?.map((app) => (
                         <Card
@@ -353,7 +472,6 @@ const Integration = () => {
                     ))}
                 </div>
 
-                {/* Empty state for better UX */}
                 {data?.available?.length === 0 && (
                     <div className="text-center py-8 sm:py-12">
                         <div className="text-gray-500 dark:text-gray-400">
@@ -365,12 +483,13 @@ const Integration = () => {
                 )}
             </div>
 
-            {/* Responsive Modal */}
+            {/* Modal with simplified UI - no file deletion functionality */}
             <Modal
                 isOpen={viewIntegration}
                 onClose={onViewIntegrationClose}
                 width={650}
                 maxWidth="95vw"
+                title="Document Details"
             >
                 <div className="flex items-center flex-wrap sm:flex-nowrap">
                     <Avatar
@@ -378,7 +497,7 @@ const Integration = () => {
                         src={intergrationDetails.img}
                         size="md"
                     />
-                    <div className=" flex-1 min-w-0 mt-[-60px] ml-[-30px]">
+                    <div className="flex-1 min-w-0 mt-[-60px] ml-[-30px]">
                         <h6 className="text-sm sm:text-base font-semibold truncate">
                             {intergrationDetails.name}
                         </h6>
@@ -390,7 +509,7 @@ const Integration = () => {
                         )}
                         {intergrationDetails.user?.email && (
                             <p className="text-xs text-gray-600 mt-1 truncate">
-                                Email: {intergrationDetails.user.email}
+                                User Email: {intergrationDetails.user.email}
                             </p>
                         )}
                     </div>
@@ -398,35 +517,121 @@ const Integration = () => {
 
                 <div className="mt-4 sm:mt-6">
                     <span className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100">
-                        Preview of {intergrationDetails.name}
+                        Update {intergrationDetails.name}
                     </span>
                 </div>
 
-                <div className="text-right mt-4 sm:mt-6">
-                    {intergrationDetails?.content?.hasFile ? (
-                        <Button
-                            variant="solid"
-                            loading={installing}
-                            size="sm"
-                            className="w-full sm:w-auto"
-                        >
-                            Update
-                        </Button>
+                <div className="mt-4 sm:mt-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Document Title
+                        </label>
+                        <input
+                            type="text"
+                            value={updateTitle}
+                            onChange={(e) => setUpdateTitle(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed dark:disabled:bg-gray-600 dark:disabled:text-gray-400"
+                            placeholder="Enter document title"
+                            disabled={true}
+                        />
+                    </div>
+
+                    {/* Conditional rendering based on document type */}
+                    {intergrationDetails.content?.type === 'reference' ? (
+                        // Reference document specific fields - NO file upload
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Full Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={referenceFullName}
+                                    onChange={(e) =>
+                                        setReferenceFullName(e.target.value)
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    placeholder="Enter full name"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    value={referenceEmail}
+                                    onChange={(e) =>
+                                        setReferenceEmail(e.target.value)
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    placeholder="Enter email address"
+                                />
+                            </div>
+                        </>
                     ) : (
-                        <Button
-                            variant="solid"
-                            loading={installing}
-                            size="sm"
-                            className="w-full sm:w-auto"
-                            onClick={() =>
-                                handleInstall(
-                                    intergrationDetails as DocumentDetail,
-                                )
-                            }
-                        >
-                            View Details
-                        </Button>
+                        // Regular document fields - WITH file upload
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Document Content (JSON Format)
+                                </label>
+                                <textarea
+                                    value={updateContent}
+                                    onChange={(e) =>
+                                        setUpdateContent(e.target.value)
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono"
+                                    placeholder='{"certificateTitle": "Your Title", "documentType": "Your Type"}'
+                                    rows={4}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Content must be valid JSON format. Current
+                                    document structure is prefilled.
+                                </p>
+                            </div>
+
+                            {/* File upload section - ONLY for non-reference documents */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Upload File{' '}
+                                    {intergrationDetails.files?.length
+                                        ? '(Optional)'
+                                        : ''}
+                                </label>
+                                <input
+                                    type="file"
+                                    onChange={handleFileChange}
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                {selectedFile && (
+                                    <p className="text-xs text-gray-600 mt-1">
+                                        Selected: {selectedFile.name}
+                                    </p>
+                                )}
+                            </div>
+                        </>
                     )}
+
+                    {updateDocumentError && (
+                        <div className="text-red-600 text-sm">
+                            {updateDocumentError}
+                        </div>
+                    )}
+                </div>
+
+                <div className="text-right mt-4 sm:mt-6">
+                    <Button
+                        variant="solid"
+                        loading={updateDocumentLoading}
+                        size="sm"
+                        className="w-full sm:w-auto"
+                        onClick={handleUpdateDocument}
+                    >
+                        Update Document
+                    </Button>
                 </div>
             </Modal>
         </>

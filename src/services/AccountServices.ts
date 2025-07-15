@@ -70,36 +70,3 @@ export async function apiPostDocument<T = any>(data: DocumentPayload) {
     })
 }
 
-
-export interface UpdateDocumentPayload {
-    title?: string
-    content?: string // JSON stringified object
-    filesToDelete?: string[] // Array of public_ids
-    updatedFile?: File | null // Optional new file to replace old one
-}
-
-export async function apiUpdateDocument<T = any>(
-    id: string,
-    payload: UpdateDocumentPayload,
-) {
-    const formData = new FormData()
-
-    if (payload.title) formData.append('title', payload.title)
-    if (payload.content) formData.append('content', payload.content)
-    if (payload.updatedFile) formData.append('Updated Medical License', payload.updatedFile)
-
-    if (payload.filesToDelete?.length) {
-        payload.filesToDelete.forEach(fileId => {
-            formData.append('filesToDelete', fileId)
-        })
-    }
-
-    return ApiService.fetchData<T>({
-        url: `/api/v1/documents/${id}`,
-        method: 'put',
-        data: formData as any,
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    })
-}

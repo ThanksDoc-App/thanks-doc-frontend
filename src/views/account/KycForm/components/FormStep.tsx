@@ -1,4 +1,5 @@
 import { useDispatch } from 'react-redux'
+import { useMemo } from 'react'
 import Menu from '@/components/ui/Menu'
 import { HiCheckCircle, HiLockClosed } from 'react-icons/hi'
 import useThemeClass from '@/utils/hooks/useThemeClass'
@@ -8,25 +9,38 @@ type FormStepProps = {
     currentStep: number
     currentStepStatus: string
     stepStatus: StepStatus
+    isBusiness?: boolean
 }
-
-const steps = [
-    { label: 'Personal information', value: 0 },
-        { label: 'Address Information', value: 1 },
-    { label: 'Identification', value: 2 },
-    { label: 'Financial Information', value: 3 },
-]
 
 const FormStep = ({
     currentStep,
     currentStepStatus,
     stepStatus,
+    isBusiness = false,
 }: FormStepProps) => {
     const { textTheme } = useThemeClass()
     const dispatch = useDispatch()
 
+    // ✅ Dynamic steps based on user type
+    const steps = useMemo(() => {
+        if (isBusiness) {
+            return [
+                { label: 'Personal Information', value: 0 },
+                { label: 'Address Information', value: 1 },
+                // { label: 'Review', value: 2 },
+            ]
+        }
+        return [
+            { label: 'Personal Information', value: 0 },
+            { label: 'Address Information', value: 1 },
+            { label: 'Identification', value: 2 },
+            { label: 'Financial Information', value: 3 },
+            // { label: 'Review', value: 4 },
+        ]
+    }, [isBusiness])
+
     const onStepChange = (step: number) => {
-        const selectedStepStatus = stepStatus[step].status
+        const selectedStepStatus = stepStatus[step]?.status
 
         if (
             selectedStepStatus === 'complete' ||
@@ -55,21 +69,21 @@ const FormStep = ({
                     onSelect={() => onStepChange(step.value)}
                 >
                     <span className="text-2xl ltr:mr-2 rtl:ml-2">
-                        {stepStatus[step.value].status === 'complete' && (
+                        {stepStatus[step.value]?.status === 'complete' && (
                             <HiCheckCircle className={textTheme} />
                         )}
-                        {stepStatus[step.value].status === 'current' && (
+                        {stepStatus[step.value]?.status === 'current' && (
                             <HiCheckCircle className="text-gray-400" />
                         )}
-                        {stepStatus[step.value].status === 'pending' &&
+                        {stepStatus[step.value]?.status === 'pending' &&
                             currentStep === step.value && (
                                 <HiCheckCircle className="text-gray-400" />
                             )}
-                        {stepStatus[step.value].status === 'pending' &&
+                        {stepStatus[step.value]?.status === 'pending' &&
                             currentStep !== step.value && (
                                 <HiLockClosed className="text-gray-400" />
                             )}
-                        {stepStatus[step.value].status === 'invalid' && (
+                        {stepStatus[step.value]?.status === 'invalid' && (
                             <HiCheckCircle className="text-gray-400" />
                         )}
                     </span>
