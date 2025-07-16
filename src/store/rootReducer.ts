@@ -235,7 +235,7 @@ interface SettingsState {
   // ✅ Add account states
   addAccountLoading: boolean
   addAccountSuccess: boolean
-  addAccountError: string | null
+  addAccountError: any
   addAccountData: any
 }
 

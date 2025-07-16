@@ -8,7 +8,7 @@ const KYCsetUp = ({ isVisible = true }) => {
     if (!isVisible) return null
 
     return (
-        <div className="flex items-start sm:items-center sm:justify-between gap-5 flex-col sm:flex-row bus rounded-xl px-5 py-9">
+        <div className="flex items-start sm:items-center sm:justify-between gap-5 flex-col sm:flex-row bg-[#F6F6FD] rounded-xl px-5 py-9">
             <div className="flex items-center gap-5">
                 <img
                     src="/img/others/kycsetup-icon.png" // Fixed path

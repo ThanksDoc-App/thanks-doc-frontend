@@ -7,7 +7,7 @@ import CreatableSelect from 'react-select/creatable'
 import DatePicker from '@/components/ui/DatePicker'
 import InputGroup from '@/components/ui/InputGroup'
 import { Field, FormikErrors, FormikTouched, FieldProps } from 'formik'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
     fetchCategories,
@@ -66,7 +66,7 @@ type FormFieldsName = {
     vendor: string
     brand: string
     description: string
-    price: number // Changed to number to match PricingFields
+    price: number
     location: string
     date: string
     time: string
@@ -79,7 +79,7 @@ type OrganizationFieldsProps = {
         category: string
         service: string
         tags: Options
-        price: number // Added price to values
+        price: number
         [key: string]: unknown
     }
 }
@@ -112,14 +112,25 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
         value: category._id,
     }))
 
-    // Transform services data for Select component
-    const serviceOptions = services.map((service) => ({
+    // Filter services based on selected category
+    const filteredServices = useMemo(() => {
+        if (!values.category) {
+            return services // Show all services if no category selected
+        }
+        return services.filter((service) => {
+            // Handle both cases: service.category can be null or an object with _id
+            return service.category && service.category._id === values.category
+        })
+    }, [services, values.category])
+
+    // Transform filtered services data for Select component
+    const serviceOptions = filteredServices.map((service) => ({
         label: service.name,
         value: service._id,
     }))
 
     // Get selected service details for price
-    const selectedService = services.find(
+    const selectedService = filteredServices.find(
         (service) => service._id === values.service,
     )
 
@@ -165,6 +176,11 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                                             field.name,
                                             option?.value,
                                         )
+                                        // Clear service selection when category changes
+                                        if (values.service) {
+                                            form.setFieldValue('service', '')
+                                            form.setFieldValue('price', 0)
+                                        }
                                     }}
                                     isLoading={categoriesLoading}
                                     placeholder={
@@ -204,9 +220,11 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                                             option?.value,
                                         )
                                         // Update price when service is selected
-                                        const selectedSrv = services.find(
-                                            (srv) => srv._id === option?.value,
-                                        )
+                                        const selectedSrv =
+                                            filteredServices.find(
+                                                (srv) =>
+                                                    srv._id === option?.value,
+                                            )
                                         if (selectedSrv && selectedSrv.price) {
                                             form.setFieldValue(
                                                 'price',
@@ -216,14 +234,21 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                                     }}
                                     isLoading={servicesLoading}
                                     placeholder={
-                                        servicesLoading
-                                            ? 'Loading services...'
-                                            : servicesError
-                                              ? 'Error loading services'
-                                              : 'Select a service'
+                                        !values.category
+                                            ? 'Please select a category first'
+                                            : servicesLoading
+                                              ? 'Loading services...'
+                                              : servicesError
+                                                ? 'Error loading services'
+                                                : filteredServices.length === 0
+                                                  ? 'No services available for this category'
+                                                  : 'Select a service'
                                     }
                                     isDisabled={
-                                        servicesLoading || !!servicesError
+                                        !values.category ||
+                                        servicesLoading ||
+                                        !!servicesError ||
+                                        filteredServices.length === 0
                                     }
                                 />
                             )}
