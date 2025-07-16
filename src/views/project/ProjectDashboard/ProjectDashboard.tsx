@@ -25,9 +25,9 @@ const ProjectDashboard = () => {
         (state) => state.projectDashboard.data.loading,
     )
 
-    const localUserName =
-        JSON.parse(localStorage.getItem('userdetails') || '{}')?.data?.name ||
-        'Doctor'
+    // Fixed: Access the name from the correct nested structure
+    const userDetails = JSON.parse(localStorage.getItem('userdetails') || '{}')
+    const localUserName = userDetails?.data?.name || 'Doctor'
 
     useEffect(() => {
         fetchData()
@@ -42,7 +42,7 @@ const ProjectDashboard = () => {
             <Loading loading={loading}>
                 <KYCsetUp isVisible={!shouldHideKYCSetup} />
                 <ProjectDashboardHeader
-                    userName={dashboardData?.userName || localUserName}
+                    userName={localUserName}
                     taskCount={dashboardData?.taskCount}
                 />
                 <div className="flex flex-col xl:flex-row gap-4">
