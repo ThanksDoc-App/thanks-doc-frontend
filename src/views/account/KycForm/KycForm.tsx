@@ -1,7 +1,9 @@
 import { useEffect, useMemo, lazy, Suspense } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Container from '@/components/shared/Container'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import FormStep from './components/FormStep'
+import { APP_PREFIX_PATH } from '@/constants/route.constant'
 import reducer, {
     getForm,
     setStepStatus,
@@ -26,9 +28,9 @@ const Identification = lazy(() => import('./components/Identification'))
 const FinancialInformation = lazy(
     () => import('./components/FinancialInformation'),
 )
-const AccountReview = lazy(() => import('./components/AccountReview'))
 
 const DetailForm = () => {
+    const navigate = useNavigate()
     const dispatch = useAppDispatch()
     const stepStatus = useAppSelector(
         (state) => state.accountDetailForm.data.stepStatus,
@@ -109,18 +111,12 @@ const DetailForm = () => {
         }
     }, [stepStatus, isBusiness])
 
-    // ✅ Auto-redirect to AccountReview if KYC is completed
+    // ✅ Auto-redirect to AccountReview page if KYC is completed
     useEffect(() => {
-        const reviewStep = isBusiness ? 2 : 4
-        if (isKycCompleted && currentStep < reviewStep) {
-            dispatch(setCurrentStep(reviewStep))
-            dispatch(
-                setStepStatus({
-                    [reviewStep]: { status: 'current' },
-                }),
-            )
+        if (isKycCompleted) {
+            navigate(`${APP_PREFIX_PATH}/account/account-review`)
         }
-    }, [isKycCompleted, currentStep, dispatch, isBusiness])
+    }, [isKycCompleted, navigate])
 
     const handleNextChange = (
         values:
@@ -135,15 +131,14 @@ const DetailForm = () => {
 
         // ✅ Adjust logic based on user type
         if (isBusiness) {
-            // For business users: step 0 -> step 1 -> step 2 (review)
+            // For business users: step 0 -> step 1 -> navigate to review page
             if (currentStep === 1) {
                 dispatch(
                     setStepStatus({
                         [currentStep]: { status: 'complete' },
-                        [2]: { status: 'current' },
                     }),
                 )
-                dispatch(setCurrentStep(2))
+                navigate(`${APP_PREFIX_PATH}/account/account-review`)
             } else {
                 dispatch(
                     setStepStatus({
@@ -159,10 +154,9 @@ const DetailForm = () => {
                 dispatch(
                     setStepStatus({
                         [currentStep]: { status: 'complete' },
-                        [4]: { status: 'current' },
                     }),
                 )
-                dispatch(setCurrentStep(4))
+                navigate(`${APP_PREFIX_PATH}/account/account-review`)
             } else {
                 dispatch(
                     setStepStatus({
@@ -189,26 +183,15 @@ const DetailForm = () => {
         <Container className="h-full">
             <AdaptableCard className="h-full" bodyClass="h-full">
                 <div className="grid lg:grid-cols-5 xl:grid-cols-3 2xl:grid-cols-5 gap-4 h-full">
-                    {/* Hide FormStep for business users at review step */}
-                    {!(isBusiness && currentStep === 2) &&
-                        currentStep !== 4 && (
-                            <div className="2xl:col-span-1 xl:col-span-1 lg:col-span-2">
-                                <FormStep
-                                    currentStep={currentStep}
-                                    currentStepStatus={currentStepStatus}
-                                    stepStatus={stepStatus}
-                                    isBusiness={isBusiness}
-                                />
-                            </div>
-                        )}
-                    <div
-                        className={
-                            !(isBusiness && currentStep === 2) &&
-                            currentStep !== 4
-                                ? '2xl:col-span-4 lg:col-span-3 xl:col-span-2'
-                                : 'lg:col-span-5'
-                        }
-                    >
+                    <div className="2xl:col-span-1 xl:col-span-1 lg:col-span-2">
+                        <FormStep
+                            currentStep={currentStep}
+                            currentStepStatus={currentStepStatus}
+                            stepStatus={stepStatus}
+                            isBusiness={isBusiness}
+                        />
+                    </div>
+                    <div className="2xl:col-span-4 lg:col-span-3 xl:col-span-2">
                         <Suspense fallback={<></>}>
                             {currentStep === 0 && (
                                 <PersonalInformation
@@ -241,11 +224,6 @@ const DetailForm = () => {
                                     onNextChange={handleNextChange}
                                     onBackChange={handleBackChange}
                                 />
-                            )}
-                            {/* AccountReview: step 2 for business, step 4 for non-business */}
-                            {((isBusiness && currentStep === 2) ||
-                                (!isBusiness && currentStep === 4)) && (
-                                <AccountReview />
                             )}
                         </Suspense>
                     </div>

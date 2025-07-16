@@ -10,13 +10,6 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/project/ProjectDashboard')),
         authority: [ADMIN, USER],
     },
-
-    // {
-    //     key: 'appsProject.projectList',
-    //     path: `${APP_PREFIX_PATH}/project/project-list`,
-    //     component: lazy(() => import('@/views/project/ProjectList')),
-    //     authority: [ADMIN, USER],
-    // },
     {
         key: 'appsProject.scrumBoard',
         path: `${APP_PREFIX_PATH}/project/scrum-board`,
@@ -28,11 +21,10 @@ const appsRoute: Routes = [
     },
     {
         key: 'appsProject.job-details',
-        path: `${APP_PREFIX_PATH}/project/job-details/:id`, // Changed {id} to :id
+        path: `${APP_PREFIX_PATH}/project/job-details/:id`,
         component: lazy(() => import('@/views/project/Issue')),
         authority: [ADMIN, USER],
     },
-
     {
         key: 'appsProject.history',
         path: `${APP_PREFIX_PATH}/project/history`,
@@ -54,7 +46,7 @@ const appsRoute: Routes = [
         authority: [ADMIN],
     },
     {
-        key: 'appsCrm.business.details', // This keeps the parent relationship
+        key: 'appsCrm.business.details',
         path: `${APP_PREFIX_PATH}/crm/business/:id`,
         component: lazy(
             () => import('@/views/crm/Business/components/BusinessDetails'),
@@ -105,7 +97,7 @@ const appsRoute: Routes = [
         authority: [ADMIN, USER],
     },
     {
-        key: 'appsCrm.doctor.details', // This keeps the parent relationship
+        key: 'appsCrm.doctor.details',
         path: `${APP_PREFIX_PATH}/crm/doctor/:id`,
         component: lazy(() => import('@/views/crm/Doctor/DoctorDetails')),
         authority: [ADMIN, USER],
@@ -182,7 +174,6 @@ const appsRoute: Routes = [
             header: 'Post a job',
         },
     },
-    //changed thetitle
     {
         key: 'appsSales.orderList',
         path: `${APP_PREFIX_PATH}/sales/order-list`,
@@ -259,6 +250,18 @@ const appsRoute: Routes = [
         path: `${APP_PREFIX_PATH}/account/kyc-form`,
         component: lazy(() => import('@/views/account/KycForm')),
         authority: [ADMIN, USER],
+    },
+    {
+        key: 'appsAccount.accountReview',
+        path: `${APP_PREFIX_PATH}/account/account-review`,
+        component: lazy(
+            () => import('@/views/account/KycForm/components/AccountReview'),
+        ),
+        authority: [ADMIN, USER],
+        meta: {
+            header: 'Account Review',
+            headerContainer: true,
+        },
     },
 ]
 
