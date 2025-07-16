@@ -19,16 +19,6 @@ import {
     UpdateDocumentPayload,
     DeleteDocumentPayload,
 } from '../store/SettingsSlice'
-// import {
-//     updateDocument,
-//     deleteDocument,
-//     resetUpdateDocumentStatus,
-//     resetDeleteDocumentStatus,
-//     clearUpdateDocumentError,
-//     clearDeleteDocumentError,
-//     UpdateDocumentPayload,
-//     DeleteDocumentPayload,
-// } from '../store/settingsSlice'
 
 // Modal Component
 interface ModalProps {
@@ -194,10 +184,9 @@ const Integration = () => {
     const [installing, setInstalling] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [updateTitle, setUpdateTitle] = useState('')
-    const [updateContent, setUpdateContent] = useState('')
-    const [showDeleteSuccess, setShowDeleteSuccess] = useState(false) // Add this state
+    const [showDeleteSuccess, setShowDeleteSuccess] = useState(false)
 
-    // State for reference document fields
+    // State for reference document fields only
     const [referenceFullName, setReferenceFullName] = useState('')
     const [referenceEmail, setReferenceEmail] = useState('')
 
@@ -216,7 +205,6 @@ const Integration = () => {
             fetchData()
             setSelectedFile(null)
             setUpdateTitle('')
-            setUpdateContent('')
             setReferenceFullName('')
             setReferenceEmail('')
             dispatch(resetUpdateDocumentStatus())
@@ -253,11 +241,10 @@ const Integration = () => {
                     placement: 'top-center',
                 },
             )
-            setShowDeleteSuccess(true) // Show success message
-            fetchData() // Refresh the data
+            setShowDeleteSuccess(true)
+            fetchData()
             dispatch(resetDeleteDocumentStatus())
 
-            // Hide success message after 3 seconds
             setTimeout(() => {
                 setShowDeleteSuccess(false)
             }, 3000)
@@ -320,37 +307,15 @@ const Integration = () => {
             setReferenceFullName(details.content.fullName || '')
             setReferenceEmail(details.content.email || '')
         }
-
-        // Ensure content is always valid JSON string (from original code)
-        let contentValue = '{}'
-        if (details.content) {
-            try {
-                contentValue = JSON.stringify(details.content, null, 2)
-            } catch (error) {
-                try {
-                    const parsed = JSON.parse(details.content as any)
-                    contentValue = JSON.stringify(parsed, null, 2)
-                } catch (parseError) {
-                    contentValue = JSON.stringify(
-                        { text: details.content },
-                        null,
-                        2,
-                    )
-                }
-            }
-        }
-
-        setUpdateContent(contentValue)
     }
 
     const onViewIntegrationClose = () => {
         setViewIntegration(false)
         setSelectedFile(null)
         setUpdateTitle('')
-        setUpdateContent('')
         setReferenceFullName('')
         setReferenceEmail('')
-        setShowDeleteSuccess(false) // Reset success message when closing modal
+        setShowDeleteSuccess(false)
         if (updateDocumentError) {
             dispatch(clearUpdateDocumentError())
         }
@@ -372,52 +337,42 @@ const Integration = () => {
 
         const payload: UpdateDocumentPayload = {}
 
-        // Handle different document types
-        if (intergrationDetails.content?.type === 'reference') {
-            // For reference documents, build content from form fields
-            const referenceContent = {
-                type: 'reference',
-                documentType: intergrationDetails.content.documentType,
-                fullName: referenceFullName.trim(),
-                email: referenceEmail.trim(),
-                submittedAt: intergrationDetails.content.submittedAt,
-            }
+        // Always send the existing content as-is, preserving all original data
+        if (intergrationDetails.content) {
+            let contentToSend = { ...intergrationDetails.content }
 
-            payload.title = updateTitle.trim()
-            payload.content = JSON.stringify(referenceContent)
-        } else {
-            // For other documents, use existing logic from original code
-            let validatedContent = updateContent.trim()
-            if (validatedContent) {
-                try {
-                    JSON.parse(validatedContent)
-                } catch (error) {
-                    toast.push(
-                        <Notification
-                            title="Invalid JSON content"
-                            type="danger"
-                            description="Please ensure content is valid JSON format"
-                        />,
-                        {
-                            placement: 'top-center',
-                        },
-                    )
-                    return
+            // For reference documents, update only the specific fields that changed
+            if (intergrationDetails.content?.type === 'reference') {
+                const hasReferenceChanges =
+                    referenceFullName.trim() !==
+                        (intergrationDetails.content.fullName || '') ||
+                    referenceEmail.trim() !==
+                        (intergrationDetails.content.email || '')
+
+                if (hasReferenceChanges) {
+                    contentToSend = {
+                        ...contentToSend,
+                        fullName: referenceFullName.trim(),
+                        email: referenceEmail.trim(),
+                    }
                 }
             }
 
-            if (updateTitle.trim()) {
-                payload.title = updateTitle.trim()
-            }
+            payload.content = JSON.stringify(contentToSend)
+        }
 
-            if (validatedContent) {
-                payload.content = validatedContent
-            }
+        // Include title if changed
+        if (
+            updateTitle.trim() &&
+            updateTitle.trim() !==
+                (intergrationDetails.title || intergrationDetails.name)
+        ) {
+            payload.title = updateTitle.trim()
+        }
 
-            // Only add files for non-reference documents
-            if (selectedFile) {
-                payload.files = selectedFile // Send the File object directly (from original)
-            }
+        // Include file if selected (only for non-reference documents)
+        if (selectedFile && intergrationDetails.content?.type !== 'reference') {
+            payload.files = selectedFile
         }
 
         // Check if we have any changes to make
@@ -448,7 +403,6 @@ const Integration = () => {
         }
     }
 
-    // Updated delete function to use the new API structure
     const handleDeleteFile = (filePublicId: string) => {
         if (!intergrationDetails._id) {
             toast.push(
@@ -462,7 +416,7 @@ const Integration = () => {
 
         const deletePayload: DeleteDocumentPayload = {
             documentId: intergrationDetails._id,
-            filesToDelete: [filePublicId], // Array of file public_ids to delete
+            filesToDelete: [filePublicId],
         }
 
         console.log('Deleting file with payload:', deletePayload)
@@ -566,7 +520,7 @@ const Integration = () => {
                 )}
             </div>
 
-            {/* Modal with file upload AND delete functionality */}
+            {/* Modal with simplified content */}
             <Modal
                 isOpen={viewIntegration}
                 onClose={onViewIntegrationClose}
@@ -597,15 +551,13 @@ const Integration = () => {
                             type="text"
                             value={updateTitle}
                             onChange={(e) => setUpdateTitle(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed dark:disabled:bg-gray-600 dark:disabled:text-gray-400"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             placeholder="Enter document title"
-                            disabled={true}
                         />
                     </div>
 
-                    {/* Conditional rendering based on document type */}
-                    {intergrationDetails.content?.type === 'reference' ? (
-                        // Reference document specific fields - NO file upload
+                    {/* Reference document specific fields - NO file upload */}
+                    {intergrationDetails.content?.type === 'reference' && (
                         <>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -637,123 +589,97 @@ const Integration = () => {
                                 />
                             </div>
                         </>
-                    ) : (
-                        // Regular document fields - WITH file upload and JSON content
-                        <>
+                    )}
+
+                    {/* Show existing files if they exist */}
+                    {intergrationDetails.files &&
+                        intergrationDetails.files.length > 0 && (
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Document Content (JSON Format)
+                                    Existing Files
                                 </label>
-                                <textarea
-                                    value={updateContent}
-                                    onChange={(e) =>
-                                        setUpdateContent(e.target.value)
-                                    }
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono"
-                                    placeholder='{"certificateTitle": "Your Title", "documentType": "Your Type"}'
-                                    rows={4}
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Content must be valid JSON format. Current
-                                    document structure is prefilled.
-                                </p>
-                            </div>
-
-                            {/* Show existing files if they exist */}
-                            {intergrationDetails.files &&
-                                intergrationDetails.files.length > 0 && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Existing Files
-                                        </label>
-                                        <div className="space-y-2">
-                                            {intergrationDetails.files.map(
-                                                (file) => (
-                                                    <div
-                                                        key={file.public_id}
-                                                        className="flex items-center justify-between p-2 border rounded"
-                                                    >
-                                                        <span className="text-sm truncate">
-                                                            {file.filename}
-                                                        </span>
-                                                        <div className="flex items-center space-x-2">
-                                                            <Button
-                                                                size="xs"
-                                                                variant="plain"
-                                                                onClick={() =>
-                                                                    handleDeleteFile(
-                                                                        file.public_id,
-                                                                    )
-                                                                }
-                                                                className="text-red-600"
-                                                                loading={
-                                                                    deleteDocumentLoading
-                                                                }
-                                                                disabled={
-                                                                    deleteDocumentLoading
-                                                                }
-                                                            >
-                                                                <Trash2
-                                                                    size={14}
-                                                                />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                ),
-                                            )}
-                                        </div>
-
-                                        {/* Success message under existing files */}
-                                        {showDeleteSuccess && (
-                                            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-                                                <div className="flex items-center">
-                                                    <svg
-                                                        className="w-4 h-4 text-green-600 mr-2"
-                                                        fill="currentColor"
-                                                        viewBox="0 0 20 20"
-                                                    >
-                                                        <path
-                                                            fillRule="evenodd"
-                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                            clipRule="evenodd"
-                                                        />
-                                                    </svg>
-                                                    <span className="text-sm text-green-800 font-medium">
-                                                        File deleted
-                                                        successfully!
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-green-600 mt-1">
-                                                    The file has been
-                                                    permanently removed from the
-                                                    document.
-                                                </p>
+                                <div className="space-y-2">
+                                    {intergrationDetails.files.map((file) => (
+                                        <div
+                                            key={file.public_id}
+                                            className="flex items-center justify-between p-2 border rounded"
+                                        >
+                                            <span className="text-sm truncate">
+                                                {file.filename}
+                                            </span>
+                                            <div className="flex items-center space-x-2">
+                                                <Button
+                                                    size="xs"
+                                                    variant="plain"
+                                                    onClick={() =>
+                                                        handleDeleteFile(
+                                                            file.public_id,
+                                                        )
+                                                    }
+                                                    className="text-red-600"
+                                                    loading={
+                                                        deleteDocumentLoading
+                                                    }
+                                                    disabled={
+                                                        deleteDocumentLoading
+                                                    }
+                                                >
+                                                    <Trash2 size={14} />
+                                                </Button>
                                             </div>
-                                        )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Success message under existing files */}
+                                {showDeleteSuccess && (
+                                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                                        <div className="flex items-center">
+                                            <svg
+                                                className="w-4 h-4 text-green-600 mr-2"
+                                                fill="currentColor"
+                                                viewBox="0 0 20 20"
+                                            >
+                                                <path
+                                                    fillRule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                    clipRule="evenodd"
+                                                />
+                                            </svg>
+                                            <span className="text-sm text-green-800 font-medium">
+                                                File deleted successfully!
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-green-600 mt-1">
+                                            The file has been permanently
+                                            removed from the document.
+                                        </p>
                                     </div>
                                 )}
-
-                            {/* File upload section - ONLY for non-reference documents */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Upload File{' '}
-                                    {intergrationDetails.files?.length
-                                        ? '(Optional)'
-                                        : ''}
-                                </label>
-                                <input
-                                    type="file"
-                                    onChange={handleFileChange}
-                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                                {selectedFile && (
-                                    <p className="text-xs text-gray-600 mt-1">
-                                        Selected: {selectedFile.name}
-                                    </p>
-                                )}
                             </div>
-                        </>
+                        )}
+
+                    {/* File upload section - ONLY for non-reference documents */}
+                    {intergrationDetails.content?.type !== 'reference' && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Upload File{' '}
+                                {intergrationDetails.files?.length
+                                    ? '(Optional)'
+                                    : ''}
+                            </label>
+                            <input
+                                type="file"
+                                onChange={handleFileChange}
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                            {selectedFile && (
+                                <p className="text-xs text-gray-600 mt-1">
+                                    Selected: {selectedFile.name}
+                                </p>
+                            )}
+                        </div>
                     )}
 
                     {updateDocumentError && (

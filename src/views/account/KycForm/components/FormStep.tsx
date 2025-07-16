@@ -50,19 +50,11 @@ const FormStep = ({
             return
         }
 
-        // FIXED: Allow navigation to previous completed steps
-        if (step < currentStep) {
-            const canNavigate = Object.keys(stepStatus)
-                .filter((key) => parseInt(key) <= step)
-                .every(
-                    (key) =>
-                        stepStatus[parseInt(key)]?.status === 'complete' ||
-                        parseInt(key) === step,
-                )
-
-            if (canNavigate) {
-                dispatch(setCurrentStep(step))
+        if (step !== currentStep && step < currentStep) {
+            if (currentStepStatus === 'pending') {
+                dispatch(setStepStatus('complete'))
             }
+            dispatch(setCurrentStep(step))
         }
     }
 
