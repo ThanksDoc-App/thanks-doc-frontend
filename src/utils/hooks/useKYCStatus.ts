@@ -1,43 +1,55 @@
-import { useMemo } from 'react'
+// utils/hooks/useKYCStatus.ts
+import { useSelector } from 'react-redux'
+import { RootState } from '@/store'
 
 export const useKYCStatus = () => {
-    const shouldHideKYCSetup = useMemo(() => {
-        try {
-            // Get user type from localStorage
-            const userDetails = JSON.parse(localStorage.getItem('userdetails') || '{}')
-            const isBusiness = userDetails?.data?.signedUpAs === 'business'
+    const { profileData } = useSelector((state: RootState) => state.settings)
 
-            // Get KYC form progress from localStorage
-            const kycProgress = JSON.parse(localStorage.getItem('kycFormProgress') || '{}')
-            const { stepStatus, currentStep } = kycProgress
+    const shouldHideKYCSetup = () => {
+        if (!profileData?.data) return false
 
-            if (!stepStatus) return false
+        const {
+            isAddressSetup,
+            isDocumentSetup,
+            isProfileSetup,
+            isBankSetup,
+            role
+        } = profileData.data
 
-            // Check if KYC is completed based on user type
-            if (isBusiness) {
-                // For business users: steps 0 and 1 need to be completed
-                // and they should be at step 2 (review) or have completed it
-                const step0Complete = stepStatus[0]?.status === 'complete'
-                const step1Complete = stepStatus[1]?.status === 'complete'
-                const atReviewOrBeyond = currentStep >= 2
-
-                return step0Complete && step1Complete && atReviewOrBeyond
-            } else {
-                // For non-business users: steps 0, 1, 2, and 3 need to be completed
-                // and they should be at step 4 (review) or have completed it
-                const step0Complete = stepStatus[0]?.status === 'complete'
-                const step1Complete = stepStatus[1]?.status === 'complete'
-                const step2Complete = stepStatus[2]?.status === 'complete'
-                const step3Complete = stepStatus[3]?.status === 'complete'
-                const atReviewOrBeyond = currentStep >= 4
-
-                return step0Complete && step1Complete && step2Complete && step3Complete && atReviewOrBeyond
-            }
-        } catch (error) {
-            console.error('Error checking KYC status:', error)
-            return false
+        // For doctors: Hide KYC setup only if ALL required fields are true
+        if (role === 'doctor') {
+            return isAddressSetup === true && 
+                   isDocumentSetup === true && 
+                   isProfileSetup === true && 
+                   isBankSetup === true
         }
-    }, [])
 
-    return { shouldHideKYCSetup }
+        // For other roles: Hide KYC setup when address and profile are setup
+        return isAddressSetup === true && isProfileSetup === true
+    }
+
+    const shouldHideKYCSetupForSales = () => {
+        if (!profileData?.data) return false
+
+        const {
+            isAddressSetup,
+            isProfileSetup,
+            role
+        } = profileData.data
+
+        // For business role: Hide KYC setup when address and profile are setup
+        if (role === 'business') {
+            return isAddressSetup === true && isProfileSetup === true
+        }
+
+        // For other roles, don't hide
+        return false
+    }
+
+    return {
+        shouldHideKYCSetup: shouldHideKYCSetup(),
+        shouldHideKYCSetupForSales: shouldHideKYCSetupForSales(),
+        profileData: profileData?.data,
+        userRole: profileData?.data?.role
+    }
 }

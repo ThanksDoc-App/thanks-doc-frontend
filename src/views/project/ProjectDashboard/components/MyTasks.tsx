@@ -232,7 +232,7 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
                     Search
                 </Button>
             </InputGroup>
-            <Table>
+            <Table className="whitespace-nowrap">
                 <THead>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <Tr key={headerGroup.id}>
