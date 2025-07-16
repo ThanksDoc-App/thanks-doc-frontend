@@ -18,7 +18,17 @@ import {
     clearDeleteDocumentError,
     UpdateDocumentPayload,
     DeleteDocumentPayload,
-} from '../store/settingsSlice'
+} from '../store/SettingsSlice'
+// import {
+//     updateDocument,
+//     deleteDocument,
+//     resetUpdateDocumentStatus,
+//     resetDeleteDocumentStatus,
+//     clearUpdateDocumentError,
+//     clearDeleteDocumentError,
+//     UpdateDocumentPayload,
+//     DeleteDocumentPayload,
+// } from '../store/settingsSlice'
 
 // Modal Component
 interface ModalProps {

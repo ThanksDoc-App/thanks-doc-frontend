@@ -61,7 +61,8 @@ export interface UpdateDocumentPayload {
     title?: string
     content?: string
     file?: File | string
-    files?: string[]
+    files?: File
+    filesToDelete?: string[]
 }
 
 // Add interface for delete document payload
