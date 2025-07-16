@@ -25,67 +25,29 @@ import {
     HiOutlineCode,
 } from 'react-icons/hi'
 import type { JSX } from 'react'
+import setting_icon from '../assets/sidebarIcons/settings-icon.png'
+import categoty_icon from '../assets/sidebarIcons/category-icon.png'
+import explore_icon from '../assets/sidebarIcons/explore-icon.png'
+import jobhistory_icon from '../assets/sidebarIcons/job-history-icon.png'
+import business_dashboard from '../assets/sidebarIcons/business-dashboard.png'
+import joblisting_icon from '../assets/sidebarIcons/job-listing-icon.png'
+import business_icon from '../assets/sidebarIcons/business-icon.png'
+import doctor_icon from '../assets/sidebarIcons/doctor-icon.png'
 
 export type NavigationIcons = Record<string, JSX.Element>
 
 const navigationIcon: NavigationIcons = {
     apps: <HiOutlineViewGridAdd />,
-    explore: (
-        <img
-            src="/public/img/sidebarIcons/explore-icon.png"
-            alt="Project"
-            className="w-5 h-5"
-        />
-    ),
-    job_history: (
-        <img
-            src="/public/img/sidebarIcons/job-history-icon.png"
-            alt=""
-            className="w-5 h-5"
-        />
-    ),
+    explore: <img src={explore_icon} alt="Project" className="w-5 h-5" />,
+    job_history: <img src={jobhistory_icon} alt="" className="w-5 h-5" />,
     busness_dashboard: (
-        <img
-            src="/public/img/sidebarIcons/business-dashboard.png"
-            alt=""
-            className="w-5 h-5"
-        />
+        <img src={business_dashboard} alt="" className="w-5 h-5" />
     ),
-    job_listing: (
-        <img
-            src="/public/img/sidebarIcons/job-listing-icon.png"
-            alt=""
-            className="w-5 h-5"
-        />
-    ),
-    business_icon: (
-        <img
-            src="/public/img/sidebarIcons/business-icon.png"
-            alt=""
-            className="w-5 h-5"
-        />
-    ),
-    doctor_icon: (
-        <img
-            src="/public/img/sidebarIcons/doctor-icon.png"
-            alt=""
-            className="w-5 h-5"
-        />
-    ),
-    category_icon: (
-        <img
-            src="/public/img/sidebarIcons/category-icon.png"
-            alt=""
-            className="w-5 h-5"
-        />
-    ),
-    settings_icon: (
-        <img
-            src="/public/img/sidebarIcons/settings-icon.png"
-            alt=""
-            className="w-5 h-5"
-        />
-    ),
+    job_listing: <img src={joblisting_icon} alt="" className="w-5 h-5" />,
+    business_icon: <img src={business_icon} alt="" className="w-5 h-5" />,
+    doctor_icon: <img src={doctor_icon} alt="" className="w-5 h-5" />,
+    category_icon: <img src={categoty_icon} alt="" className="w-5 h-5" />,
+    settings_icon: <img src={setting_icon} alt="" className="w-5 h-5" />,
     knowledgeBase: <HiOutlineBookOpen />,
     account: <HiOutlineUserCircle />,
     uiComponents: <HiOutlineTemplate />,
