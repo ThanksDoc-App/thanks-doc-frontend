@@ -55,7 +55,7 @@ class TableErrorBoundary extends React.Component<
     }
 }
 
-const BusinessTable = () => {
+const BusinessTable = ({ className }: any) => {
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
 
@@ -316,9 +316,9 @@ const BusinessTable = () => {
     }
 
     return (
-        <div className="w-full mx-auto bg-white">
+        <div className={`w-full mx-auto ${className}`}>
             {/* Responsive Table Wrapper */}
-            <div className="overflow-x-auto bg-white scrollbar-hidden">
+            <div className="overflow-x-auto scrollbar-hidden">
                 <table className="min-w-[700px] w-full border border-[#D6DDEB]">
                     <thead className="border-b border-gray-200">
                         <tr>
@@ -342,8 +342,10 @@ const BusinessTable = () => {
                             <tr
                                 key={bus.id || index}
                                 onClick={() => handleBusinessClick(bus)}
-                                className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
-                                    (index + 1) % 2 === 0 ? 'bg-[#F8F8FD]' : ''
+                                className={`text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
+                                    (index + 1) % 2 === 0
+                                        ? 'bg-[#F8F8FD] dark:bg-transparent'
+                                        : ''
                                 }`}
                             >
                                 {/* Safe string rendering with fallbacks */}
@@ -413,7 +415,7 @@ const BusinessTable = () => {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB] bg-white">
+            <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB]">
                 {/* Left side - View dropdown */}
                 <div className="flex items-center gap-2">
                     <span className="text-[13px] text-[#8c91a0]">View</span>
@@ -471,7 +473,7 @@ const BusinessTable = () => {
                                         className={`px-3 py-1 text-[13px] rounded ${
                                             currentPage === page
                                                 ? 'bg-[#0F9297] text-white'
-                                                : 'text-[#25324B] hover:bg-gray-100'
+                                                : 'dark:text-[white] light:text-[#25324B] '
                                         }`}
                                     >
                                         {page}

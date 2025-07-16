@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react' // Make sure this is the right import
 import { Button } from '@/components/ui'
 
-const SignUpAs = () => {
+const SignUpAs = ({ className }: any) => {
     const navigate = useNavigate()
 
     const handleDoctorSignUp = () => {
@@ -35,8 +35,8 @@ const SignUpAs = () => {
             </div>
 
             {/* Centered Content */}
-            <div className="w-full max-w-md">
-                <h1 className="text-[30px] font-[600] text-[#202430] text-center mb-12">
+            <div className={`w-full max-w-md ${className}`}>
+                <h1 className="text-[30px] font-[600] text-[#202430] dark:text-white text-center mb-12">
                     Sign up
                 </h1>
                 <div className="flex flex-wrap justify-center gap-3 sm:gap-5">

@@ -31,7 +31,7 @@ const CrmDashboardBody = () => {
                 <p className="text-[#7C8493] text-[14px] font-[400]">
                     Total Business
                 </p>
-                <h5 className="text-[#25324B] text-[16px] font-[600]">
+                <h5 className=" text-[16px] font-[600]">
                     {stats?.businesses || 0}
                 </h5>
             </div>
@@ -42,7 +42,7 @@ const CrmDashboardBody = () => {
                 <p className="text-[#7C8493] text-[14px] font-[400]">
                     Total Doctors
                 </p>
-                <h5 className="text-[#25324B] text-[16px] font-[600]">
+                <h5 className="text-[16px] font-[600]">
                     {stats?.doctors || 0}
                 </h5>
             </div>
@@ -50,7 +50,7 @@ const CrmDashboardBody = () => {
                 <p className="text-[#7C8493] text-[14px] font-[400]">
                     Total Services
                 </p>
-                <h5 className="text-[#25324B] text-[16px] font-[600]">
+                <h5 className="text-[16px] font-[600]">
                     {stats?.services || 0}
                 </h5>
             </div>

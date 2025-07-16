@@ -22,7 +22,7 @@ import SkeletonTable from '@/components/shared/SkeletonTable'
 import { categoryStorage, type Category } from '../store/categoryStorage'
 // import { categoryStorage, type Category } from '@/utils/categoryStorage'
 
-const CategoryTable = () => {
+const CategoryTable = ({ className }: any) => {
     const dispatch = useAppDispatch()
 
     // Use the selectors for cleaner code
@@ -174,8 +174,8 @@ const CategoryTable = () => {
     }
 
     return (
-        <div className="w-full mx-auto bg-white relative">
-            <div className="overflow-x-auto bg-white scrollbar-hidden">
+        <div className={`w-full mx-auto relative ${className}`}>
+            <div className="overflow-x-auto scrollbar-hidden">
                 <table className="min-w-[700px] w-full border border-[#D6DDEB]">
                     <thead className="border-b border-gray-200">
                         <tr>
@@ -189,8 +189,10 @@ const CategoryTable = () => {
                         {currentData.map((cat: Category, index: number) => (
                             <tr
                                 key={cat._id}
-                                className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap ${
-                                    index % 2 === 1 ? 'bg-[#F8F8FD]' : ''
+                                className={`text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
+                                    (index + 1) % 2 === 0
+                                        ? 'bg-[#F8F8FD] dark:bg-transparent'
+                                        : ''
                                 }`}
                             >
                                 <td className="px-6 py-4">{cat.name}</td>
@@ -281,7 +283,7 @@ const CategoryTable = () => {
             )}
 
             {/* Pagination */}
-            <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB] bg-white">
+            <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB]">
                 {/* View dropdown */}
                 <div className="flex items-center gap-2">
                     <span className="text-[13px] text-[#8c91a0]">View</span>
@@ -339,7 +341,7 @@ const CategoryTable = () => {
                                     className={`px-3 py-1 text-[13px] rounded ${
                                         currentPage === page
                                             ? 'bg-[#0F9297] text-white'
-                                            : 'text-[#25324B] hover:bg-gray-100'
+                                            : 'dark:text-[white] light:text-[#25324B] '
                                     }`}
                                 >
                                     {page}

@@ -23,7 +23,7 @@ import {
 import type { Service } from '../store/servicesSlice'
 import SkeletonTable from '@/components/shared/SkeletonTable'
 
-const ServiceTable: React.FC = () => {
+const ServiceTable: React.FC = ({ className }: any) => {
     const dispatch = useAppDispatch()
     const services = useAppSelector(selectServices)
     const loading = useAppSelector(selectServicesLoading)
@@ -158,7 +158,7 @@ const ServiceTable: React.FC = () => {
     }
 
     return (
-        <div className="w-full mx-auto bg-white relative">
+        <div className={`w-full mx-auto relative ${className}`}>
             <div className="overflow-x-auto scrollbar-hidden">
                 <table className="min-w-[700px] w-full border border-[#D6DDEB]">
                     <thead className="border-b border-gray-200">
@@ -179,8 +179,10 @@ const ServiceTable: React.FC = () => {
                         {currentData.map((service, index) => (
                             <tr
                                 key={service._id}
-                                className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap ${
-                                    index % 2 === 1 ? 'bg-[#F8F8FD]' : ''
+                                className={`text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
+                                    (index + 1) % 2 === 0
+                                        ? 'bg-[#F8F8FD] dark:bg-transparent'
+                                        : ''
                                 }`}
                             >
                                 <td className="px-6 py-4">
@@ -300,7 +302,7 @@ const ServiceTable: React.FC = () => {
                 </div>
             )}
 
-            <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB] bg-white">
+            <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB] ">
                 <div className="flex items-center gap-2">
                     <span className="text-[13px] text-[#8c91a0]">View</span>
                     <div className="relative">
@@ -355,7 +357,7 @@ const ServiceTable: React.FC = () => {
                                     className={`px-3 py-1 text-[13px] rounded ${
                                         currentPage === page
                                             ? 'bg-[#0F9297] text-white'
-                                            : 'text-[#25324B] hover:bg-gray-100'
+                                            : 'dark:text-[white] light:text-[#25324B] '
                                     }`}
                                 >
                                     {page}

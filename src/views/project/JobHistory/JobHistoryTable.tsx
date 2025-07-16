@@ -17,7 +17,7 @@ import {
 } from '../JobHistory/store/jobHistorySlice'
 import SkeletonTable from '@/components/shared/SkeletonTable'
 
-const JobHistoryTable = () => {
+const JobHistoryTable = ({ className }: any) => {
     const navigate = useNavigate()
     const dispatch = useDispatch()
 
@@ -159,10 +159,12 @@ const JobHistoryTable = () => {
     }
 
     return (
-        <div className="w-full mx-auto bg-white">
+        <div className="w-full mx-auto">
             {/* Responsive Table Wrapper */}
-            <div className="overflow-x-auto bg-white scrollbar-hidden">
-                <table className="min-w-[700px] w-full border border-[#D6DDEB]">
+            <div className={`overflow-x-auto scrollbar-hidden ${className}`}>
+                <table
+                    className={`min-w-[700px] w-full border border-[#D6DDEB] ${className}`}
+                >
                     <thead className="border-b border-gray-200">
                         <tr>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
@@ -192,9 +194,9 @@ const JobHistoryTable = () => {
                                 <tr
                                     key={job.id}
                                     onClick={() => handleJobClick(job.id)}
-                                    className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
-                                        (startIndex + index + 1) % 2 === 0
-                                            ? 'bg-[#F8F8FD]'
+                                    className={`text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
+                                        (index + 1) % 2 === 0
+                                            ? 'bg-[#F8F8FD] dark:bg-transparent'
                                             : ''
                                     }`}
                                 >
@@ -267,7 +269,9 @@ const JobHistoryTable = () => {
 
             {/* Pagination */}
             {transformedJobData.length > 0 && (
-                <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB] bg-white">
+                <div
+                    className={`flex items-center justify-between px-6 py-4 border border-[#D6DDEB] ${className}`}
+                >
                     {/* Left side - View dropdown */}
                     <div className="flex items-center gap-2">
                         <span className="text-[13px] text-[#8c91a0]">View</span>
@@ -330,7 +334,7 @@ const JobHistoryTable = () => {
                                             className={`px-3 py-1 text-[13px] rounded ${
                                                 currentPage === page
                                                     ? 'bg-[#0F9297] text-white'
-                                                    : 'text-[#25324B] hover:bg-gray-100'
+                                                    : 'dark:text-[white] light:text-[#25324B] '
                                             }`}
                                         >
                                             {page}

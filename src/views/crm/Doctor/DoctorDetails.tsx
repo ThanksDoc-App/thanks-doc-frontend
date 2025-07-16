@@ -87,7 +87,7 @@ interface DocumentItem {
     }
 }
 
-const DoctorDetails = () => {
+const DoctorDetails = ({ className }: any) => {
     // **State Management**
     const [doctor, setDoctor] = useState<Doctor | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -509,7 +509,7 @@ const DoctorDetails = () => {
             {/* Header */}
             <div className="mb-6 flex flex-col lg:flex-row justify-between items-center gap-5">
                 <button
-                    className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
+                    className="flex items-center gap-2 hover:text-gray-900 transition-colors"
                     onClick={() => navigate(-1)}
                     aria-label="Go back to previous page"
                 >
@@ -543,7 +543,7 @@ const DoctorDetails = () => {
                             />
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <p className="text-[#25324B] text-[17px] font-bold">
+                            <p className="text-[#25324B] text-[17px] font-bold dark:text-[#7C8493]">
                                 {doctor.name}
                             </p>
                             <p className="text-[#7C8493] text-[12px]">
@@ -552,7 +552,7 @@ const DoctorDetails = () => {
                             </p>
                             <div className="flex items-center gap-1">
                                 <FaStar color="#FFB836" />
-                                <p className="text-[12px] font-[500] text-[#25324B]">
+                                <p className="text-[12px] font-[500] text-[#25324B] dark:text-[#7C8493]">
                                     {doctor.rating !== undefined &&
                                     doctor.rating !== null
                                         ? Number(doctor.rating).toFixed(1)
@@ -566,8 +566,8 @@ const DoctorDetails = () => {
                     </p>
 
                     {/* Contact Information */}
-                    <div className="border-b border-[#D6DDEB] py-3">
-                        <p className="text-[#25324B] text-[14px] font-[600] mb-2">
+                    <div className="border-b border-[rgb(214,221,235)] py-3">
+                        <p className="text-[#25324B] dark:text-[#7C8493] text-[14px] font-[600] mb-2">
                             Contact
                         </p>
                         <div className="flex gap-3">
@@ -576,7 +576,7 @@ const DoctorDetails = () => {
                                 <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                     Email
                                 </p>
-                                <p className="text-[#25324B] text-[11.5px] break-all">
+                                <p className="text-[#25324B] dark:text-[#7C8493] text-[11.5px] break-all">
                                     {doctor.email}
                                 </p>
                             </div>
@@ -587,7 +587,7 @@ const DoctorDetails = () => {
                                 <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                     Phone
                                 </p>
-                                <p className="text-[#25324B] text-[11.5px]">
+                                <p className="text-[#25324B] dark:text-[#7C8493] text-[11.5px] break-all">
                                     {doctor.phone || 'N/A'}
                                 </p>
                             </div>
@@ -598,7 +598,7 @@ const DoctorDetails = () => {
                                 <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                     GMC Number
                                 </p>
-                                <p className="text-[#25324B] text-[11.5px]">
+                                <p className="text-[#25324B] dark:text-[#7C8493] text-[11.5px] break-all">
                                     {doctor.gmcNumber || 'N/A'}
                                 </p>
                             </div>
@@ -608,7 +608,7 @@ const DoctorDetails = () => {
                     {/* Bank Details Section */}
                     <div className="mt-3">
                         <div className="flex items-center justify-between mb-2">
-                            <p className="text-[#25324B] text-[14px] font-[600]">
+                            <p className="text-[#25324B] dark:text-[#7C8493] text-[14px] font-[600] mb-2">
                                 Bank Details
                             </p>
                             {userAccountLoading && (
@@ -644,7 +644,7 @@ const DoctorDetails = () => {
                                         <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                             Sort Code
                                         </p>
-                                        <p className="text-[#25324B] text-[11.5px]">
+                                        <p className="text-[#25324B] dark:text-[#7C8493] text-[11.5px] break-all">
                                             {userAccount.sortCode || 'N/A'}
                                         </p>
                                     </div>
@@ -655,7 +655,7 @@ const DoctorDetails = () => {
                                         <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                             Account Number
                                         </p>
-                                        <p className="text-[#25324B] text-[11.5px]">
+                                        <p className="text-[#25324B] dark:text-[#7C8493] text-[11.5px] break-all">
                                             {userAccount.accountNumber || 'N/A'}
                                         </p>
                                     </div>
@@ -666,7 +666,7 @@ const DoctorDetails = () => {
                                         <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                             Account Name
                                         </p>
-                                        <p className="text-[#25324B] text-[11.5px]">
+                                        <p className="text-[#25324B] dark:text-[#7C8493] text-[11.5px] break-all">
                                             {userAccount.accountName ||
                                                 doctor.name}
                                         </p>
@@ -765,7 +765,7 @@ const DoctorDetails = () => {
 
                     {/* Jobs Table */}
                     {activeTab === 'jobs' && (
-                        <div className="w-full mx-auto bg-white">
+                        <div className="w-full mx-auto">
                             {/* Error Display */}
                             {paymentError && (
                                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -793,7 +793,7 @@ const DoctorDetails = () => {
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
                                 </div>
                             ) : (
-                                <div className="bg-white">
+                                <div className="">
                                     <table className="w-full border border-[#D6DDEB]">
                                         <thead className="border-b border-gray-200">
                                             <tr>
@@ -1069,10 +1069,10 @@ const DoctorDetails = () => {
                                     return (
                                         <div
                                             key={`${doc._id}-${index}`}
-                                            className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-sm transition-shadow"
+                                            className="border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-sm transition-shadow"
                                         >
                                             <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-800">
+                                                <p className="text-sm font-medium text-gray-800 dark:text-[#7C8493]">
                                                     {doc.title}
                                                 </p>
 

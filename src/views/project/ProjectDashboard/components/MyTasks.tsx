@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Table from '@/components/ui/Table'
@@ -9,6 +9,10 @@ import InputGroup from '@/components/ui/InputGroup'
 import { HiOutlineLocationMarker } from 'react-icons/hi'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
 import ActionLink from '@/components/shared/ActionLink'
+import { useAppDispatch } from '@/store'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/store'
+import { getUserProfile } from '@/views/account/Settings/store/SettingsSlice'
 import {
     useReactTable,
     getCoreRowModel,
@@ -64,7 +68,37 @@ const PriorityTag = ({ priority }: { priority: number }) => {
 
 const MyTasks = ({ data = [] }: MyTasksProps) => {
     const navigate = useNavigate()
+    const dispatch = useAppDispatch()
     const [searchTerm, setSearchTerm] = useState('')
+    const [isInitialLoad, setIsInitialLoad] = useState(true)
+
+    // Get profile data from Redux
+    const { profileData, getProfileLoading } = useSelector(
+        (state: RootState) => state.settings,
+    )
+
+    // Fetch profile data on component mount
+    useEffect(() => {
+        if (!profileData) {
+            dispatch(getUserProfile())
+        }
+    }, [dispatch, profileData])
+
+    // Extract user location for prefilling search on initial load only
+    useEffect(() => {
+        if (profileData?.data?.location && isInitialLoad) {
+            const { location } = profileData.data
+            // Use address1 and zipCode as per your requirement
+            const locationString = [location.address1, location.zipCode]
+                .filter(Boolean)
+                .join(', ')
+
+            if (locationString) {
+                setSearchTerm(locationString)
+            }
+            setIsInitialLoad(false) // Mark initial load as complete
+        }
+    }, [profileData, isInitialLoad])
 
     // Filter data based on search term
     const filteredData = useMemo(() => {
@@ -144,12 +178,35 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
     }
 
     const onViewJobDetails = (id: string) => {
-        // Fixed: proper string typing
         navigate(`/app/project/job-details/${id}`)
     }
 
     const handleSearch = () => {
         console.log('Searching for:', searchTerm)
+        // Add your search logic here
+    }
+
+    // Create placeholder text from user location or use default
+    const getPlaceholderText = () => {
+        if (profileData?.data?.location) {
+            const { location } = profileData.data
+            const address1 = location.address1
+            const zipCode = location.zipCode
+
+            if (address1 && zipCode) {
+                return `${address1}, ${zipCode}`
+            } else if (address1) {
+                return address1
+            } else if (zipCode) {
+                return zipCode
+            }
+        }
+        return 'Enter postcode or location...'
+    }
+
+    // Handle input change - allows clearing and typing new values
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value)
     }
 
     return (
@@ -162,9 +219,9 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
                     prefix={
                         <HiOutlineLocationMarker className="text-xl text-indigo-600 cursor-pointer" />
                     }
-                    placeholder="Enter postcode or location..."
+                    placeholder={getPlaceholderText()}
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                             handleSearch()

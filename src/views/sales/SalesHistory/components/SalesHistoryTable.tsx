@@ -23,8 +23,9 @@ import {
     clearUpdateError,
     clearRatingError, // ✅ Add clear rating error action
 } from '../store/jobHistorySlice'
+import SkeletonTable from '@/components/shared/SkeletonTable'
 
-const SalesHistory = () => {
+const SalesHistory = ({ className }: any) => {
     const dispatch = useAppDispatch()
     const jobs = useAppSelector(selectJobHistory)
     const loading = useAppSelector(selectJobHistoryLoading)
@@ -292,11 +293,7 @@ const SalesHistory = () => {
 
     // Show loading state
     if (loading) {
-        return (
-            <div className="w-full bg-white rounded-lg p-8 text-center">
-                <div className="text-gray-500">Loading jobs...</div>
-            </div>
-        )
+        return <SkeletonTable />
     }
 
     // Show error state
@@ -316,7 +313,7 @@ const SalesHistory = () => {
 
     return (
         <>
-            <div className="w-full bg-white rounded-lg">
+            <div className={`w-full rounded-lg ${className}`}>
                 {/* Error Display */}
                 {(updateError || ratingError) && (
                     <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -376,9 +373,9 @@ const SalesHistory = () => {
                                 currentData.map((item: any, index: any) => (
                                     <tr
                                         key={item._id || index}
-                                        className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap ${
-                                            index % 2 === 1
-                                                ? 'bg-[#F8F8FD]'
+                                        className={`text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
+                                            (index + 1) % 2 === 0
+                                                ? 'bg-[#F8F8FD] dark:bg-transparent'
                                                 : ''
                                         }`}
                                     >
@@ -470,7 +467,9 @@ const SalesHistory = () => {
                 </div>
 
                 {/* Pagination - keeping the same pagination code */}
-                <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB] bg-white">
+                <div
+                    className={`flex items-center justify-between px-6 py-4 border border-[#D6DDEB] ${className}`}
+                >
                     <div className="flex items-center gap-2">
                         <span className="text-[13px] text-[#8c91a0]">View</span>
                         <div className="relative">
@@ -513,7 +512,7 @@ const SalesHistory = () => {
                                 page === '...' ? (
                                     <span
                                         key={idx}
-                                        className="px-2 py-1 text-[13px] text-[#8c91a0]"
+                                        className="px-2 py-1 text-[13px]"
                                     >
                                         ...
                                     </span>
@@ -526,7 +525,7 @@ const SalesHistory = () => {
                                         className={`px-3 py-1 text-[13px] rounded ${
                                             currentPage === page
                                                 ? 'bg-[#0F9297] text-white'
-                                                : 'text-[#25324B] hover:bg-gray-100'
+                                                : 'dark:text-[white] light:text-[#25324B] '
                                         }`}
                                     >
                                         {page}

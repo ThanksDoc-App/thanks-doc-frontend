@@ -7,12 +7,14 @@ import appConfig from '@/configs/app.config'
 import classNames from 'classnames'
 import { HiOutlineUser, HiOutlineCog, HiOutlineLogout } from 'react-icons/hi'
 import { FiActivity } from 'react-icons/fi'
+import { HiOutlineMoon } from 'react-icons/hi'
 import type { CommonProps } from '@/@types/common'
 import type { JSX } from 'react'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/store'
 import { useEffect } from 'react'
 import { getUserProfile } from '@/views/account/Settings/store/SettingsSlice'
+import ModeSwitcher from './ThemeConfigurator/ModeSwitcher'
 
 type DropdownList = {
     label: string
@@ -130,6 +132,19 @@ const _UserDropdown = ({ className }: CommonProps) => {
                         </Link>
                     </Dropdown.Item>
                 ))}
+                <Dropdown.Item className="mb-1 px-0">
+                    <div className="flex h-full w-full px-2">
+                        <span className="flex gap-2 items-center w-full justify-between">
+                            <span className="flex gap-2 items-center">
+                                <span className="text-xl opacity-50">
+                                    <HiOutlineMoon />
+                                </span>
+                                <span>Dark Mode</span>
+                            </span>
+                            <ModeSwitcher />
+                        </span>
+                    </div>
+                </Dropdown.Item>
                 <Dropdown.Item variant="divider" />
                 <Dropdown.Item
                     eventKey="Sign Out"

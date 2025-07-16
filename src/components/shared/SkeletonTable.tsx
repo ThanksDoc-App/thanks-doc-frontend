@@ -1,9 +1,9 @@
 import React from 'react'
 
-const SkeletonTable = () => {
+const SkeletonTable = ({ className }: any) => {
     return (
-        <div className="w-full mx-auto bg-white">
-            <div className="overflow-x-auto bg-white scrollbar-hidden">
+        <div className={`w-full mx-auto ${className}`}>
+            <div className="overflow-x-auto scrollbar-hidden">
                 <table className="min-w-[700px] w-full border border-[#D6DDEB]">
                     <thead className="border-b border-gray-200">
                         <tr>
@@ -18,8 +18,10 @@ const SkeletonTable = () => {
                         {Array.from({ length: 10 }).map((_, index) => (
                             <tr
                                 key={index}
-                                className={`text-[#25324B] text-[13px] whitespace-nowrap ${
-                                    (index + 1) % 2 === 0 ? 'bg-[#F8F8FD]' : ''
+                                className={`text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
+                                    (index + 1) % 2 === 0
+                                        ? 'bg-[#F8F8FD] dark:bg-transparent'
+                                        : ''
                                 }`}
                             >
                                 <td className="px-6 py-4">
@@ -46,7 +48,7 @@ const SkeletonTable = () => {
             </div>
 
             {/* Skeleton Pagination */}
-            <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB] bg-white">
+            <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB]">
                 {/* View dropdown skeleton */}
                 <div className="flex items-center gap-2">
                     <span className="text-[13px] text-[#8c91a0]">View</span>

@@ -56,14 +56,18 @@ const CrmCreateCategory = () => {
 
     return (
         <div>
-            <div className="ml-[-26px]">
+            <div className="">
                 <Button
+                    variant="solid"
                     className="flex items-center justify-center gap-2 border-0"
                     onClick={() => navigate(-1)}
                 >
-                    <IoMdArrowRoundBack size={30} color="#25324B" />
-                    <span className="text-[#25324B] text-[18px]">
-                        Create a category
+                    <IoMdArrowRoundBack
+                        size={20}
+                        className="text-[#25324B] dark:text-white"
+                    />
+                    <span className="text-[#25324B] dark:text-white ">
+                        Create category
                     </span>
                 </Button>
             </div>

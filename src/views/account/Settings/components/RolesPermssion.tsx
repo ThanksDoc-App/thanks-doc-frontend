@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import { apiAddAdmin, apiGetAdmins } from '@/services/CommonService'
-import { MoreHorizontal, X, Eye, EyeOff } from 'lucide-react'
+import {
+    MoreHorizontal,
+    X,
+    Eye,
+    EyeOff,
+    ChevronLeft,
+    ChevronRight,
+    ChevronDown,
+} from 'lucide-react'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import SkeletonTable from '@/components/shared/SkeletonTable'
 
-const RolesPermission = () => {
+const RolesPermission = ({ className }: any) => {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
@@ -19,6 +27,11 @@ const RolesPermission = () => {
         { id: string; name: string; email: string }[]
     >([])
     const [loadingAdmins, setLoadingAdmins] = useState(true)
+
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1)
+    const [itemsPerPage, setItemsPerPage] = useState(10)
+    const [showDropdown, setShowDropdown] = useState(false)
 
     type AdminUser = { _id: string; name: string; email: string }
     type AdminsResponse = { users: AdminUser[] }
@@ -47,6 +60,59 @@ const RolesPermission = () => {
     useEffect(() => {
         fetchAdmins()
     }, [])
+
+    // Pagination calculations
+    const totalItems = admins.length
+    const totalPages = Math.ceil(totalItems / itemsPerPage)
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    const currentData = admins.slice(startIndex, endIndex)
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page)
+        }
+    }
+
+    const handleItemsPerPageChange = (items: number) => {
+        setItemsPerPage(items)
+        setCurrentPage(1)
+        setShowDropdown(false)
+    }
+
+    const getPageNumbers = () => {
+        const pages: (number | '...')[] = []
+        const maxVisible = 5
+
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i)
+        } else {
+            if (currentPage <= 3) {
+                pages.push(1, 2, 3, 4, '...', totalPages)
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(
+                    1,
+                    '...',
+                    totalPages - 3,
+                    totalPages - 2,
+                    totalPages - 1,
+                    totalPages,
+                )
+            } else {
+                pages.push(
+                    1,
+                    '...',
+                    currentPage - 1,
+                    currentPage,
+                    currentPage + 1,
+                    '...',
+                    totalPages,
+                )
+            }
+        }
+
+        return pages
+    }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -101,7 +167,7 @@ const RolesPermission = () => {
     }
 
     return (
-        <div className="w-full">
+        <div className={`w-full mx-auto relative ${className}`}>
             <ToastContainer />
 
             {/* Add user button */}
@@ -115,8 +181,8 @@ const RolesPermission = () => {
             </div>
 
             {/* Table container */}
-            <div className="overflow-x-auto bg-white rounded-md border border-[#D6DDEB]">
-                <table className="min-w-[600px] w-full">
+            <div className="overflow-x-auto scrollbar-hidden">
+                <table className="min-w-[600px] w-full border border-[#D6DDEB]">
                     <thead className="border-b border-gray-200">
                         <tr>
                             <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
@@ -129,17 +195,19 @@ const RolesPermission = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {admins.map((ad, index) => (
+                        {currentData.map((ad, index) => (
                             <tr
                                 key={ad.id}
-                                className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap ${
-                                    (index + 1) % 2 === 0 ? 'bg-[#F8F8FD]' : ''
+                                className={`text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
+                                    (index + 1) % 2 === 0
+                                        ? 'bg-[#F8F8FD] dark:bg-transparent'
+                                        : ''
                                 }`}
                             >
                                 <td className="px-6 py-4">{ad.name}</td>
                                 <td className="px-6 py-4">{ad.email}</td>
                                 <td className="px-6 py-4">
-                                    <button className="p-1">
+                                    <button className="p-1 hover:bg-gray-100 rounded">
                                         <MoreHorizontal className="w-5 h-5" />
                                     </button>
                                 </td>
@@ -148,6 +216,86 @@ const RolesPermission = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination */}
+            {admins.length > 0 && (
+                <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB] border-t-0">
+                    {/* View dropdown */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[13px] text-[#8c91a0]">View</span>
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowDropdown(!showDropdown)}
+                                className="flex items-center gap-1 px-3 py-1 text-[13px] text-[#25324B] border border-[#D6DDEB] rounded bg-white hover:bg-gray-50"
+                            >
+                                {itemsPerPage}
+                                <ChevronDown className="w-4 h-4" />
+                            </button>
+                            {showDropdown && (
+                                <div className="absolute top-full left-0 mt-1 bg-white border border-[#D6DDEB] rounded shadow-lg z-10">
+                                    {[5, 10, 15, 20, 25].map((num) => (
+                                        <button
+                                            key={num}
+                                            onClick={() =>
+                                                handleItemsPerPageChange(num)
+                                            }
+                                            className="block w-full px-3 py-2 text-[13px] text-left hover:bg-gray-50 text-[#25324B]"
+                                        >
+                                            {num}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Page navigation */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="p-2 text-[#8c91a0] hover:text-[#25324B] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                            {getPageNumbers().map((page, idx) =>
+                                page === '...' ? (
+                                    <span
+                                        key={idx}
+                                        className="px-2 py-1 text-[13px] text-[#8c91a0]"
+                                    >
+                                        …
+                                    </span>
+                                ) : (
+                                    <button
+                                        key={idx}
+                                        onClick={() =>
+                                            handlePageChange(page as number)
+                                        }
+                                        className={`px-3 py-1 text-[13px] rounded ${
+                                            currentPage === page
+                                                ? 'bg-[#0F9297] text-white'
+                                                : 'dark:text-[white] light:text-[#25324B] hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ),
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="p-2 text-[#8c91a0] hover:text-[#25324B] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Modal */}
             {isModalOpen && (
@@ -201,34 +349,6 @@ const RolesPermission = () => {
                                     className="w-full px-3 py-2 placeholder:text-[#272D37] border border-[#D0D5DD] rounded-md text-[13px] outline-0"
                                 />
                             </div>
-
-                            {/* <div className="mb-6 relative">
-                                <label className="block text-[12px] font-[500] text-[#344054] mb-1">
-                                    Password
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type={
-                                            showPassword ? 'text' : 'password'
-                                        }
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md text-[13px] outline-0 pr-10"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={togglePasswordVisibility}
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-5 w-5" />
-                                        ) : (
-                                            <Eye className="h-5 w-5" />
-                                        )}
-                                    </button>
-                                </div>
-                            </div> */}
 
                             {/* Modal Footer */}
                             <div className="flex justify-end">

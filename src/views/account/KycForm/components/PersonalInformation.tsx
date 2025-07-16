@@ -366,7 +366,7 @@ const PersonalInformation = ({
                                     <FormItem
                                         label={
                                             isBusiness
-                                                ? 'Date of Creation'
+                                                ? 'Business registration date'
                                                 : 'Date of Birth'
                                         } // ✅ Dynamic label based on user type
                                         invalid={

@@ -40,6 +40,20 @@ type NotificationList = {
     readed: boolean
 }
 
+// API Response types based on your actual response
+type ApiNotification = {
+    _id: string
+    user: string
+    objectId: string
+    type: string
+    title: string
+    message: string
+    isRead: string
+    createdAt: string
+    updatedAt: string
+    __v: number
+}
+
 const notificationHeight = 'h-72'
 const imagePath = '/img/avatars/'
 
@@ -121,25 +135,82 @@ const _Notification = ({ className }: { className?: string }) => {
     const [notificationList, setNotificationList] = useState<
         NotificationList[]
     >([])
+    console.log('notificationList', notificationList)
+
     const [unreadNotification, setUnreadNotification] = useState(false)
     const [noResult, setNoResult] = useState(false)
     const [loading, setLoading] = useState(false)
 
     const { bgTheme } = useThemeClass()
-
     const { larger } = useResponsive()
-
     const direction = useAppSelector((state) => state.theme.direction)
 
-    const getNotificationCount = useCallback(async () => {
-        const resp = await apiGetNotificationCount()
-        if (resp.data.count > 0) {
-            setNoResult(false)
-            setUnreadNotification(true)
-        } else {
-            setNoResult(true)
+    // Transform API notification to component format
+    const transformNotification = (
+        apiNotification: ApiNotification,
+    ): NotificationList => {
+        // Map notification types
+        const getNotificationType = (type: string): number => {
+            switch (type.toLowerCase()) {
+                case 'job':
+                    return 1
+                case 'account':
+                    return 2
+                default:
+                    return 0
+            }
         }
-    }, [setUnreadNotification])
+
+        // Format date
+        const formatDate = (dateString: string): string => {
+            const date = new Date(dateString)
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            })
+        }
+
+        return {
+            id: apiNotification._id,
+            target: apiNotification.title,
+            description: apiNotification.message,
+            date: formatDate(apiNotification.createdAt),
+            image: '', // Add image logic if needed
+            type: getNotificationType(apiNotification.type),
+            location: '',
+            locationLabel: '',
+            status: 'succeed', // Adjust based on your logic
+            readed: apiNotification.isRead === 'true',
+        }
+    }
+
+    const getNotificationCount = useCallback(async () => {
+        try {
+            const resp = await apiGetNotificationCount()
+            console.log('notification count response:', resp)
+
+            // Access the count from the nested response structure
+            const count =
+                resp.data?.data?.totalUnReadNotifications ||
+                resp.data?.totalUnReadNotifications ||
+                resp.data?.count ||
+                0
+
+            if (count > 0) {
+                setNoResult(false)
+                setUnreadNotification(true)
+            } else {
+                setNoResult(true)
+                setUnreadNotification(false)
+            }
+        } catch (error) {
+            console.error('Error fetching notification count:', error)
+            setNoResult(true)
+            setUnreadNotification(false)
+        }
+    }, [])
 
     useEffect(() => {
         getNotificationCount()
@@ -148,36 +219,95 @@ const _Notification = ({ className }: { className?: string }) => {
     const onNotificationOpen = useCallback(async () => {
         if (notificationList.length === 0) {
             setLoading(true)
-            const resp = await apiGetNotificationList()
-            setLoading(false)
-            setNotificationList(resp.data)
-        }
-    }, [notificationList, setLoading])
+            try {
+                const resp = await apiGetNotificationList()
+                console.log('Full API response:', resp)
+                console.log('Response data:', resp.data)
 
-    const onMarkAllAsRead = useCallback(() => {
-        const list = notificationList.map((item: NotificationList) => {
-            if (!item.readed) {
-                item.readed = true
+                // Based on your logs, the structure is resp.data.data.notifications
+                let notifications: ApiNotification[] = []
+
+                if (
+                    resp.data?.data?.notifications &&
+                    Array.isArray(resp.data.data.notifications)
+                ) {
+                    notifications = resp.data.data.notifications
+                } else if (
+                    resp.data?.notifications &&
+                    Array.isArray(resp.data.notifications)
+                ) {
+                    notifications = resp.data.notifications
+                } else if (resp.data && Array.isArray(resp.data)) {
+                    notifications = resp.data
+                } else {
+                    console.warn('Unexpected response structure:', resp.data)
+                    notifications = []
+                }
+
+                console.log('Extracted notifications:', notifications)
+
+                // Transform API notifications to component format
+                const transformedNotifications = notifications.map(
+                    transformNotification,
+                )
+                console.log(
+                    'Transformed notifications:',
+                    transformedNotifications,
+                )
+
+                setNotificationList(transformedNotifications)
+
+                // Update no result state
+                if (transformedNotifications.length === 0) {
+                    setNoResult(true)
+                } else {
+                    setNoResult(false)
+                }
+            } catch (error) {
+                console.error('Error fetching notifications:', error)
+                setNoResult(true)
+            } finally {
+                setLoading(false)
             }
-            return item
-        })
-        setNotificationList(list)
-        setUnreadNotification(false)
+        }
+    }, [notificationList])
+
+    const onMarkAllAsRead = useCallback(async () => {
+        try {
+            // Here you would typically make an API call to mark all as read
+            // await apiMarkAllNotificationsAsRead()
+
+            const list = notificationList.map((item: NotificationList) => ({
+                ...item,
+                readed: true,
+            }))
+
+            setNotificationList(list)
+            setUnreadNotification(false)
+        } catch (error) {
+            console.error('Error marking all as read:', error)
+        }
     }, [notificationList])
 
     const onMarkAsRead = useCallback(
-        (id: string) => {
-            const list = notificationList.map((item) => {
-                if (item.id === id) {
-                    item.readed = true
-                }
-                return item
-            })
-            setNotificationList(list)
-            const hasUnread = notificationList.some((item) => !item.readed)
+        async (id: string) => {
+            try {
+                // Here you would typically make an API call to mark as read
+                // await apiMarkNotificationAsRead(id)
 
-            if (!hasUnread) {
-                setUnreadNotification(false)
+                const list = notificationList.map((item) => ({
+                    ...item,
+                    readed: item.id === id ? true : item.readed,
+                }))
+
+                setNotificationList(list)
+
+                const hasUnread = list.some((item) => !item.readed)
+                if (!hasUnread) {
+                    setUnreadNotification(false)
+                }
+            } catch (error) {
+                console.error('Error marking notification as read:', error)
             }
         },
         [notificationList],
@@ -211,7 +341,19 @@ const _Notification = ({ className }: { className?: string }) => {
             </Dropdown.Item>
             <div className={classNames('overflow-y-auto', notificationHeight)}>
                 <ScrollBar direction={direction}>
-                    {notificationList.length > 0 &&
+                    {loading && (
+                        <div
+                            className={classNames(
+                                'flex items-center justify-center',
+                                notificationHeight,
+                            )}
+                        >
+                            <Spinner size={40} />
+                        </div>
+                    )}
+
+                    {!loading &&
+                        notificationList.length > 0 &&
                         notificationList.map((item, index) => (
                             <div
                                 key={item.id}
@@ -242,36 +384,30 @@ const _Notification = ({ className }: { className?: string }) => {
                                 />
                             </div>
                         ))}
-                    {loading && (
-                        <div
-                            className={classNames(
-                                'flex items-center justify-center',
-                                notificationHeight,
-                            )}
-                        >
-                            <Spinner size={40} />
-                        </div>
-                    )}
-                    {noResult && (
-                        <div
-                            className={classNames(
-                                'flex items-center justify-center',
-                                notificationHeight,
-                            )}
-                        >
-                            <div className="text-center">
-                                <img
-                                    className="mx-auto mb-2 max-w-[150px]"
-                                    src="/img/others/no-notification.png"
-                                    alt="no-notification"
-                                />
-                                <h6 className="font-semibold">
-                                    No notifications!
-                                </h6>
-                                <p className="mt-1">Please Try again later</p>
+
+                    {!loading &&
+                        (noResult || notificationList.length === 0) && (
+                            <div
+                                className={classNames(
+                                    'flex items-center justify-center',
+                                    notificationHeight,
+                                )}
+                            >
+                                <div className="text-center">
+                                    {/* <img
+                                        className="mx-auto mb-2 max-w-[150px]"
+                                        src="/img/others/no-notification.png"
+                                        alt="no-notification"
+                                    /> */}
+                                    <h6 className="font-semibold">
+                                        No notifications!
+                                    </h6>
+                                    <p className="mt-1">
+                                        Please try again later
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
                 </ScrollBar>
             </div>
             <Dropdown.Item variant="header">
@@ -280,7 +416,7 @@ const _Notification = ({ className }: { className?: string }) => {
                         to="/app/account/activity-log"
                         className="font-semibold cursor-pointer p-2 px-3 text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
                     >
-                        View All Activity11
+                        View All Activity
                     </Link>
                 </div> */}
             </Dropdown.Item>

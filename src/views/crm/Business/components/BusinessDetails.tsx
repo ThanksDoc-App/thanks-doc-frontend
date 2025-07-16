@@ -203,7 +203,7 @@ const BusinessDetails = () => {
     // If no business data is available
     if (!businessData) {
         return (
-            <div className="w-full mx-auto bg-white p-6">
+            <div className="w-full mx-auto p-6">
                 <div className="flex items-center gap-4 mb-6">
                     <button
                         onClick={handleGoBack}
@@ -233,7 +233,7 @@ const BusinessDetails = () => {
             {/* Header */}
             <div className="mb-6 flex flex-col lg:flex-row justify-between items-center gap-5">
                 <button
-                    className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
+                    className="flex items-center gap-2 hover:text-gray-900 transition-colors"
                     onClick={() => navigate(-1)}
                     aria-label="Go back to previous page"
                 >
@@ -260,7 +260,7 @@ const BusinessDetails = () => {
                             />
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <p className="text-[#25324B] text-[17px] font-bold">
+                            <p className="text-[#25324B] text-[17px] font-bold dark:text-[#7C8493]">
                                 {getBusinessName()}
                             </p>
                             <p className="text-[#7C8493] text-[12px]">
@@ -271,7 +271,7 @@ const BusinessDetails = () => {
                     <div className="border-b border-[#D6DDEB] py-2" />
                     {/* Contact Section */}
                     <div className="py-3">
-                        <p className="text-[#25324B] text-[14px] font-[600] mb-2">
+                        <p className="text-[#25324B] dark:text-[#7C8493] text-[14px] font-[600] mb-2">
                             Contact{' '}
                         </p>
                         <div className="flex gap-3 mb-3">
@@ -280,7 +280,7 @@ const BusinessDetails = () => {
                                 <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                     Contact person{' '}
                                 </p>
-                                <p className="text-[#25324B] text-[11.5px] break-all">
+                                <p className="text-[#25324B] dark:text-[#7C8493] text-[11.5px] break-all">
                                     {businessData.name || 'N/A'}
                                 </p>
                             </div>
@@ -291,7 +291,7 @@ const BusinessDetails = () => {
                                 <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                     Email{' '}
                                 </p>
-                                <p className="text-[#25324B] text-[11.5px] break-all">
+                                <p className="text-[#25324B] dark:text-[#7C8493] text-[11.5px] break-all">
                                     {businessData.email || 'N/A'}
                                 </p>
                             </div>
@@ -302,7 +302,7 @@ const BusinessDetails = () => {
                                 <p className="text-[#7C8493] text-[11.5px] font-[400]">
                                     Phone{' '}
                                 </p>
-                                <p className="text-[#25324B] text-[11.5px] break-all">
+                                <p className="text-[#25324B] dark:text-[#7C8493] text-[11.5px] break-all">
                                     {businessData.phone || 'N/A'}
                                 </p>
                             </div>
@@ -327,7 +327,7 @@ const BusinessDetails = () => {
                     </div>
 
                     {/* Jobs Table */}
-                    <div className="w-full mx-auto bg-white">
+                    <div className="w-full mx-auto">
                         {/* Error Display */}
                         {paymentHistoryError && (
                             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -351,9 +351,9 @@ const BusinessDetails = () => {
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
                             </div>
                         ) : (
-                            <div className="bg-white">
+                            <div className="">
                                 {/* Responsive Table Wrapper */}
-                                <div className="overflow-x-auto bg-white scrollbar-hidden">
+                                <div className="overflow-x-auto  scrollbar-hidden">
                                     <table className="min-w-[600px] w-full border border-[#D6DDEB]">
                                         <thead className="border-b border-gray-200">
                                             <tr>
@@ -390,11 +390,11 @@ const BusinessDetails = () => {
                                                     (job, index) => (
                                                         <tr
                                                             key={job._id}
-                                                            className={`hover:bg-gray-50 text-[#25324B] text-[13px] whitespace-nowrap transition-colors ${
+                                                            className={`text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
                                                                 (index + 1) %
                                                                     2 ===
                                                                 0
-                                                                    ? 'bg-[#F8F8FD]'
+                                                                    ? 'bg-[#F8F8FD] dark:bg-transparent'
                                                                     : ''
                                                             }`}
                                                         >

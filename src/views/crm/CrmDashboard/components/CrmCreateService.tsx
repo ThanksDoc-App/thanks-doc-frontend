@@ -13,7 +13,7 @@ import {
 } from '../../Category/store/categoryStorage'
 // import { categoryStorage, type Category } from '@/utils/categoryStorage'
 
-const CrmCreateService = () => {
+const CrmCreateService = ({ className }: any) => {
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
 
@@ -105,14 +105,18 @@ const CrmCreateService = () => {
     }
 
     return (
-        <div>
-            <div className="ml-[-26px]">
+        <div className={className}>
+            <div className="">
                 <Button
+                    variant="solid"
                     className="flex items-center justify-center gap-2 border-0"
                     onClick={() => navigate(-1)}
                 >
-                    <IoMdArrowRoundBack size={30} color="#25324B" />
-                    <span className="text-[#25324B] text-[18px]">
+                    <IoMdArrowRoundBack
+                        size={20}
+                        className="text-[#25324B] dark:text-white"
+                    />
+                    <span className="text-[#25324B] dark:text-white ">
                         Create a service
                     </span>
                 </Button>
@@ -213,12 +217,12 @@ const CrmCreateService = () => {
                             name="currency"
                             value={formData.currency}
                             onChange={handleInputChange}
-                            className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-1.5 outline-0 bg-gray-100 text-gray-500 cursor-not-allowed"
+                            className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-1.5 outline-0 text-gray-500 cursor-not-allowed"
                             required
                             disabled
                         >
                             <option value="GBP">GBP (£)</option>
-                        </select>c
+                        </select>
                     </div>
 
                     <Button

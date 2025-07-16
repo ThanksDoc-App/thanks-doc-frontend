@@ -4,7 +4,7 @@ import SignUpFormBusiness from '@/views/auth/SignUp/SignUpFormBusiness'
 import { ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-const SignUpBusiness = () => {
+const SignUpBusiness = ({ className }: any) => {
     const navigate = useNavigate()
 
     const handleBack = () => {
@@ -12,7 +12,9 @@ const SignUpBusiness = () => {
     }
 
     return (
-        <div className="relative flex items-center justify-center bg-gray-50 px-4">
+        <div
+            className={`relative flex items-center justify-center px-4 ${className}`}
+        >
             {/* Back button */}
             <div className="absolute top-6 left-4 mt-2 sm:left-10 z-10">
                 <Button
@@ -29,8 +31,8 @@ const SignUpBusiness = () => {
             <div className="flex items-center justify-center min-h-screen w-full">
                 <Simple
                     content={
-                        <div className="mb-4 text-center">
-                            <h3 className="text-2xl font-semibold text-gray-800 mb-1">
+                        <div className={`mb-4 text-center ${className}`}>
+                            <h3 className="text-2xl font-semibold text-gray-800 dark:text-white mb-1">
                                 Get Started
                             </h3>
                             {/* <p className="text-gray-500">Start posting jobs!</p> */}
