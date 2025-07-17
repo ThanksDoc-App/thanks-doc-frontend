@@ -2,7 +2,7 @@ import { useState, ComponentType, useEffect } from 'react'
 import { Field, FieldProps, FieldInputProps, useFormikContext } from 'formik'
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
 import { useDispatch, useSelector } from 'react-redux'
-import { useSearchParams } from 'react-router-dom' // Add this import
+import { useNavigate, useSearchParams } from 'react-router-dom' // Add this import
 import { AppDispatch, RootState } from '@/store'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import { FormItem } from '@/components/ui/Form'
@@ -61,6 +61,7 @@ const PricingFields = ({ className }: any) => {
     const [modalType, setModalType] = useState<PaymentModalType>(null)
     const [createdJobId, setCreatedJobId] = useState<string | null>(null)
     const [paymentDetails, setPaymentDetails] = useState<any>(null)
+    const navigate = useNavigate()
 
     // Add URL search params hook
     const [searchParams, setSearchParams] = useSearchParams()
@@ -299,7 +300,7 @@ const PricingFields = ({ className }: any) => {
 
     const handleSuccessClose = () => {
         closeModal()
-        resetForm() // Reset the form after successful payment
+        navigate('/app/sales/dashboard')
     }
 
     // Mock functions to simulate payment success/cancel (for testing)
@@ -371,7 +372,7 @@ const PricingFields = ({ className }: any) => {
                 )}
 
                 {/* Test buttons for demonstration */}
-                {/* <div className="flex gap-2 mt-4">
+                <div className="flex gap-2 mt-4">
                     <Button
                         variant="outline"
                         size="sm"
@@ -388,7 +389,7 @@ const PricingFields = ({ className }: any) => {
                     >
                         Test Failure Modal
                     </Button>
-                </div> */}
+                </div>
             </AdaptableCard>
 
             {/* Payment Modal */}
