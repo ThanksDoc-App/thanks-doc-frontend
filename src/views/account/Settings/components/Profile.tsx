@@ -160,7 +160,7 @@ const Profile = ({ data }: ProfileProps) => {
         name: profileData?.data?.name || '', // ✅ Name prefilled
         email: profileData?.data?.email || '', // ✅ Email prefilled
         phone: profileData?.data?.phone || '', // ✅ Phone prefilled
-        address: profileData?.location?.address1 || '', // ✅ Address prefilled
+        address: profileData?.data?.location?.city || '', // ✅ Address prefilled
         avatar: profileData?.data?.profileImage?.url || '', // ✅ Profile image prefilled
         gmcNumber: profileData?.data?.gmcNumber || '', // ✅ GMC Number prefilled
         timeZone: '',
@@ -487,7 +487,7 @@ const Profile = ({ data }: ProfileProps) => {
                             {signedUpAs !== 'super admin' && (
                                 <FormRow
                                     name="address"
-                                    label="Your Postcode"
+                                    label="City"
                                     {...validatorProps}
                                     border={false}
                                 >
@@ -504,38 +504,41 @@ const Profile = ({ data }: ProfileProps) => {
                                 </FormRow>
                             )}
 
-                            {signedUpAs !== 'super admin' && (
-                                <FormRow
-                                    name="specialty"
-                                    label="Specialty"
-                                    touched={touched}
-                                    errors={errors}
-                                    border={false}
-                                >
-                                    <Field name="specialty">
-                                        {({ field, form }: FieldProps) => (
-                                            <Select
-                                                placeholder="Select specialty"
-                                                field={field}
-                                                form={form}
-                                                options={specialtyOptions}
-                                                isLoading={categoriesLoading}
-                                                value={specialtyOptions.find(
-                                                    (option) =>
-                                                        option.value ===
-                                                        values.specialty,
-                                                )}
-                                                onChange={(option) =>
-                                                    form.setFieldValue(
-                                                        field.name,
-                                                        option?.value,
-                                                    )
-                                                }
-                                            />
-                                        )}
-                                    </Field>
-                                </FormRow>
-                            )}
+                            {signedUpAs !== 'super admin' &&
+                                signedUpAs !== 'business' && (
+                                    <FormRow
+                                        name="specialty"
+                                        label="Specialty"
+                                        touched={touched}
+                                        errors={errors}
+                                        border={false}
+                                    >
+                                        <Field name="specialty">
+                                            {({ field, form }: FieldProps) => (
+                                                <Select
+                                                    placeholder="Select specialty"
+                                                    field={field}
+                                                    form={form}
+                                                    options={specialtyOptions}
+                                                    isLoading={
+                                                        categoriesLoading
+                                                    }
+                                                    value={specialtyOptions.find(
+                                                        (option) =>
+                                                            option.value ===
+                                                            values.specialty,
+                                                    )}
+                                                    onChange={(option) =>
+                                                        form.setFieldValue(
+                                                            field.name,
+                                                            option?.value,
+                                                        )
+                                                    }
+                                                />
+                                            )}
+                                        </Field>
+                                    </FormRow>
+                                )}
 
                             <FormRow
                                 name="phone"
