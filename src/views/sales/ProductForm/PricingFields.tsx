@@ -33,7 +33,7 @@ type FormFieldsName = {
     name: string
 }
 
-type PaymentModalType = 'payment' | 'success' | 'failure' | null
+type PaymentModalType = 'payment' | 'success' | 'cancel' | null
 
 const PriceInput = (props: InputProps & { field: any }) => {
     return <Input {...props} value={props.field.value} suffix="GBP" />
@@ -91,8 +91,8 @@ const PricingFields = ({ className }: any) => {
             // Clean up URL parameter after showing modal
             searchParams.delete('status')
             setSearchParams(searchParams, { replace: true })
-        } else if (status === 'failed' || status === 'failure') {
-            setModalType('failure')
+        } else if (status === 'cancel' || status === 'cancel') {
+            setModalType('cancel')
             // Clean up URL parameter after showing modal
             searchParams.delete('status')
             setSearchParams(searchParams, { replace: true })
@@ -252,7 +252,7 @@ const PricingFields = ({ className }: any) => {
                 })
 
                 if (checkoutUrl && typeof checkoutUrl === 'string') {
-                    // Store payment details for potential success/failure handling
+                    // Store payment details for potential success/cancel handling
                     setPaymentDetails({
                         jobId: createdJobId,
                         amount: values.price,
@@ -276,17 +276,17 @@ const PricingFields = ({ className }: any) => {
                         fullResponse: response,
                     })
                     // Show failure modal
-                    setModalType('failure')
+                    setModalType('cancel')
                 }
             } else {
                 console.error('Payment action rejected:', resultAction.payload)
-                // Show failure modal
-                setModalType('failure')
+                // Show cancel modal
+                setModalType('cancel')
             }
         } catch (error) {
             console.error('Error in handleConfirmPayment:', error)
-            // Show failure modal
-            setModalType('failure')
+            // Show cancel modal
+            setModalType('cancel')
         }
     }
 
@@ -302,7 +302,7 @@ const PricingFields = ({ className }: any) => {
         resetForm() // Reset the form after successful payment
     }
 
-    // Mock functions to simulate payment success/failure (for testing)
+    // Mock functions to simulate payment success/cancel (for testing)
     const simulatePaymentSuccess = () => {
         setPaymentDetails({
             jobId: 'test-job-123',
@@ -316,8 +316,8 @@ const PricingFields = ({ className }: any) => {
         setModalType('success')
     }
 
-    const simulatePaymentFailure = () => {
-        setModalType('failure')
+    const simulatePaymentcancel = () => {
+        setModalType('cancel')
     }
 
     return (
@@ -371,7 +371,7 @@ const PricingFields = ({ className }: any) => {
                 )}
 
                 {/* Test buttons for demonstration */}
-                <div className="flex gap-2 mt-4">
+                {/* <div className="flex gap-2 mt-4">
                     <Button
                         variant="outline"
                         size="sm"
@@ -383,12 +383,12 @@ const PricingFields = ({ className }: any) => {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={simulatePaymentFailure}
+                        onClick={simulatePaymentcancel}
                         type="button"
                     >
                         Test Failure Modal
                     </Button>
-                </div>
+                </div> */}
             </AdaptableCard>
 
             {/* Payment Modal */}
@@ -514,7 +514,7 @@ const PricingFields = ({ className }: any) => {
             )}
 
             {/* Payment Failure Modal */}
-            {modalType === 'failure' && (
+            {modalType === 'cancel' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center">
                     {/* Backdrop */}
                     <div className="fixed inset-0 bg-[#2155A329] bg-opacity-50" />
