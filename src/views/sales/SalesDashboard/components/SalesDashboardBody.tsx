@@ -15,6 +15,8 @@ const SalesDashboardBody = () => {
         (state) => state.salesDashboard.data.dashboardData,
     )
 
+    console.log('dashboardData', dashboardData)
+
     const loading = useAppSelector((state) => state.salesDashboard.data.loading)
 
     useEffect(() => {
@@ -26,9 +28,27 @@ const SalesDashboardBody = () => {
         dispatch(getSalesDashboardData())
     }
 
+    // Transform the API data to match what Statistic component expects
+    const transformedStatisticData = dashboardData?.data
+        ? {
+              allJobs: {
+                  value: dashboardData.data.totalJobs || 0,
+                  growShrink: 0, // You can calculate this if you have previous period data
+              },
+              activeJobs: {
+                  value: dashboardData.data.activeJobs || 0,
+                  growShrink: 0, // You can calculate this if you have previous period data
+              },
+              pendingJobs: {
+                  value: dashboardData.data.pendingJobs || 0,
+                  growShrink: 0, // You can calculate this if you have previous period data
+              },
+          }
+        : undefined
+
     return (
         <Loading loading={loading}>
-            <Statistic data={dashboardData?.statisticData} />
+            <Statistic data={transformedStatisticData} />
             {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <SalesReport
                     data={dashboardData?.salesReportData}

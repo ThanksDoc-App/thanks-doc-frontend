@@ -20,7 +20,7 @@ import {
     FieldInputProps,
 } from 'formik'
 import useThemeClass from '@/utils/hooks/useThemeClass'
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import * as Yup from 'yup'
 import { useAppDispatch, useAppSelector } from '@/store'
 import {
@@ -31,6 +31,9 @@ import {
 } from '../store/documentSlice'
 import type { Identification as IdentificationType } from '../store'
 import type { PropsWithChildren } from 'react'
+// ✅ Add document API import
+import { apiGetAccountSettingIntegrationData } from '@/services/AccountServices'
+import dayjs from 'dayjs'
 
 export const settingIntergrationData = {
     available: [
@@ -169,7 +172,7 @@ const generateValidationSchema = () => {
 
 const validationSchema = generateValidationSchema()
 
-// Enhanced DocumentUploadField with PDF support
+// Enhanced DocumentUploadField with PDF support and existing file handling
 const DocumentUploadField = (props: DocumentUploadFieldProps) => {
     const { label, name, children, touched, errors } = props
 
@@ -236,13 +239,37 @@ const DocumentUploadField = (props: DocumentUploadFieldProps) => {
                                         {field.value.name}
                                     </p>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        {(
-                                            field.value.size /
-                                            1024 /
-                                            1024
-                                        ).toFixed(2)}{' '}
-                                        MB
+                                        {field.value.isExisting ? (
+                                            <>
+                                                <span className="text-green-600 font-medium">
+                                                    ✓ Existing file
+                                                </span>
+                                                <br />
+                                                <span className="text-xs">
+                                                    Upload new file to replace
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {(
+                                                    field.value.size /
+                                                    1024 /
+                                                    1024
+                                                ).toFixed(2)}{' '}
+                                                MB
+                                            </>
+                                        )}
                                     </p>
+                                    {field.value.isExisting && (
+                                        <a
+                                            href={field.value.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-500 text-xs mt-1 hover:underline"
+                                        >
+                                            View current file
+                                        </a>
+                                    )}
                                 </div>
                             </div>
                         ) : (
@@ -358,6 +385,123 @@ const Identification = ({
     const documentLoading = useAppSelector(selectDocumentLoading)
     const documentError = useAppSelector(selectDocumentError)
 
+    // ✅ Add state for documents data
+    const [documentsData, setDocumentsData] = useState<any[]>([])
+
+    // ✅ Fetch documents data on component mount
+    useEffect(() => {
+        const fetchDocuments = async () => {
+            try {
+                const response = await apiGetAccountSettingIntegrationData()
+                if (response.data?.data?.documents) {
+                    setDocumentsData(response.data.data.documents)
+                }
+            } catch (error) {
+                console.error('Error fetching documents:', error)
+            }
+        }
+
+        fetchDocuments()
+    }, [])
+
+    // ✅ Enhanced prefill logic that handles PDF files and expiry dates properly
+    const prefilledData = useMemo(() => {
+        if (!documentsData.length) return data
+
+        const prefilled = { ...data }
+
+        // ✅ Group documents by type and get the latest one for each type
+        const documentsByType = documentsData.reduce((acc, doc) => {
+            const docType = doc.content?.documentType
+            if (
+                !acc[docType] ||
+                new Date(doc.createdAt) > new Date(acc[docType].createdAt)
+            ) {
+                acc[docType] = doc
+            }
+            return acc
+        }, {})
+
+        // ✅ Find the most recent document overall to auto-select
+        const mostRecentDoc = documentsData.reduce((latest, current) => {
+            return new Date(current.createdAt) > new Date(latest.createdAt)
+                ? current
+                : latest
+        })
+
+        // ✅ Auto-select the most recent document type
+        const mostRecentDocType = documentTypes.find(
+            (dt) => dt.label === mostRecentDoc.content?.documentType,
+        )
+
+        if (mostRecentDocType) {
+            prefilled.documentType = mostRecentDocType.value
+        }
+
+        // ✅ Prefill all document types with their latest data
+        Object.keys(documentsByType).forEach((docType) => {
+            const latestDoc = documentsByType[docType]
+
+            // Find matching document type in our form
+            const formDocType = documentTypes.find((dt) => dt.label === docType)
+
+            if (formDocType) {
+                const fieldName = formDocType.value
+
+                if (latestDoc.content?.type === 'reference') {
+                    // ✅ Prefill reference fields
+                    prefilled[`${fieldName}FullName`] =
+                        latestDoc.content.fullName || ''
+                    prefilled[`${fieldName}Email`] =
+                        latestDoc.content.email || ''
+                } else if (latestDoc.content?.type === 'certificate') {
+                    // ✅ Prefill certificate title
+                    prefilled[`${fieldName}Title`] =
+                        latestDoc.content.certificateTitle || ''
+
+                    // ✅ Handle PDF file for certificate documents
+                    if (latestDoc.files && latestDoc.files.length > 0) {
+                        // Create a mock file object to show existing file
+                        const existingFile = {
+                            name: `${
+                                latestDoc.content.certificateTitle ||
+                                'Certificate'
+                            }.pdf`,
+                            size: 1024000, // Mock size
+                            type: 'application/pdf',
+                            url: latestDoc.files[0].url,
+                            isExisting: true, // Flag to identify existing files
+                        }
+                        prefilled[`${fieldName}Document`] = existingFile
+                    }
+                } else if (latestDoc.content?.type === 'standard') {
+                    // ✅ Prefill expiry date - convert to proper DatePicker format
+                    if (latestDoc.content.expiryDate) {
+                        prefilled[`${fieldName}ExpiryDate`] = new Date(
+                            latestDoc.content.expiryDate,
+                        )
+                    }
+
+                    // ✅ Handle PDF file for standard documents
+                    if (latestDoc.files && latestDoc.files.length > 0) {
+                        // Create a mock file object to show existing file
+                        const existingFile = {
+                            name: `${docType}.pdf`,
+                            size: 1024000, // Mock size
+                            type: 'application/pdf',
+                            url: latestDoc.files[0].url,
+                            isExisting: true, // Flag to identify existing files
+                        }
+                        prefilled[`${fieldName}Document`] = existingFile
+                    }
+                }
+            }
+        })
+
+        console.log('Enhanced prefilled data:', prefilled)
+        return prefilled
+    }, [documentsData, data])
+
     const getCurrentPageItems = () => {
         const startIndex = currentPage * itemsPerPage
         const endIndex = startIndex + itemsPerPage
@@ -416,7 +560,10 @@ const Identification = ({
                     const certificateTitle = values[`${fieldName}Title`]
 
                     if (documentFile || certificateTitle) {
-                        const files = documentFile ? [documentFile] : []
+                        const files =
+                            documentFile && !documentFile.isExisting
+                                ? [documentFile]
+                                : []
 
                         documentsToUpload.push({
                             title: `${documentLabel} - ${
@@ -438,7 +585,10 @@ const Identification = ({
                     const expiryDate = values[`${fieldName}ExpiryDate`]
 
                     if (documentFile || expiryDate) {
-                        const files = documentFile ? [documentFile] : []
+                        const files =
+                            documentFile && !documentFile.isExisting
+                                ? [documentFile]
+                                : []
 
                         documentsToUpload.push({
                             title: `${documentLabel} - Document`,
@@ -527,7 +677,7 @@ const Identification = ({
             </div>
             <Formik
                 enableReinitialize
-                initialValues={data}
+                initialValues={prefilledData} // ✅ Use prefilled data
                 validationSchema={validationSchema}
                 onSubmit={(values, { setSubmitting }) => {
                     onNext(values, setSubmitting)

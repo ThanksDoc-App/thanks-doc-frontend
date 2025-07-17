@@ -16,6 +16,18 @@ type StatisticCardProps = {
 
 type StatisticProps = {
     data?: {
+        allJobs?: {
+            value: number
+            growShrink: number
+        }
+        activeJobs?: {
+            value: number
+            growShrink: number
+        }
+        pendingJobs?: {
+            value: number
+            growShrink: number
+        }
         revenue?: {
             value: number
             growShrink: number
@@ -50,14 +62,9 @@ const StatisticCard = ({
                             prefix={valuePrefix}
                         />
                     </h3>
-                    {/* <p>
-                        vs. 3 months prior to{' '}
-                        <span className="font-semibold">
-                            {dayjs(date).format('DD MMM')}
-                        </span>
-                    </p> */}
+                    {/* Removed the comparison text */}
                 </div>
-                {/* <GrowShrinkTag value={data.growShrink} suffix="%" /> */}
+                {/* Removed the GrowShrinkTag component */}
             </div>
         </Card>
     )
@@ -69,34 +76,22 @@ const Statistic = ({ data = {} }: StatisticProps) => {
     )
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 ">
-            {/* <StatisticCard
-                data={data.revenue}
-                valuePrefix="$"
-                label="Revenue"
-                date={startDate}
-            /> */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <StatisticCard
-                data={data.orders}
+                data={data.allJobs || { value: 0, growShrink: 0 }}
                 label="All Jobs"
                 date={startDate}
             />
             <StatisticCard
-                data={data.orders}
+                data={data.activeJobs || { value: 0, growShrink: 0 }}
                 label="Active Jobs"
                 date={startDate}
             />
             <StatisticCard
-                data={data.orders}
+                data={data.pendingJobs || { value: 0, growShrink: 0 }}
                 label="Pending Jobs"
                 date={startDate}
             />
-            {/* <StatisticCard
-                data={data.purchases}
-                valuePrefix="$"
-                label="Jobs Posted"
-                date={startDate}
-            /> */}
         </div>
     )
 }

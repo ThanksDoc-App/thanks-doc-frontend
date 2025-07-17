@@ -68,6 +68,8 @@ type FormFieldsName = {
     description: string
     price: number
     location: string
+    city: string // Added city field
+    zipcode: string // Added postcode field
     date: string
     time: string
 }
@@ -80,13 +82,22 @@ type OrganizationFieldsProps = {
         service: string
         tags: Options
         price: number
+        city: string // Added to values type
+        zipcode: string // Added to values type
         [key: string]: unknown
     }
 }
 
 const OrganizationFields = (props: OrganizationFieldsProps) => {
     const {
-        values = { category: '', service: '', tags: [], price: 0 },
+        values = {
+            category: '',
+            service: '',
+            tags: [],
+            price: 0,
+            city: '',
+            zipcode: '',
+        },
         touched,
         errors,
     } = props
@@ -310,6 +321,37 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                         />
                     </FormItem>
                 </div>
+
+                {/* City and Postcode Fields - Added before Date and Time */}
+                <div className="col-span-1">
+                    <FormItem
+                        label="City"
+                        invalid={Boolean(errors.city && touched.city)}
+                        errorMessage={errors.city}
+                    >
+                        <Field
+                            type="text"
+                            name="city"
+                            placeholder="Enter city"
+                            component={Input}
+                        />
+                    </FormItem>
+                </div>
+                <div className="col-span-1">
+                    <FormItem
+                        label="Postcode"
+                        invalid={Boolean(errors.zipcode && touched.zipcode)}
+                        errorMessage={errors.zipcode}
+                    >
+                        <Field
+                            type="text"
+                            name="zipcode" // ✅ This matches FormFieldsName type
+                            placeholder="Enter postcode"
+                            component={Input}
+                        />
+                    </FormItem>
+                </div>
+
                 <div className="col-span-1">
                     <FormItem
                         label="Date"

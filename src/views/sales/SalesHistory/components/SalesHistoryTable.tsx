@@ -12,18 +12,20 @@ import { useAppDispatch, useAppSelector } from '@/store'
 import {
     fetchJobHistory,
     updateJobStatus,
-    rateJob, // ✅ Add the new rateJob import
+    rateJob,
     selectJobHistory,
     selectJobHistoryLoading,
     selectJobHistoryError,
     selectUpdateLoading,
     selectUpdateError,
-    selectRatingLoading, // ✅ Add rating loading selector
-    selectRatingError, // ✅ Add rating error selector
+    selectRatingLoading,
+    selectRatingError,
     clearUpdateError,
-    clearRatingError, // ✅ Add clear rating error action
+    clearRatingError,
 } from '../store/jobHistorySlice'
 import SkeletonTable from '@/components/shared/SkeletonTable'
+import toast from '@/components/ui/toast' // Add toast import
+import Notification from '@/components/ui/Notification' // Add Notification import
 
 const SalesHistory = ({ className }: any) => {
     const dispatch = useAppDispatch()
@@ -32,8 +34,8 @@ const SalesHistory = ({ className }: any) => {
     const error = useAppSelector(selectJobHistoryError)
     const updateLoading = useAppSelector(selectUpdateLoading)
     const updateError = useAppSelector(selectUpdateError)
-    const ratingLoading = useAppSelector(selectRatingLoading) // ✅ Add rating loading state
-    const ratingError = useAppSelector(selectRatingError) // ✅ Add rating error state
+    const ratingLoading = useAppSelector(selectRatingLoading)
+    const ratingError = useAppSelector(selectRatingError)
 
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(5)
@@ -151,14 +153,41 @@ const SalesHistory = ({ className }: any) => {
                 }),
             ).unwrap()
 
+            // Show success toast
+            toast.push(
+                <Notification title="Job Completed" type="success">
+                    Job "{selectedJob.title || selectedJob.name}" has been
+                    marked as completed successfully!
+                </Notification>,
+                {
+                    placement: 'top-center',
+                },
+            )
+
             console.log('Job marked as completed successfully!')
 
+            // Close modal first
             setShowModal(false)
+
+            // Refresh the job history data to reflect changes
+            dispatch(fetchJobHistory())
+
+            // Then show rating modal
             setShowRatingModal(true)
             setRating(0)
             setHoverRating(0)
         } catch (error) {
             console.error('Failed to mark job as completed:', error)
+
+            // Show error toast
+            toast.push(
+                <Notification title="Error" type="danger">
+                    Failed to mark job as completed. Please try again.
+                </Notification>,
+                {
+                    placement: 'top-center',
+                },
+            )
         }
     }
 
@@ -181,7 +210,6 @@ const SalesHistory = ({ className }: any) => {
         }
     }
 
-    // ✅ Updated to use the dedicated rateJob thunk
     const handleRatingSubmit = async () => {
         if (!selectedJob || rating === 0) return
 
@@ -193,6 +221,17 @@ const SalesHistory = ({ className }: any) => {
                     data: { rating: rating },
                 }),
             ).unwrap()
+
+            // Show success toast for rating
+            toast.push(
+                <Notification title="Rating Submitted" type="success">
+                    Thank you for rating the service! Your {rating}-star rating
+                    has been submitted.
+                </Notification>,
+                {
+                    placement: 'top-center',
+                },
+            )
 
             console.log(
                 'Rating submitted successfully:',
@@ -206,11 +245,25 @@ const SalesHistory = ({ className }: any) => {
             setSelectedJob(null)
             setRating(0)
             setHoverRating(0)
+
+            // Refresh the job history data to reflect rating changes
+            dispatch(fetchJobHistory())
         } catch (error) {
             console.error('Failed to submit rating:', error)
+
+            // Show error toast for rating
+            toast.push(
+                <Notification title="Rating Error" type="danger">
+                    Failed to submit rating. Please try again.
+                </Notification>,
+                {
+                    placement: 'top-center',
+                },
+            )
         }
     }
 
+    // Rest of your component code remains the same...
     const getStatusBadge = (status: string) => {
         const baseClasses = 'px-3 py-1.5 rounded-full text-[12px] font-semibold'
         if (status === 'Accepted' || status === 'accepted')
@@ -276,7 +329,7 @@ const SalesHistory = ({ className }: any) => {
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
                         className="p-1 transition-colors duration-200"
-                        disabled={ratingLoading} // ✅ Use ratingLoading instead of updateLoading
+                        disabled={ratingLoading}
                     >
                         <Star
                             className={`w-8 h-8 ${
@@ -310,6 +363,8 @@ const SalesHistory = ({ className }: any) => {
             </div>
         )
     }
+
+    // Rest of your JSX remains the same...
 
     return (
         <>

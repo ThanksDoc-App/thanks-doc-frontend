@@ -25,6 +25,7 @@
     "@tanstack/match-sorter-utils": "^8.19.4",
     "@tanstack/react-table": "^8.20.5",
     "@visx/pattern": "^3.13.0-alpha.0",
+    "aos": "^2.3.4",
     "axios": "^1.7.7",
     "classnames": "^2.5.1",
     "d3-dsv": "^3.0.1",

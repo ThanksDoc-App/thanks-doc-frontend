@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Checkbox from '@/components/ui/Checkbox'
@@ -20,6 +20,9 @@ import {
     selectTempPersonalInfo,
     clearTempPersonalInfo,
 } from '../store/tempDataSlice'
+// ✅ Add profile imports (ONLY NEW IMPORT)
+import { getUserProfile } from '../../../account/Settings/store/SettingsSlice'
+import { RootState } from '@/store'
 
 type FormModel = Address
 
@@ -185,6 +188,46 @@ const AddressInfomation = ({
     // Get temporary personal information from main store
     const tempPersonalInfo = useAppSelector(selectTempPersonalInfo)
 
+    // ✅ Get profile data from Redux state (NEW)
+    const { profileData } = useAppSelector((state: RootState) => state.settings)
+
+    // ✅ Fetch profile data on component mount (NEW)
+    useEffect(() => {
+        if (!profileData) {
+            dispatch(getUserProfile())
+        }
+    }, [dispatch, profileData])
+
+    // ✅ Create prefilled data from profile API response (NEW)
+    const prefilledData = useMemo(() => {
+        if (!profileData?.data?.location) return data
+
+        const location = profileData.data.location
+
+        return {
+            ...data,
+            country: location.country || data.country,
+            addressLine1: location.address1 || data.addressLine1,
+            addressLine2: location.address2 || data.addressLine2,
+            city: location.city || data.city,
+            state: location.state || data.state,
+            zipCode: location.zipCode || data.zipCode,
+            correspondenceAddress: {
+                ...data.correspondenceAddress,
+                country: location.country || data.correspondenceAddress.country,
+                addressLine1:
+                    location.address1 ||
+                    data.correspondenceAddress.addressLine1,
+                addressLine2:
+                    location.address2 ||
+                    data.correspondenceAddress.addressLine2,
+                city: location.city || data.correspondenceAddress.city,
+                state: location.state || data.correspondenceAddress.state,
+                zipCode: location.zipCode || data.correspondenceAddress.zipCode,
+            },
+        }
+    }, [profileData, data])
+
     // Check if personal information is available
     useEffect(() => {
         if (!tempPersonalInfo) {
@@ -324,7 +367,7 @@ const AddressInfomation = ({
             </div>
             <Formik
                 enableReinitialize
-                initialValues={data}
+                initialValues={prefilledData} // ✅ CHANGED: Use prefilled data
                 validationSchema={validationSchema}
                 onSubmit={async (values, { setSubmitting }) => {
                     setSubmitting(true)

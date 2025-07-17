@@ -7,6 +7,7 @@ import Layout from '@/components/layouts'
 import mockServer from './mock'
 import appConfig from '@/configs/app.config'
 import './locales'
+import ScrollToTop from './utils/ScrollToTop'
 
 const environment = process.env.NODE_ENV
 
@@ -25,6 +26,7 @@ function App() {
         <Provider store={store}>
             <PersistGate loading={null} persistor={persistor}>
                 <BrowserRouter>
+                    <ScrollToTop />
                     <Theme>
                         <Layout />
                     </Theme>

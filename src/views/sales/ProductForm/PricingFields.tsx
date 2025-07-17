@@ -2,7 +2,7 @@ import { useState, ComponentType, useEffect } from 'react'
 import { Field, FieldProps, FieldInputProps, useFormikContext } from 'formik'
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, useSearchParams } from 'react-router-dom' // Add this import
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AppDispatch, RootState } from '@/store'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import { FormItem } from '@/components/ui/Form'
@@ -28,6 +28,8 @@ type FormFieldsName = {
     service: string
     description: string
     location: string
+    city: string // Add city field
+    zipcode: string // Add zipcode field (matching OrganizationFields)
     date: string
     time: string
     name: string
@@ -107,6 +109,8 @@ const PricingFields = ({ className }: any) => {
             'service',
             'description',
             'location',
+            'city', // Add city as required
+            'zipcode', // Add zipcode as required
             'date',
             'time',
             'price',
@@ -130,19 +134,19 @@ const PricingFields = ({ className }: any) => {
         }
 
         try {
-            // Create job data in the format expected by the API
+            // Create job data using actual form values instead of hardcoded data
             const jobData = {
                 name: values.name || 'Job Service',
                 service: values.service,
                 category: values.category,
                 description: values.description,
                 location: {
-                    country: 'UK',
-                    city: 'London',
-                    state: 'England',
-                    address1: values.location,
+                    country: 'UK', // You can make this dynamic too if needed
+                    city: values.city || '', // Use actual city from form
+                    state: 'England', // You can make this dynamic too if needed
+                    address1: values.location || '',
                     address2: '',
-                    zipCode: '00000',
+                    zipCode: values.zipcode || '', // Use actual zipcode from form
                 },
                 amount: Number(values.price) || 0,
                 currency: 'GBP',
@@ -239,18 +243,6 @@ const PricingFields = ({ className }: any) => {
                 }
 
                 console.log('Extracted checkout URL:', checkoutUrl)
-                console.log('Response structure analysis:', {
-                    hasData: !!response?.data,
-                    dataKeys: response?.data ? Object.keys(response.data) : [],
-                    nestedData: response?.data?.data,
-                    nestedDataKeys: response?.data?.data
-                        ? Object.keys(response.data.data)
-                        : [],
-                    deepNestedData: response?.data?.data?.data,
-                    deepNestedDataKeys: response?.data?.data?.data
-                        ? Object.keys(response.data.data.data)
-                        : [],
-                })
 
                 if (checkoutUrl && typeof checkoutUrl === 'string') {
                     // Store payment details for potential success/cancel handling
@@ -258,6 +250,8 @@ const PricingFields = ({ className }: any) => {
                         jobId: createdJobId,
                         amount: values.price,
                         service: values.service,
+                        city: values.city,
+                        zipcode: values.zipcode,
                         date: values.date,
                         time: values.time,
                         sessionId: response?.data?.data?.session_id || 'N/A',
@@ -301,24 +295,6 @@ const PricingFields = ({ className }: any) => {
     const handleSuccessClose = () => {
         closeModal()
         navigate('/app/sales/dashboard')
-    }
-
-    // Mock functions to simulate payment success/cancel (for testing)
-    const simulatePaymentSuccess = () => {
-        setPaymentDetails({
-            jobId: 'test-job-123',
-            amount: values.price,
-            service: values.service,
-            date: values.date,
-            time: values.time,
-            sessionId: 'test-session-456',
-            transactionId: 'txn_' + Date.now(),
-        })
-        setModalType('success')
-    }
-
-    const simulatePaymentcancel = () => {
-        setModalType('cancel')
     }
 
     return (
@@ -370,26 +346,6 @@ const PricingFields = ({ className }: any) => {
                         Error: {createJobError}
                     </div>
                 )}
-
-                {/* Test buttons for demonstration */}
-                {/* <div className="flex gap-2 mt-4">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={simulatePaymentSuccess}
-                        type="button"
-                    >
-                        Test Success Modal
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={simulatePaymentcancel}
-                        type="button"
-                    >
-                        Test Failure Modal
-                    </Button>
-                </div> */}
             </AdaptableCard>
 
             {/* Payment Modal */}
@@ -446,6 +402,7 @@ const PricingFields = ({ className }: any) => {
                                 <p className="text-gray-600 text-sm font-medium text-center">
                                     Service completed, proceed to pay
                                 </p>
+                                {/* Display location information from form */}
                                 <p className="text-3xl font-bold text-gray-800">
                                     {Number(values.price || 0).toFixed(2)} GBP
                                 </p>

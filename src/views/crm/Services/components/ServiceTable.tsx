@@ -212,41 +212,12 @@ const ServiceTable: React.FC = ({ className }: any) => {
                                                             service.category
                                                                 ._id, // ← extract string ID
                                                     },
-                                                    'menu',
+                                                    'delete', // Changed from 'menu' to 'delete'
                                                 )
                                             }
                                         >
                                             <MoreHorizontal className="w-5 h-5" />
                                         </button>
-
-                                        {activeModal === 'menu' &&
-                                            selectedService?._id ===
-                                                service._id && (
-                                                <div className="absolute right-0 top-0 bg-white border border-[#D6DDEB] rounded-lg shadow-lg z-50 min-w-[120px]">
-                                                    <div className="py-1">
-                                                        <button
-                                                            onClick={() =>
-                                                                handleActionClick(
-                                                                    {
-                                                                        ...service,
-                                                                        _id: String(
-                                                                            service._id,
-                                                                        ),
-                                                                        category:
-                                                                            service
-                                                                                .category
-                                                                                ._id, // ← extract string ID
-                                                                    },
-                                                                    'delete',
-                                                                )
-                                                            }
-                                                            className="flex items-center gap-3 w-full px-4 py-2 text-[13px] text-[#25324B] hover:bg-gray-50"
-                                                        >
-                                                            Delete service
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
                                     </div>
                                 </td>
                             </tr>

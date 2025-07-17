@@ -89,9 +89,7 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
         if (profileData?.data?.location && isInitialLoad) {
             const { location } = profileData.data
             // Use address1 and zipCode as per your requirement
-            const locationString = [location.address1, location.zipCode]
-                .filter(Boolean)
-                .join(', ')
+            const locationString = [location.city].filter(Boolean).join(', ')
 
             if (locationString) {
                 setSearchTerm(locationString)
@@ -187,22 +185,6 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
     }
 
     // Create placeholder text from user location or use default
-    const getPlaceholderText = () => {
-        if (profileData?.data?.location) {
-            const { location } = profileData.data
-            const address1 = location.address1
-            const zipCode = location.zipCode
-
-            if (address1 && zipCode) {
-                return `${address1}, ${zipCode}`
-            } else if (address1) {
-                return address1
-            } else if (zipCode) {
-                return zipCode
-            }
-        }
-        return 'Enter postcode or location...'
-    }
 
     // Handle input change - allows clearing and typing new values
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -219,7 +201,7 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
                     prefix={
                         <HiOutlineLocationMarker className="text-xl text-indigo-600 cursor-pointer" />
                     }
-                    placeholder={getPlaceholderText()}
+                    placeholder="Enter a city"
                     value={searchTerm}
                     onChange={handleInputChange}
                     onKeyPress={(e) => {

@@ -24,8 +24,19 @@ import {
     addUserAccount,
     resetAddAccountStatus,
     clearAddAccountError,
+    // Add this import to get account details
+    getAccountDetails,
 } from '@/views/account/Settings/store/SettingsSlice'
-import { useEffect } from 'react'
+// Import the fetchUserAccount action from doctor slice
+import {
+    fetchUserAccount,
+    selectUserAccount,
+    selectUserAccountLoading,
+    selectUserAccountError,
+    clearUserAccountError,
+} from '@/views/crm/Doctor/store/doctorSlice'
+import { useEffect, useState, useCallback } from 'react'
+// import { fetchUserAccount } from '@/views/crm/Doctor/store/doctorSlice'
 
 type FormModel = FinancialInformationType
 
@@ -43,6 +54,7 @@ type FinancialInformationProps = {
     ) => void
     onBackChange?: () => void
     currentStepStatus?: string
+    userId?: string // Add userId prop to fetch user account data
 }
 
 const NumberInput = (props: InputProps) => {
@@ -120,10 +132,88 @@ const FinancialInformation = ({
     onNextChange,
     onBackChange,
     currentStepStatus,
+    userId, // Add userId prop
 }: FinancialInformationProps) => {
     const dispatch = useAppDispatch()
-    const { addAccountLoading, addAccountSuccess, addAccountError } =
-        useAppSelector((state) => state.settings)
+    const {
+        addAccountLoading,
+        addAccountSuccess,
+        addAccountError,
+        accountDetailsData,
+    } = useAppSelector((state) => state.settings)
+
+    // Add selectors for user account data
+    const userAccount = useAppSelector(selectUserAccount)
+    const userAccountLoading = useAppSelector(selectUserAccountLoading)
+    const userAccountError = useAppSelector(selectUserAccountError)
+
+    // State to manage form initialization
+    const [formInitialized, setFormInitialized] = useState(false)
+    const [initialFormData, setInitialFormData] = useState(data)
+
+    // Function to create form data from different sources
+    const createFormData = useCallback(
+        (sources: any[]) => {
+            const result = { ...data }
+
+            // Merge data from sources in priority order
+            sources.forEach((source) => {
+                if (source) {
+                    console.log('Merging source:', source)
+                    if (source.accountName)
+                        result.accountName = source.accountName
+                    if (source.sortCode) result.sortCode = source.sortCode
+                    if (source.accountNumber)
+                        result.accountNumber = source.accountNumber
+                }
+            })
+
+            console.log('Final merged form data:', result)
+            return result
+        },
+        [data],
+    )
+
+    // Fetch data from multiple sources
+    useEffect(() => {
+        const fetchAllData = async () => {
+            console.log('Starting data fetch...')
+
+            // Fetch user account data if userId is provided
+            if (userId) {
+                console.log('Fetching user account for userId:', userId)
+                dispatch(fetchUserAccount(userId))
+            }
+
+            // Also fetch general account details
+            console.log('Fetching general account details...')
+            dispatch(getAccountDetails())
+        }
+
+        fetchAllData()
+    }, [dispatch, userId])
+
+    // Update form data when any source data changes
+    useEffect(() => {
+        console.log('Data change detected:')
+        console.log('- userAccount:', userAccount)
+        console.log('- accountDetailsData:', accountDetailsData)
+        console.log('- userAccountLoading:', userAccountLoading)
+
+        // Wait for loading to complete before initializing
+        if (!userAccountLoading) {
+            const sources = [
+                userAccount, // Priority 1: User-specific account
+                accountDetailsData?.data, // Priority 2: General account details
+            ]
+
+            const newFormData = createFormData(sources)
+            setInitialFormData(newFormData)
+            setFormInitialized(true)
+
+            console.log('Form initialized with data:', newFormData)
+        }
+    }, [userAccount, accountDetailsData, userAccountLoading, createFormData])
 
     const onNext = async (
         values: FormModel,
@@ -149,7 +239,7 @@ const FinancialInformation = ({
             // Show success notification
             toast.push(
                 <Notification
-                    title="Bank account added successfully"
+                    title="Bank account updated successfully"
                     type="success"
                 />,
                 { placement: 'top-center' },
@@ -161,12 +251,12 @@ const FinancialInformation = ({
             // Show error notification
             toast.push(
                 <Notification
-                    title="Failed to add bank account"
+                    title="Failed to update bank account"
                     type="danger"
                 />,
                 { placement: 'top-center' },
             )
-            console.error('Failed to add account:', error)
+            console.error('Failed to update account:', error)
             setSubmitting(false)
         }
     }
@@ -175,14 +265,17 @@ const FinancialInformation = ({
         onBackChange?.()
     }
 
-    // Clear error when component unmounts
+    // Clear errors when component unmounts
     useEffect(() => {
         return () => {
             if (addAccountError) {
                 dispatch(clearAddAccountError())
             }
+            if (userAccountError) {
+                dispatch(clearUserAccountError())
+            }
         }
-    }, [addAccountError, dispatch])
+    }, [addAccountError, userAccountError, dispatch])
 
     // Handle success state
     useEffect(() => {
@@ -194,6 +287,16 @@ const FinancialInformation = ({
         }
     }, [addAccountSuccess, dispatch])
 
+    // Show loading state while fetching data
+    if (userAccountLoading || !formInitialized) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                <span className="ml-2">Loading account information...</span>
+            </div>
+        )
+    }
+
     return (
         <>
             <div className="mb-8">
@@ -202,10 +305,29 @@ const FinancialInformation = ({
                     Fill in your financial information to help us speed up the
                     verification process.
                 </p>
+
+                {/* Debug information */}
+                <div className="mt-4 p-3 bg-gray-100 rounded text-xs">
+                    <strong>Debug Info:</strong>
+                    <div>
+                        User Account: {userAccount ? 'Loaded' : 'Not loaded'}
+                    </div>
+                    <div>
+                        Account Details:{' '}
+                        {accountDetailsData ? 'Loaded' : 'Not loaded'}
+                    </div>
+                    <div>
+                        Form Initialized: {formInitialized ? 'Yes' : 'No'}
+                    </div>
+                    <div>Account Name: {initialFormData.accountName}</div>
+                    <div>Sort Code: {initialFormData.sortCode}</div>
+                    <div>Account Number: {initialFormData.accountNumber}</div>
+                </div>
             </div>
+
             <Formik
-                enableReinitialize
-                initialValues={data}
+                enableReinitialize={true}
+                initialValues={initialFormData}
                 validationSchema={validationSchema}
                 onSubmit={async (values, { setSubmitting }) => {
                     setSubmitting(true)
@@ -219,11 +341,14 @@ const FinancialInformation = ({
                     }
                 }}
             >
-                {({ values, touched, errors, isSubmitting }) => {
+                {({ values, touched, errors, isSubmitting, setFieldValue }) => {
+                    // Debug current form values
+                    console.log('Current form values:', values)
+
                     return (
                         <Form>
                             <FormContainer>
-                                {/* Error Display */}
+                                {/* Error Display for Add Account */}
                                 {addAccountError && (
                                     <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                                         <div className="flex items-center justify-between">
@@ -243,6 +368,76 @@ const FinancialInformation = ({
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Error Display for Fetch User Account */}
+                                {userAccountError && (
+                                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-red-600 text-sm">
+                                                {userAccountError}
+                                            </span>
+                                            <button
+                                                onClick={() =>
+                                                    dispatch(
+                                                        clearUserAccountError(),
+                                                    )
+                                                }
+                                                className="text-red-400 hover:text-red-600"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Manual prefill button for testing */}
+                                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            console.log(
+                                                'Manual prefill triggered',
+                                            )
+                                            if (userAccount) {
+                                                setFieldValue(
+                                                    'accountName',
+                                                    userAccount.accountName ||
+                                                        '',
+                                                )
+                                                setFieldValue(
+                                                    'sortCode',
+                                                    userAccount.sortCode || '',
+                                                )
+                                                setFieldValue(
+                                                    'accountNumber',
+                                                    userAccount.accountNumber ||
+                                                        '',
+                                                )
+                                            } else if (
+                                                accountDetailsData?.data
+                                            ) {
+                                                setFieldValue(
+                                                    'accountName',
+                                                    accountDetailsData.data
+                                                        .accountName || '',
+                                                )
+                                                setFieldValue(
+                                                    'sortCode',
+                                                    accountDetailsData.data
+                                                        .sortCode || '',
+                                                )
+                                                setFieldValue(
+                                                    'accountNumber',
+                                                    accountDetailsData.data
+                                                        .accountNumber || '',
+                                                )
+                                            }
+                                        }}
+                                        className="text-yellow-700 hover:text-yellow-900 text-sm"
+                                    >
+                                        Manual Prefill (Debug)
+                                    </button>
+                                </div>
 
                                 <FormItem
                                     label="Account Name"
