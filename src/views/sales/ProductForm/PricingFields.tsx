@@ -57,7 +57,7 @@ const NumericFormatInput = ({
     )
 }
 
-const PricingFields = () => {
+const PricingFields = ({ className }: any) => {
     const [modalType, setModalType] = useState<PaymentModalType>(null)
     const [createdJobId, setCreatedJobId] = useState<string | null>(null)
     const [paymentDetails, setPaymentDetails] = useState<any>(null)
@@ -404,7 +404,7 @@ const PricingFields = () => {
                     <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-4">
-                                <h4 className="text-lg font-semibold">
+                                <h4 className="text-lg font-semibold text-gray-800">
                                     Pay for the service
                                 </h4>
                                 <button
@@ -477,7 +477,7 @@ const PricingFields = () => {
                     <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-2 mt-[-10px]">
-                                <h4 className="text-lg font-semibold">
+                                <h4 className="text-gray-800 text-lg font-semibold">
                                     Success{' '}
                                 </h4>
                             </div>
@@ -523,7 +523,7 @@ const PricingFields = () => {
                     <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-2 mt-[-10px]">
-                                <h4 className="text-lg font-semibold">
+                                <h4 className="text-gray-800 text-lg font-semibold">
                                     Payment Failed
                                 </h4>
                             </div>
