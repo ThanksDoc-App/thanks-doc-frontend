@@ -1,7 +1,8 @@
-import { useState, ComponentType } from 'react'
+import { useState, ComponentType, useEffect } from 'react'
 import { Field, FieldProps, FieldInputProps, useFormikContext } from 'formik'
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom' // Add this import
 import { AppDispatch, RootState } from '@/store'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import { FormItem } from '@/components/ui/Form'
@@ -61,6 +62,9 @@ const PricingFields = () => {
     const [createdJobId, setCreatedJobId] = useState<string | null>(null)
     const [paymentDetails, setPaymentDetails] = useState<any>(null)
 
+    // Add URL search params hook
+    const [searchParams, setSearchParams] = useSearchParams()
+
     // Get live form state
     const { values, touched, errors, setFieldValue, resetForm } =
         useFormikContext<FormFieldsName>()
@@ -77,6 +81,23 @@ const PricingFields = () => {
         error: paymentError = null,
         lastPayment = null,
     } = paymentState || {}
+
+    // Add useEffect to check URL query parameters
+    useEffect(() => {
+        const status = searchParams.get('status')
+
+        if (status === 'success') {
+            setModalType('success')
+            // Clean up URL parameter after showing modal
+            searchParams.delete('status')
+            setSearchParams(searchParams, { replace: true })
+        } else if (status === 'failed' || status === 'failure') {
+            setModalType('failure')
+            // Clean up URL parameter after showing modal
+            searchParams.delete('status')
+            setSearchParams(searchParams, { replace: true })
+        }
+    }, [searchParams, setSearchParams])
 
     // Check if all required fields are filled
     const isFormValid = (): boolean => {
@@ -452,9 +473,8 @@ const PricingFields = () => {
                     {/* Backdrop */}
                     <div className="fixed inset-0 bg-[#2155A329] bg-opacity-50" />
 
-                    {/* Modal Content - ✅ Changed from max-w-sm to max-w-md */}
+                    {/* Modal Content */}
                     <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-                        {/* ✅ Changed padding from p-8 to p-6 to match payment modal */}
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-2 mt-[-10px]">
                                 <h4 className="text-lg font-semibold">
@@ -473,7 +493,8 @@ const PricingFields = () => {
                                 </div>
 
                                 <h4 className="text-[17px] font-semibold text-[#515B6F] mb-8">
-                                    Job successfully created{' '}
+                                    Payment successful! Job created
+                                    successfully.
                                 </h4>
 
                                 <div className="w-full">
@@ -498,13 +519,12 @@ const PricingFields = () => {
                     {/* Backdrop */}
                     <div className="fixed inset-0 bg-[#2155A329] bg-opacity-50" />
 
-                    {/* Modal Content - ✅ Changed from max-w-sm to max-w-md */}
+                    {/* Modal Content */}
                     <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-                        {/* ✅ Changed padding from p-8 to p-6 to match payment modal */}
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-2 mt-[-10px]">
                                 <h4 className="text-lg font-semibold">
-                                    Failure{' '}
+                                    Payment Failed
                                 </h4>
                             </div>
                             <hr className="mb-4" />
@@ -519,7 +539,7 @@ const PricingFields = () => {
                                 </div>
 
                                 <h4 className="text-[17px] font-semibold text-[#515B6F] mb-8">
-                                    Job creation failed, please try again
+                                    Payment failed, please try again
                                 </h4>
 
                                 <div className="w-full">
