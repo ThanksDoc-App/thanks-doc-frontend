@@ -5,8 +5,9 @@ import {
     apiGetUserProfile,
     apiAddUserAccount,
     apiUpdateDocument,
-    apiDeleteDocument, // Updated function
+    apiDeleteDocument,
 } from '@/services/CommonService'
+import { apiGetAccountDetails } from '@/services/AccountServices'
 
 // Define interfaces
 export interface UserUpdatePayload {
@@ -99,6 +100,11 @@ interface SettingsState {
     deleteDocumentSuccess: boolean
     deleteDocumentError: string | null
     deleteDocumentData: any
+    // Add account details state
+    getAccountDetailsLoading: boolean
+    getAccountDetailsSuccess: boolean
+    getAccountDetailsError: string | null
+    accountDetailsData: any
 }
 
 const initialState: SettingsState = {
@@ -126,6 +132,11 @@ const initialState: SettingsState = {
     deleteDocumentSuccess: false,
     deleteDocumentError: null,
     deleteDocumentData: null,
+    // Add account details initial state
+    getAccountDetailsLoading: false,
+    getAccountDetailsSuccess: false,
+    getAccountDetailsError: null,
+    accountDetailsData: null,
 }
 
 // Async thunks
@@ -167,6 +178,22 @@ export const getUserProfile = createAsyncThunk(
         } catch (error: any) {
             return rejectWithValue(
                 error.response?.data?.message || 'Failed to fetch profile',
+            )
+        }
+    },
+)
+
+// Add the new account details thunk
+export const getAccountDetails = createAsyncThunk(
+    'settings/getAccountDetails',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await apiGetAccountDetails()
+            return response.data
+        } catch (error: any) {
+            return rejectWithValue(
+                error.response?.data?.message ||
+                    'Failed to fetch account details',
             )
         }
     },
@@ -255,6 +282,14 @@ const settingsSlice = createSlice({
         clearGetProfileError: (state) => {
             state.getProfileError = null
         },
+        // Add account details reducers
+        resetGetAccountDetailsStatus: (state) => {
+            state.getAccountDetailsSuccess = false
+            state.getAccountDetailsError = null
+        },
+        clearGetAccountDetailsError: (state) => {
+            state.getAccountDetailsError = null
+        },
         resetAddAccountStatus: (state) => {
             state.addAccountSuccess = false
             state.addAccountError = null
@@ -325,6 +360,21 @@ const settingsSlice = createSlice({
                 state.getProfileLoading = false
                 state.getProfileError = action.payload as string
             })
+            // Add account details cases
+            .addCase(getAccountDetails.pending, (state) => {
+                state.getAccountDetailsLoading = true
+                state.getAccountDetailsSuccess = false
+                state.getAccountDetailsError = null
+            })
+            .addCase(getAccountDetails.fulfilled, (state, action) => {
+                state.getAccountDetailsLoading = false
+                state.getAccountDetailsSuccess = true
+                state.accountDetailsData = action.payload
+            })
+            .addCase(getAccountDetails.rejected, (state, action) => {
+                state.getAccountDetailsLoading = false
+                state.getAccountDetailsError = action.payload as string
+            })
             // Add user account
             .addCase(addUserAccount.pending, (state) => {
                 state.addAccountLoading = true
@@ -380,6 +430,8 @@ export const {
     clearProfileImageError,
     resetGetProfileStatus,
     clearGetProfileError,
+    resetGetAccountDetailsStatus,
+    clearGetAccountDetailsError,
     resetAddAccountStatus,
     clearAddAccountError,
     resetUpdateDocumentStatus,

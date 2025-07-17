@@ -143,7 +143,7 @@ const appsRoute: Routes = [
         authority: [ADMIN, USER],
     },
     {
-        key: 'appsSales.history',
+        key: 'appsSales.listing',
         path: `${APP_PREFIX_PATH}/sales/history`,
         component: lazy(
             () => import('@/views/sales/SalesHistory/SalesHistory'),

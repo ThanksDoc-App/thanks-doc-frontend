@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import reducer, {
     getProjectDashboardData,
     useAppDispatch,
@@ -20,6 +20,7 @@ injectReducer('projectDashboard', reducer)
 const ProjectDashboard = () => {
     const dispatch = useAppDispatch()
     const { shouldHideKYCSetup, userRole } = useKYCStatus()
+    const [showContent, setShowContent] = useState(false)
 
     const dashboardData = useAppSelector(
         (state) => state.projectDashboard.data.dashboardData,
@@ -46,6 +47,19 @@ const ProjectDashboard = () => {
         }
     }, [dispatch, profileData])
 
+    // Add delay after loading is complete
+    useEffect(() => {
+        if (!loading && dashboardData) {
+            const timer = setTimeout(() => {
+                setShowContent(true)
+            }, 500) // 5 second delay
+
+            return () => clearTimeout(timer)
+        } else {
+            setShowContent(false)
+        }
+    }, [loading, dashboardData])
+
     const fetchData = () => {
         dispatch(getProjectDashboardData())
     }
@@ -53,9 +67,12 @@ const ProjectDashboard = () => {
     console.log('User Role:', userRole)
     console.log('Should Hide KYC Setup:', shouldHideKYCSetup)
 
+    // Show loading until both API loading is done AND delay has passed
+    const isLoading = loading || !showContent
+
     return (
         <div className="flex flex-col gap-4 h-full">
-            <Loading loading={loading}>
+            <Loading loading={isLoading}>
                 <KYCsetUp isVisible={!shouldHideKYCSetup} />
                 <ProjectDashboardHeader
                     userName={userName}

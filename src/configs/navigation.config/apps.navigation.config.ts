@@ -69,10 +69,10 @@ const baseConfig: NavigationTree[] = [
             subMenu: [],
           },
           {
-            key: 'appsProject.history',
+        key: 'appsSales.listing',
             path: `${APP_PREFIX_PATH}/sales/history`,
             title: 'Listing',
-            translateKey: 'nav.appsSales.history',
+            translateKey: 'nav.appsSales.listing',
             icon: 'job_listing',
             type: NAV_ITEM_TYPE_ITEM,
             authority: [BUSINESS],

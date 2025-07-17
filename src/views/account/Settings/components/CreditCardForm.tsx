@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { FormContainer, FormItem } from '@/components/ui/Form'
@@ -19,24 +19,61 @@ export type CreditCardInfo = CreditCardFormModel & {
     primary?: boolean
 }
 
+// Add account details type
+type AccountDetails = {
+    accountName: string
+    accountNumber: string
+    sortCode: string
+    createdAt: string
+    updatedAt: string
+    user: string
+    _id: string
+    __v: number
+}
+
 type CreditCardFormProps = {
     onUpdate: (bankDetails: CreditCardInfo) => void
     loading?: boolean
     card?: Partial<CreditCardInfo>
+    accountDetails?: AccountDetails | null // Add this prop
+    isAccountDataLoaded?: boolean // Add this prop
 }
 
 const CreditCardForm = ({
     onUpdate,
     loading = false,
     card,
+    accountDetails,
+    isAccountDataLoaded = false,
 }: CreditCardFormProps) => {
-    const [formData, setFormData] = useState<CreditCardFormModel>({
-        accountName: card?.accountName || '',
-        sortCode: card?.sortCode || '',
-        accountNumber: card?.accountNumber || '',
-    })
+    // Function to get initial form data
+    const getInitialFormData = (): CreditCardFormModel => {
+        // Priority: card data > accountDetails > empty defaults
+        return {
+            accountName: card?.accountName || accountDetails?.accountName || '',
+            sortCode: card?.sortCode || accountDetails?.sortCode || '',
+            accountNumber:
+                card?.accountNumber || accountDetails?.accountNumber || '',
+        }
+    }
 
+    const [formData, setFormData] =
+        useState<CreditCardFormModel>(getInitialFormData())
     const [errors, setErrors] = useState<Partial<CreditCardFormModel>>({})
+
+    // Update form data when accountDetails or card changes
+    useEffect(() => {
+        if (accountDetails || card) {
+            setFormData(getInitialFormData())
+        }
+    }, [accountDetails, card])
+
+    // Debug logging
+    useEffect(() => {
+        console.log('CreditCardForm - accountDetails:', accountDetails)
+        console.log('CreditCardForm - card:', card)
+        console.log('CreditCardForm - formData:', formData)
+    }, [accountDetails, card, formData])
 
     const validateForm = () => {
         const newErrors: Partial<CreditCardFormModel> = {}
@@ -113,18 +150,35 @@ const CreditCardForm = ({
             const cardInfo: CreditCardInfo = {
                 ...formData,
                 accountNumber: cleanAccountNumber, // Store clean version
-                cardId: card?.cardId || `card_${Date.now()}`,
+                cardId:
+                    card?.cardId || accountDetails?._id || `card_${Date.now()}`,
                 cardHolderName: formData.accountName,
                 cardType: 'bank',
                 expMonth: '',
                 expYear: '',
                 last4Number: cleanAccountNumber.slice(-4),
-                primary: card?.primary || false,
+                primary: card?.primary || true, // Default to true for first account
             }
 
             console.log('Calling onUpdate with:', cardInfo)
             onUpdate(cardInfo)
         }
+    }
+
+    // Show loading state if account data is still loading
+    if (!isAccountDataLoaded && !card) {
+        return (
+            <div className="space-y-6">
+                <FormContainer>
+                    <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="mt-2 text-sm text-gray-600">
+                            Loading account details...
+                        </p>
+                    </div>
+                </FormContainer>
+            </div>
+        )
     }
 
     return (

@@ -52,6 +52,14 @@ export async function apiGetAccountFormData<T>(data: Partial<T>) {
     })
 }
 
+// ✅ NEW ENDPOINT: /api/v1/account/details
+export async function apiGetAccountDetails<T>() {
+    return ApiService.fetchData<T>({
+        url: '/api/v1/account/details',
+        method: 'get',
+    })
+}
+
 // ------------------------------------------
 // Document POST Endpoint
 // ------------------------------------------
@@ -69,4 +77,3 @@ export async function apiPostDocument<T = any>(data: DocumentPayload) {
         data: data as unknown as Record<string, unknown>,
     })
 }
-
