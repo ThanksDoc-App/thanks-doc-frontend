@@ -372,7 +372,7 @@ const PricingFields = ({ className }: any) => {
                 )}
 
                 {/* Test buttons for demonstration */}
-                <div className="flex gap-2 mt-4">
+                {/* <div className="flex gap-2 mt-4">
                     <Button
                         variant="outline"
                         size="sm"
@@ -389,7 +389,7 @@ const PricingFields = ({ className }: any) => {
                     >
                         Test Failure Modal
                     </Button>
-                </div>
+                </div> */}
             </AdaptableCard>
 
             {/* Payment Modal */}
