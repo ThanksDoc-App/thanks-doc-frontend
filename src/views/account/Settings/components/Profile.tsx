@@ -21,6 +21,7 @@ import {
     HiOutlinePhone,
     HiOutlineLocationMarker,
     HiOutlineClipboard,
+    HiOutlineHome,
 } from 'react-icons/hi'
 import * as Yup from 'yup'
 import type { OptionProps, ControlProps } from 'react-select'
@@ -44,7 +45,9 @@ import { useAppDispatch, useAppSelector } from '@/store'
 
 export type ProfileFormModel = {
     name: string
-    address: string
+    city: string // ✅ Changed from address to city
+    address1: string // ✅ Added separate address1 field
+    postcode: string
     email: string
     phone: string
     avatar: string
@@ -76,6 +79,8 @@ const validationSchema = Yup.object().shape({
     timeZone: Yup.string(),
     syncData: Yup.bool(),
     specialty: Yup.string(),
+    city: Yup.string(), // ✅ Added city validation
+    address1: Yup.string(), // ✅ Added address1 validation
 })
 
 const langOptions: LanguageOption[] = [
@@ -154,19 +159,20 @@ const Profile = ({ data }: ProfileProps) => {
         value: category._id, // Category ID
     }))
 
-    // ✅ Use API data instead of localStorage
-    // ✅ Use API data instead of localStorage
+    // ✅ Use API data with separate city and address1 fields
     const defaultData: ProfileFormModel = {
-        name: profileData?.data?.name || '', // ✅ Name prefilled
-        email: profileData?.data?.email || '', // ✅ Email prefilled
-        phone: profileData?.data?.phone || '', // ✅ Phone prefilled
-        address: profileData?.data?.location?.city || '', // ✅ Address prefilled
-        avatar: profileData?.data?.profileImage?.url || '', // ✅ Profile image prefilled
-        gmcNumber: profileData?.data?.gmcNumber || '', // ✅ GMC Number prefilled
+        name: profileData?.data?.name || '',
+        email: profileData?.data?.email || '',
+        phone: profileData?.data?.phone || '',
+        city: profileData?.data?.location?.city || '', // ✅ City field
+        address1: profileData?.data?.location?.address1 || '', // ✅ Address1 field
+        postcode: profileData?.data?.location?.zipCode || '',
+        avatar: profileData?.data?.profileImage?.url || '',
+        gmcNumber: profileData?.data?.gmcNumber || '',
         timeZone: '',
         lang: '',
         syncData: false,
-        specialty: profileData?.data?.category?._id || '', // ✅ Specialty prefilled
+        specialty: profileData?.data?.category?._id || '',
     }
 
     const initialData = {
@@ -232,7 +238,7 @@ const Profile = ({ data }: ProfileProps) => {
         }
     }
 
-    // In the onFormSubmit function, change the location payload structure
+    // In your Profile.tsx component, update the onFormSubmit function:
 
     const onFormSubmit = async (
         values: ProfileFormModel,
@@ -261,7 +267,9 @@ const Profile = ({ data }: ProfileProps) => {
                     phone: values.phone,
                     gmcNumber: values.gmcNumber?.toString() || '',
                     location: {
-                        city: values.address, // ✅ Changed from address1 to city
+                        city: values.city,
+                        address1: values.address1,
+                        zipCode: values.postcode, // ✅ Map postcode to zipCode
                     },
                     category: values.specialty || '',
                 }
@@ -270,7 +278,9 @@ const Profile = ({ data }: ProfileProps) => {
                     businessName: values.name,
                     phone: values.phone,
                     location: {
-                        city: values.address, // ✅ Changed from address1 to city
+                        city: values.city,
+                        address1: values.address1,
+                        zipCode: values.postcode, // ✅ Map postcode to zipCode
                     },
                     category: values.specialty || '',
                 }
@@ -281,7 +291,9 @@ const Profile = ({ data }: ProfileProps) => {
                     email: values.email,
                     phone: values.phone,
                     location: {
-                        city: values.address, // ✅ Changed from address1 to city
+                        city: values.city,
+                        address1: values.address1,
+                        zipCode: values.postcode, // ✅ Map postcode to zipCode
                     },
                     category: values.specialty || '',
                 }
@@ -486,9 +498,11 @@ const Profile = ({ data }: ProfileProps) => {
                                     />
                                 </FormRow>
                             )}
+
+                            {/* ✅ City Field */}
                             {signedUpAs !== 'super admin' && (
                                 <FormRow
-                                    name="address"
+                                    name="city"
                                     label="City"
                                     {...validatorProps}
                                     border={false}
@@ -496,11 +510,52 @@ const Profile = ({ data }: ProfileProps) => {
                                     <Field
                                         type="text"
                                         autoComplete="off"
-                                        name="address"
-                                        placeholder="Address"
+                                        name="city"
+                                        placeholder="City"
                                         component={Input}
                                         prefix={
                                             <HiOutlineLocationMarker className="text-xl" />
+                                        }
+                                    />
+                                </FormRow>
+                            )}
+
+                            {/* ✅ Address1 Field */}
+                            {signedUpAs !== 'super admin' && (
+                                <FormRow
+                                    name="address1"
+                                    label="Address"
+                                    {...validatorProps}
+                                    border={false}
+                                >
+                                    <Field
+                                        type="text"
+                                        autoComplete="off"
+                                        name="address1"
+                                        placeholder="Street Address"
+                                        component={Input}
+                                        prefix={
+                                            <HiOutlineHome className="text-xl" />
+                                        }
+                                    />
+                                </FormRow>
+                            )}
+
+                            {signedUpAs !== 'super admin' && (
+                                <FormRow
+                                    name="postcode"
+                                    label="Postcode"
+                                    {...validatorProps}
+                                    border={false}
+                                >
+                                    <Field
+                                        type="text"
+                                        autoComplete="off"
+                                        name="postcode"
+                                        placeholder="Postcode"
+                                        component={Input}
+                                        prefix={
+                                            <HiOutlineHome className="text-xl" />
                                         }
                                     />
                                 </FormRow>

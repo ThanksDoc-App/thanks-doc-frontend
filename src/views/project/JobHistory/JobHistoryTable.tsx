@@ -44,8 +44,8 @@ const JobHistoryTable = ({ className }: any) => {
     // Transform API data to match table structure
     const transformedJobData = jobData.map((job, index) => ({
         id: job._id || index,
-        companyName: (job as any).service?.name || job.companyName || 'N/A',
-        role: (job as any).category?.name || job.role || 'N/A',
+        companyName: (job as any).businessOwner?.name || 'N/A',
+        role: (job as any)?.name || 'N/A',
         dateApplied: job.createdAt
             ? new Date(job.createdAt).toLocaleDateString('en-GB', {
                   day: 'numeric',
@@ -206,7 +206,7 @@ const JobHistoryTable = ({ className }: any) => {
                                     <td className="px-6 py-4">
                                         {job.companyName}
                                     </td>
-                                    <td className="px-6 py-4">{job.role}</td>
+                                    <td className="px-2 py-4">{job.role}</td>
                                     <td className="px-6 py-4">
                                         {job.dateApplied}
                                     </td>

@@ -69,7 +69,7 @@ const baseConfig: NavigationTree[] = [
             subMenu: [],
           },
           {
-        key: 'appsSales.listing',
+            key: 'appsSales.listing',
             path: `${APP_PREFIX_PATH}/sales/history`,
             title: 'Listing',
             translateKey: 'nav.appsSales.listing',
@@ -155,74 +155,67 @@ const baseConfig: NavigationTree[] = [
   },
 ]
 
-// Enhanced navigation configuration with proper state management
-export const getAppsNavigationConfig = (userRole?: string): NavigationTree[] => {
-  const configCopy = structuredClone(baseConfig)
-  
-  // Get user role from parameter or localStorage
-  let signedUpAs: string | null = userRole || null
-  
-  if (!signedUpAs) {
+// Simple function to get current user role
+const getCurrentUserRole = (): string | null => {
+  try {
     const userDetailsString = localStorage.getItem('userdetails')
-    
     if (userDetailsString) {
-      try {
-        const userDetails = JSON.parse(userDetailsString)
-        signedUpAs = userDetails.data?.signedUpAs?.toLowerCase() || null
-      } catch (error) {
-        console.error('Error parsing user details from localStorage:', error)
-        return configCopy // Return base config if parsing fails
-      }
+      const userDetails = JSON.parse(userDetailsString)
+      return userDetails.data?.signedUpAs?.toLowerCase() || null
     }
+  } catch (error) {
+    console.error('Error getting user role:', error)
   }
+  return null
+}
+
+// Enhanced navigation configuration - ALWAYS generates fresh config
+export const getAppsNavigationConfig = (): NavigationTree[] => {
+  // Always get fresh copy of base config
+  const configCopy = JSON.parse(JSON.stringify(baseConfig))
   
-  // If no user role found, return base config
+  // Get current user role fresh each time
+  const signedUpAs = getCurrentUserRole()
+  
+  console.log('Generating navigation for role:', signedUpAs)
+  
   if (!signedUpAs) {
-    console.warn('No user role found, returning base navigation config')
+    console.warn('No user role found')
     return configCopy
   }
   
-  const appsSection = configCopy.find(section => section.key === 'apps')
+  const appsSection = configCopy.find((section: NavigationTree) => section.key === 'apps')
   
   if (appsSection && Array.isArray(appsSection.subMenu)) {
     let newSubMenu: NavigationTree[] = []
     
-    if (signedUpAs === 'super admin') {
-      // Super admin logic
+    if (signedUpAs === 'super admin' || signedUpAs.includes('admin')) {
+      // Admin users - show CRM items
       for (const item of appsSection.subMenu) {
         if (item.key === 'apps.crm') {
-          const children = structuredClone(item.subMenu)
+          const children = JSON.parse(JSON.stringify(item.subMenu))
           if (children.length > 0) {
             children[0].icon = item.icon
           }
           newSubMenu.push(...children)
         } else if (item.key === 'appsAccount.settings') {
-          // Always include settings for super admin
           newSubMenu.push(item)
         }
       }
     } else {
-      // Regular user logic
+      // Doctor/Business users
       for (const item of appsSection.subMenu) {
-        // Skip items based on user role
+        // Skip wrong role items
         if ((signedUpAs === 'doctor' && item.key === 'apps.sales') ||
-            (signedUpAs === 'business' && item.key === 'apps.project')) {
+            (signedUpAs === 'business' && item.key === 'apps.project') ||
+            (item.key === 'apps.crm')) {
           continue
         }
         
         if (item.key === 'appsAccount.settings') {
-          // Always include settings for all users
           newSubMenu.push(item)
-        } else if (item.key === 'apps.crm') {
-          if (signedUpAs !== 'doctor' && signedUpAs !== 'business') {
-            const children = structuredClone(item.subMenu)
-            if (children.length > 0) {
-              children[0].icon = item.icon
-            }
-            newSubMenu.push(...children)
-          }
         } else if (item.type === NAV_ITEM_TYPE_COLLAPSE && Array.isArray(item.subMenu)) {
-          const children = structuredClone(item.subMenu)
+          const children = JSON.parse(JSON.stringify(item.subMenu))
           if (children.length > 0) {
             children[0].icon = item.icon
           }
@@ -239,127 +232,50 @@ export const getAppsNavigationConfig = (userRole?: string): NavigationTree[] => 
   return configCopy
 }
 
-// Navigation store/context for state management
-class NavigationStore {
-  private static instance: NavigationStore
-  private currentConfig: NavigationTree[] = []
-  private userRole: string | null = null
-  private listeners: Array<(config: NavigationTree[]) => void> = []
-  
-  private constructor() {
-    this.initialize()
-  }
-  
-  static getInstance(): NavigationStore {
-    if (!NavigationStore.instance) {
-      NavigationStore.instance = new NavigationStore()
-    }
-    return NavigationStore.instance
-  }
-  
-  private initialize() {
-    // Listen for localStorage changes
-    window.addEventListener('storage', this.handleStorageChange.bind(this))
-    
-    // Initial load
-    this.updateFromStorage()
-  }
-  
-  private handleStorageChange(event: StorageEvent) {
-    if (event.key === 'userdetails') {
-      this.updateFromStorage()
-    }
-  }
-  
-  private updateFromStorage() {
-    const userDetailsString = localStorage.getItem('userdetails')
-    let newUserRole: string | null = null
-    
-    if (userDetailsString) {
-      try {
-        const userDetails = JSON.parse(userDetailsString)
-        newUserRole = userDetails.data?.signedUpAs?.toLowerCase() || null
-      } catch (error) {
-        console.error('Error parsing user details from localStorage:', error)
-      }
-    }
-    
-    // Only update if role has changed
-    if (newUserRole !== this.userRole) {
-      this.userRole = newUserRole
-      this.currentConfig = getAppsNavigationConfig(this.userRole)
-      this.notifyListeners()
-    }
-  }
-  
-  public updateUserRole(role: string) {
-    this.userRole = role
-    this.currentConfig = getAppsNavigationConfig(this.userRole)
-    this.notifyListeners()
-  }
-  
-  public getConfig(): NavigationTree[] {
-    return this.currentConfig
-  }
-  
-  public subscribe(listener: (config: NavigationTree[]) => void) {
-    this.listeners.push(listener)
-    
-    // Return unsubscribe function
-    return () => {
-      this.listeners = this.listeners.filter(l => l !== listener)
-    }
-  }
-  
-  private notifyListeners() {
-    this.listeners.forEach(listener => listener(this.currentConfig))
-  }
-  
-  public refreshConfig() {
-    this.updateFromStorage()
-  }
-}
-
-// Hook for React components
+// Simple hook for React components
 export const useNavigationConfig = () => {
   const [config, setConfig] = useState<NavigationTree[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
-  useEffect(() => {
-    const store = NavigationStore.getInstance()
-    
-    // Set initial config
-    setConfig(store.getConfig())
+  const refreshConfig = useCallback(() => {
+    const newConfig = getAppsNavigationConfig()
+    setConfig(newConfig)
     setIsLoading(false)
-    
-    // Subscribe to changes
-    const unsubscribe = store.subscribe((newConfig) => {
-      setConfig(newConfig)
-      setIsLoading(false)
-    })
-    
-    // Cleanup
-    return unsubscribe
   }, [])
   
-  const refreshConfig = () => {
-    NavigationStore.getInstance().refreshConfig()
-  }
+  useEffect(() => {
+    // Initial load
+    refreshConfig()
+    
+    // Listen for storage changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'userdetails') {
+        setTimeout(refreshConfig, 100) // Small delay to ensure localStorage is updated
+      }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [refreshConfig])
   
   return { config, isLoading, refreshConfig }
 }
 
-// Authentication helper
+// Simple auth helper - call this after login
 export const updateNavigationAfterAuth = (userDetails: any) => {
-  // Save to localStorage
   localStorage.setItem('userdetails', JSON.stringify(userDetails))
   
-  // Update navigation store
-  const role = userDetails.data?.signedUpAs?.toLowerCase() || null
-  if (role) {
-    NavigationStore.getInstance().updateUserRole(role)
-  }
+  // Force refresh navigation after a short delay
+  setTimeout(() => {
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'userdetails',
+      newValue: JSON.stringify(userDetails)
+    }))
+  }, 100)
 }
 
-// Default export for backward compatibility
+// Default export
 export default getAppsNavigationConfig()

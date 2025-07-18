@@ -305,24 +305,6 @@ const FinancialInformation = ({
                     Fill in your financial information to help us speed up the
                     verification process.
                 </p>
-
-                {/* Debug information */}
-                <div className="mt-4 p-3 bg-gray-100 rounded text-xs">
-                    <strong>Debug Info:</strong>
-                    <div>
-                        User Account: {userAccount ? 'Loaded' : 'Not loaded'}
-                    </div>
-                    <div>
-                        Account Details:{' '}
-                        {accountDetailsData ? 'Loaded' : 'Not loaded'}
-                    </div>
-                    <div>
-                        Form Initialized: {formInitialized ? 'Yes' : 'No'}
-                    </div>
-                    <div>Account Name: {initialFormData.accountName}</div>
-                    <div>Sort Code: {initialFormData.sortCode}</div>
-                    <div>Account Number: {initialFormData.accountNumber}</div>
-                </div>
             </div>
 
             <Formik
@@ -389,55 +371,6 @@ const FinancialInformation = ({
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Manual prefill button for testing */}
-                                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            console.log(
-                                                'Manual prefill triggered',
-                                            )
-                                            if (userAccount) {
-                                                setFieldValue(
-                                                    'accountName',
-                                                    userAccount.accountName ||
-                                                        '',
-                                                )
-                                                setFieldValue(
-                                                    'sortCode',
-                                                    userAccount.sortCode || '',
-                                                )
-                                                setFieldValue(
-                                                    'accountNumber',
-                                                    userAccount.accountNumber ||
-                                                        '',
-                                                )
-                                            } else if (
-                                                accountDetailsData?.data
-                                            ) {
-                                                setFieldValue(
-                                                    'accountName',
-                                                    accountDetailsData.data
-                                                        .accountName || '',
-                                                )
-                                                setFieldValue(
-                                                    'sortCode',
-                                                    accountDetailsData.data
-                                                        .sortCode || '',
-                                                )
-                                                setFieldValue(
-                                                    'accountNumber',
-                                                    accountDetailsData.data
-                                                        .accountNumber || '',
-                                                )
-                                            }
-                                        }}
-                                        className="text-yellow-700 hover:text-yellow-900 text-sm"
-                                    >
-                                        Manual Prefill (Debug)
-                                    </button>
-                                </div>
 
                                 <FormItem
                                     label="Account Name"
