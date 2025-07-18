@@ -201,7 +201,7 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
                     prefix={
                         <HiOutlineLocationMarker className="text-xl text-indigo-600 cursor-pointer" />
                     }
-                    placeholder="Enter a city"
+                    placeholder="Enter a city or job"
                     value={searchTerm}
                     onChange={handleInputChange}
                     onKeyPress={(e) => {
@@ -210,9 +210,9 @@ const MyTasks = ({ data = [] }: MyTasksProps) => {
                         }
                     }}
                 />
-                <Button color="primary" onClick={handleSearch}>
+                {/* <Button color="primary" onClick={handleSearch}>
                     Search
-                </Button>
+                </Button> */}
             </InputGroup>
             <Table className="whitespace-nowrap">
                 <THead>
