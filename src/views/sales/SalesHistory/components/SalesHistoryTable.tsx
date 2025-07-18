@@ -270,7 +270,12 @@ const SalesHistory = ({ className }: any) => {
             return `${baseClasses} text-[#FF9500] border border-[#FF9500]`
         if (status === 'Closed' || status === 'closed')
             return `${baseClasses} text-[#FF6550] border border-[#FF6550]`
-        if (status === 'Completed' || status === 'completed')
+        if (
+            status === 'Completed' ||
+            status === 'completed' ||
+            status === 'active' ||
+            status === 'Active'
+        )
             return `${baseClasses} text-[#10B981] border border-[#10B981]`
         return `${baseClasses} text-gray-500 border border-gray-300`
     }
@@ -393,7 +398,7 @@ const SalesHistory = ({ className }: any) => {
 
                 {/* Table */}
                 <div className="overflow-x-auto">
-                    <table className="min-w-[700px] w-full border border-gray-200">
+                    <table className="min-w-[700px] w-full border border-gray-200 whitespace-nowrap">
                         <thead className="border-b border-gray-200">
                             <tr>
                                 <th className="px-6 py-4 text-left text-sm font-medium text-[#6b6d74]">

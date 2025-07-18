@@ -286,6 +286,7 @@ const DoctorDetails = ({ className }: any) => {
         documentId?: string,
     ): void => {
         const isProfessionalReference =
+            document.type === 'Professional Reference' ||
             document.content?.documentType === 'Professional References' ||
             document.title?.toLowerCase().includes('professional reference')
 
@@ -793,8 +794,8 @@ const DoctorDetails = ({ className }: any) => {
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
                                 </div>
                             ) : (
-                                <div className="">
-                                    <table className="w-full border border-[#D6DDEB]">
+                                <div className="w-full overflow-x-auto">
+                                    <table className="min-w-max w-full border border-[#D6DDEB] whitespace-nowrap">
                                         <thead className="border-b border-gray-200">
                                             <tr>
                                                 <th className="px-4 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
@@ -838,27 +839,30 @@ const DoctorDetails = ({ className }: any) => {
                                                             }`}
                                                         >
                                                             <td className="px-4 py-4">
-                                                                {payment.jobId ||
+                                                                {payment._id ||
                                                                     'N/A'}
                                                             </td>
                                                             <td className="px-4 py-4">
                                                                 {formatCurrency(
                                                                     payment.amount,
-                                                                    payment.currency,
+                                                                    payment.currency.toUpperCase(),
                                                                 )}
                                                             </td>
                                                             <td className="px-4 py-4">
                                                                 {formatDate(
-                                                                    payment.paymentDate,
+                                                                    payment.transactionDate,
                                                                 )}
                                                             </td>
                                                             <td className="px-4 py-4">
                                                                 <span
                                                                     className={`px-2 py-1 rounded-full text-[11px] font-medium ${
-                                                                        payment.status ===
-                                                                            'paid' ||
-                                                                        payment.status ===
-                                                                            'completed'
+                                                                        [
+                                                                            'paid',
+                                                                            'completed',
+                                                                            'succeeded',
+                                                                        ].includes(
+                                                                            payment.status,
+                                                                        )
                                                                             ? 'bg-green-100 text-green-800'
                                                                             : payment.status ===
                                                                                 'pending'
@@ -1086,7 +1090,7 @@ const DoctorDetails = ({ className }: any) => {
                                                     </p>
                                                 )}
 
-                                                {isProfessionalReference &&
+                                                {/* {isProfessionalReference &&
                                                     doc.content?.fullName && (
                                                         <p className="text-xs text-gray-600 mt-1">
                                                             Fullname:{' '}
@@ -1102,7 +1106,7 @@ const DoctorDetails = ({ className }: any) => {
                                                         Email:{' '}
                                                         {doc.content.email}
                                                     </p>
-                                                )}
+                                                )} */}
 
                                                 {doc.content?.submittedAt && (
                                                     <p className="text-xs text-gray-600 mt-1">

@@ -186,6 +186,36 @@ const DocumentViewModal = ({
             ? 'View Professional Reference'
             : 'View Document'
 
+    const renderBasicProfessionalReference = () => {
+        if (!document?.referenceData) return null
+
+        return (
+            <div className="border border-gray-200 rounded-lg h-[500px] bg-gray-50 p-6 overflow-y-auto">
+                <div className="space-y-4">
+                    {/* Full Name */}
+                    <div>
+                        <p className="text-sm font-medium text-gray-600">
+                            Full Name:
+                        </p>
+                        <p className="text-lg font-semibold text-gray-800 mt-1">
+                            {document.referenceData.fullName}
+                        </p>
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                        <p className="text-sm font-medium text-gray-600">
+                            Email:
+                        </p>
+                        <p className="text-lg font-semibold text-gray-800 mt-1">
+                            {document.referenceData.email}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     const renderPdfViewer = () => {
         if (!document?.fileUrl) {
             return (
@@ -320,195 +350,113 @@ const DocumentViewModal = ({
                     />
                 </div>
 
-                {/* Professional Reference Preview */}
-                {document?.type === 'Professional Reference' &&
-                document?.referenceData ? (
-                    <div className="mb-6">
-                        <label className="block text-[13px] font-medium text-[#344054] mb-2">
-                            Reference Information Preview
-                        </label>
-                        <div className="border border-gray-200 rounded-lg h-[500px] bg-gray-50 p-6 overflow-y-auto">
-                            <div className="space-y-6">
-                                {/* Full Name - Prominent Display */}
-                                <div className="text-center border-b border-gray-300 pb-4">
-                                    <h2 className="text-2xl font-bold text-[#25324B] mb-2">
-                                        {document.referenceData.fullName}
-                                    </h2>
-                                    <p className="text-[#7C8493] text-sm">
-                                        Professional Reference
-                                    </p>
-                                </div>
+                {/* Document Content */}
+                <div className="mb-6">
+                    <label className="block text-[13px] font-medium text-[#344054] mb-2">
+                        {document?.type === 'Professional Reference'
+                            ? 'Reference Information Preview'
+                            : 'Document Preview'}
+                    </label>
 
-                                {/* Contact Information */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Email */}
-                                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <CiMail className="text-[#0F9297] text-xl" />
-                                            <h3 className="text-[#25324B] font-semibold text-sm">
-                                                Email Address
-                                            </h3>
-                                        </div>
-                                        <p className="text-[#25324B] text-lg font-medium break-all">
-                                            {document.referenceData.email}
-                                        </p>
-                                    </div>
-
-                                    {/* Phone (if available) */}
-                                    {document.referenceData.phone && (
-                                        <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <BsPhone className="text-[#0F9297] text-xl" />
-                                                <h3 className="text-[#25324B] font-semibold text-sm">
-                                                    Phone Number
-                                                </h3>
-                                            </div>
-                                            <p className="text-[#25324B] text-lg font-medium">
-                                                {document.referenceData.phone}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Professional Details */}
-                                <div className="space-y-4">
-                                    {/* Position */}
-                                    {document.referenceData.position && (
-                                        <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                            <h3 className="text-[#7C8493] text-sm font-medium mb-1">
-                                                Position
-                                            </h3>
-                                            <p className="text-[#25324B] text-base font-medium">
-                                                {
-                                                    document.referenceData
-                                                        .position
-                                                }
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Organization */}
-                                    {document.referenceData.organization && (
-                                        <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                            <h3 className="text-[#7C8493] text-sm font-medium mb-1">
-                                                Organization
-                                            </h3>
-                                            <p className="text-[#25324B] text-base font-medium">
-                                                {
-                                                    document.referenceData
-                                                        .organization
-                                                }
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Reference Note */}
-                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-6">
-                                    <p className="text-blue-800 text-sm text-center">
-                                        This is a professional reference contact
-                                        for verification purposes.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    /* Enhanced PDF handling with multiple viewer options */
-                    <>
-                        {/* PDF Viewer Controls */}
-                        {document?.fileUrl && (
-                            <div className="mb-4">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={handleOpenInNewTab}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
-                                        >
-                                            <ExternalLink className="w-4 h-4" />
-                                            Open in New Tab
-                                        </button>
-                                        <button
-                                            onClick={handleDownload}
-                                            disabled={isLoading}
-                                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
-                                        >
-                                            <Download className="w-4 h-4" />
-                                            Download
-                                        </button>
-                                    </div>
-
-                                    {document?.status && (
-                                        <div className="flex items-center">
-                                            <span
-                                                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                                    getStatusBadge(
-                                                        document.status,
-                                                    ).className
-                                                }`}
+                    {document?.type === 'Professional Reference' &&
+                    document?.referenceData ? (
+                        renderBasicProfessionalReference()
+                    ) : (
+                        <>
+                            {/* PDF Viewer Controls */}
+                            {document?.fileUrl && (
+                                <div className="mb-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={handleOpenInNewTab}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
                                             >
-                                                {
-                                                    getStatusBadge(
-                                                        document.status,
-                                                    ).text
-                                                }
-                                            </span>
+                                                <ExternalLink className="w-4 h-4" />
+                                                Open in New Tab
+                                            </button>
+                                            <button
+                                                onClick={handleDownload}
+                                                disabled={isLoading}
+                                                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                                Download
+                                            </button>
                                         </div>
-                                    )}
-                                </div>
 
-                                {/* Viewer Mode Selector */}
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-xs text-gray-600">
-                                        Viewer:
-                                    </span>
-                                    <button
-                                        onClick={() => {
-                                            setPdfViewerMode('iframe')
-                                            setPdfError(false)
-                                        }}
-                                        className={`px-2 py-1 text-xs rounded ${
-                                            pdfViewerMode === 'iframe'
-                                                ? 'bg-blue-100 text-blue-700'
-                                                : 'bg-gray-100 text-gray-600'
-                                        }`}
-                                    >
-                                        Standard
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setPdfViewerMode('embed')
-                                            setPdfError(false)
-                                        }}
-                                        className={`px-2 py-1 text-xs rounded ${
-                                            pdfViewerMode === 'embed'
-                                                ? 'bg-blue-100 text-blue-700'
-                                                : 'bg-gray-100 text-gray-600'
-                                        }`}
-                                    >
-                                        Embed
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setPdfViewerMode('google')
-                                            setPdfError(false)
-                                        }}
-                                        className={`px-2 py-1 text-xs rounded ${
-                                            pdfViewerMode === 'google'
-                                                ? 'bg-blue-100 text-blue-700'
-                                                : 'bg-gray-100 text-gray-600'
-                                        }`}
-                                    >
-                                        Google Docs
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                                        {document?.status && (
+                                            <div className="flex items-center">
+                                                <span
+                                                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                        getStatusBadge(
+                                                            document.status,
+                                                        ).className
+                                                    }`}
+                                                >
+                                                    {
+                                                        getStatusBadge(
+                                                            document.status,
+                                                        ).text
+                                                    }
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
 
-                        {/* PDF Viewer */}
-                        <div className="mb-6">{renderPdfViewer()}</div>
-                    </>
-                )}
+                                    {/* Viewer Mode Selector */}
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-xs text-gray-600">
+                                            Viewer:
+                                        </span>
+                                        <button
+                                            onClick={() => {
+                                                setPdfViewerMode('iframe')
+                                                setPdfError(false)
+                                            }}
+                                            className={`px-2 py-1 text-xs rounded ${
+                                                pdfViewerMode === 'iframe'
+                                                    ? 'bg-blue-100 text-blue-700'
+                                                    : 'bg-gray-100 text-gray-600'
+                                            }`}
+                                        >
+                                            Standard
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setPdfViewerMode('embed')
+                                                setPdfError(false)
+                                            }}
+                                            className={`px-2 py-1 text-xs rounded ${
+                                                pdfViewerMode === 'embed'
+                                                    ? 'bg-blue-100 text-blue-700'
+                                                    : 'bg-gray-100 text-gray-600'
+                                            }`}
+                                        >
+                                            Embed
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setPdfViewerMode('google')
+                                                setPdfError(false)
+                                            }}
+                                            className={`px-2 py-1 text-xs rounded ${
+                                                pdfViewerMode === 'google'
+                                                    ? 'bg-blue-100 text-blue-700'
+                                                    : 'bg-gray-100 text-gray-600'
+                                            }`}
+                                        >
+                                            Google Docs
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* PDF Viewer */}
+                            {renderPdfViewer()}
+                        </>
+                    )}
+                </div>
 
                 {/* Accept/Decline Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
