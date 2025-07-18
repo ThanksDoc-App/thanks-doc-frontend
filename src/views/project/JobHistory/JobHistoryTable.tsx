@@ -5,7 +5,6 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronDown,
-    Loader2,
 } from 'lucide-react'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '@/store'
@@ -21,7 +20,6 @@ const JobHistoryTable = ({ className }: any) => {
     const navigate = useNavigate()
     const dispatch = useDispatch()
 
-    // Redux state
     const jobData = useSelector((state: RootState) => selectJobHistory(state))
     const loading = useSelector((state: RootState) =>
         selectJobHistoryLoading(state),
@@ -30,18 +28,18 @@ const JobHistoryTable = ({ className }: any) => {
         selectJobHistoryError(state),
     )
 
-    // Local state for pagination
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
     const [showDropdown, setShowDropdown] = useState(false)
 
-    // Fetch data on component mount
     useEffect(() => {
-        console.log('🚀 JobHistoryTable mounted - dispatching fetchJobHistory')
         dispatch(fetchJobHistory())
     }, [dispatch])
 
-    // Transform API data to match table structure
+    // Capitalize first letter of status or payment
+    const capitalize = (text: string) =>
+        text.charAt(0).toUpperCase() + text.slice(1)
+
     const transformedJobData = jobData.map((job, index) => ({
         id: job._id || index,
         companyName: (job as any).businessOwner?.name || 'N/A',
@@ -56,35 +54,31 @@ const JobHistoryTable = ({ className }: any) => {
         status: job.status || 'pending',
         amount: job.amount || 0,
         currency: job.currency || 'GBP',
+        hasPaid: job.hasPaid ? 'paid' : 'pending',
     }))
 
-    // Calculate pagination
     const totalItems = transformedJobData.length
     const totalPages = Math.ceil(totalItems / itemsPerPage)
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
     const currentData = transformedJobData.slice(startIndex, endIndex)
 
-    // Handle job row click
     const handleJobClick = (jobId: any) => {
         navigate(`/app/project/job-details/${jobId}`)
     }
 
-    // Handle page change
     const handlePageChange = (page: any) => {
         if (page >= 1 && page <= totalPages) {
             setCurrentPage(page)
         }
     }
 
-    // Handle items per page change
     const handleItemsPerPageChange = (items: any) => {
         setItemsPerPage(items)
         setCurrentPage(1)
         setShowDropdown(false)
     }
 
-    // Generate page numbers to display
     const getPageNumbers = () => {
         const pages = []
         const maxVisiblePages = 5
@@ -136,12 +130,24 @@ const JobHistoryTable = ({ className }: any) => {
         return baseClasses
     }
 
-    // Show skeleton loader when loading
+    const getPaymentBadge = (status: string) => {
+        const baseClasses = 'px-2 py-1 rounded-full text-[12px] font-semibold'
+
+        if (status === 'pending') {
+            return `${baseClasses} text-gray-500 border border-gray-400 bg-gray-100`
+        }
+
+        if (status === 'paid') {
+            return `${baseClasses} text-blue-500 border border-blue-500 bg-blue-50`
+        }
+
+        return baseClasses
+    }
+
     if (loading && transformedJobData.length === 0) {
         return <SkeletonTable />
     }
 
-    // Error state
     if (error && transformedJobData.length === 0) {
         return (
             <div className="w-full mx-auto bg-white">
@@ -160,30 +166,29 @@ const JobHistoryTable = ({ className }: any) => {
 
     return (
         <div className="w-full mx-auto">
-            {/* Responsive Table Wrapper */}
             <div className={`overflow-x-auto scrollbar-hidden ${className}`}>
                 <table
                     className={`min-w-[700px] w-full border border-[#D6DDEB] ${className}`}
                 >
                     <thead className="border-b border-gray-200">
                         <tr>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16 whitespace-nowrap">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] w-16">
                                 #
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] whitespace-nowrap">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
                                 Company Name
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] whitespace-nowrap">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
                                 Role
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] whitespace-nowrap">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
                                 Date Applied
                             </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] whitespace-nowrap">
-                                Amount
-                            </th>
-                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0] whitespace-nowrap">
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
                                 Status
+                            </th>
+                            <th className="px-6 py-4 text-left text-[13px] font-medium text-[#8c91a0]">
+                                Payment Status
                             </th>
                             <th className="px-6 py-4 w-12"></th>
                         </tr>
@@ -211,26 +216,27 @@ const JobHistoryTable = ({ className }: any) => {
                                         {job.dateApplied}
                                     </td>
                                     <td className="px-6 py-4">
-                                        {job.amount
-                                            ? `${job.amount} ${job.currency}`
-                                            : 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4">
                                         <span
                                             className={getStatusBadge(
                                                 job.status,
                                             )}
                                         >
-                                            {job.status}
+                                            {capitalize(job.status)}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span
+                                            className={getPaymentBadge(
+                                                job.hasPaid,
+                                            )}
+                                        >
+                                            {capitalize(job.hasPaid)}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <button
                                             className="p-1 hover:bg-gray-200 rounded"
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                // Add your menu logic here
-                                            }}
+                                            onClick={(e) => e.stopPropagation()}
                                         >
                                             <MoreHorizontal className="w-5 h-5" />
                                         </button>
@@ -267,12 +273,10 @@ const JobHistoryTable = ({ className }: any) => {
                 </table>
             </div>
 
-            {/* Pagination */}
             {transformedJobData.length > 0 && (
                 <div
                     className={`flex items-center justify-between px-6 py-4 border border-[#D6DDEB] ${className}`}
                 >
-                    {/* Left side - View dropdown */}
                     <div className="flex items-center gap-2">
                         <span className="text-[13px] text-[#8c91a0]">View</span>
                         <div className="relative">
@@ -307,9 +311,7 @@ const JobHistoryTable = ({ className }: any) => {
                         </span>
                     </div>
 
-                    {/* Right side - Page navigation */}
                     <div className="flex items-center gap-2">
-                        {/* Previous button */}
                         <button
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={currentPage === 1}
@@ -318,7 +320,6 @@ const JobHistoryTable = ({ className }: any) => {
                             <ChevronLeft className="w-4 h-4" />
                         </button>
 
-                        {/* Page numbers */}
                         <div className="flex items-center gap-1">
                             {getPageNumbers().map((page, index) => (
                                 <React.Fragment key={index}>
@@ -334,7 +335,7 @@ const JobHistoryTable = ({ className }: any) => {
                                             className={`px-3 py-1 text-[13px] rounded ${
                                                 currentPage === page
                                                     ? 'bg-[#0F9297] text-white'
-                                                    : 'dark:text-[white] light:text-[#25324B] '
+                                                    : 'dark:text-[white] light:text-[#25324B]'
                                             }`}
                                         >
                                             {page}
@@ -344,7 +345,6 @@ const JobHistoryTable = ({ className }: any) => {
                             ))}
                         </div>
 
-                        {/* Next button */}
                         <button
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage === totalPages}
