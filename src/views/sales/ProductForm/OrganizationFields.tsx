@@ -321,7 +321,6 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                         />
                     </FormItem>
                 </div>
-
                 {/* City and Postcode Fields - Added before Date and Time */}
                 <div className="col-span-1">
                     <FormItem
@@ -351,7 +350,6 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                         />
                     </FormItem>
                 </div>
-
                 <div className="col-span-1">
                     <FormItem
                         label="Date"
@@ -367,6 +365,7 @@ const OrganizationFields = (props: OrganizationFieldsProps) => {
                                         form.setFieldValue(field.name, val)
                                     }
                                     placeholder="Select Date"
+                                    minDate={new Date()} // ✅ disable past days
                                 />
                             )}
                         </Field>
