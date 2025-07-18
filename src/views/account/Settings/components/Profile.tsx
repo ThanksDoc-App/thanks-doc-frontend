@@ -232,6 +232,8 @@ const Profile = ({ data }: ProfileProps) => {
         }
     }
 
+    // In the onFormSubmit function, change the location payload structure
+
     const onFormSubmit = async (
         values: ProfileFormModel,
         setSubmitting: (isSubmitting: boolean) => void,
@@ -259,7 +261,7 @@ const Profile = ({ data }: ProfileProps) => {
                     phone: values.phone,
                     gmcNumber: values.gmcNumber?.toString() || '',
                     location: {
-                        address1: values.address,
+                        city: values.address, // ✅ Changed from address1 to city
                     },
                     category: values.specialty || '',
                 }
@@ -268,7 +270,7 @@ const Profile = ({ data }: ProfileProps) => {
                     businessName: values.name,
                     phone: values.phone,
                     location: {
-                        address1: values.address,
+                        city: values.address, // ✅ Changed from address1 to city
                     },
                     category: values.specialty || '',
                 }
@@ -279,7 +281,7 @@ const Profile = ({ data }: ProfileProps) => {
                     email: values.email,
                     phone: values.phone,
                     location: {
-                        address1: values.address,
+                        city: values.address, // ✅ Changed from address1 to city
                     },
                     category: values.specialty || '',
                 }
