@@ -5,26 +5,25 @@ import { useNavigate } from 'react-router-dom'
 import { useAppDispatch } from '@/store' // Adjust import path as needed
 import { clearCategoryError, createCategory } from '../store'
 import { useSelector } from 'react-redux'
-import type { RootState } from '@/store' // Adjust the path if your RootState is defined elsewhere
-// Alternative toast imports (choose one based on your setup):
+import type { RootState } from '@/store'
 import { toast } from 'react-toastify'
-// import { useToast } from '@/components/ui/use-toast'
 
 const CrmCreateCategory = () => {
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
     const [categoryName, setCategoryName] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const { categoryLoading = false, categoryError = null } = useSelector(
+    const { categoryError = null } = useSelector(
         (state: RootState) => state.adminDashboard || {},
     )
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!categoryName.trim()) {
-            return
-        }
+        if (!categoryName.trim()) return
+
+        setIsSubmitting(true)
 
         try {
             const result = await dispatch(
@@ -32,23 +31,20 @@ const CrmCreateCategory = () => {
             )
 
             if (createCategory.fulfilled.match(result)) {
-                // Success - show toast message
                 toast.success('Category created successfully!')
-
                 setCategoryName('')
-                navigate(-1) // Go back to previous page
+                navigate(-1)
             }
         } catch (error) {
-            // Error handling is managed by Redux
-            console.error('Failed to create category:', error)
-            // Optional: Show error toast
             toast.error('Failed to create category. Please try again.')
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setCategoryName(e.target.value)
-        // Clear error when user starts typing
+
         if (categoryError) {
             dispatch(clearCategoryError())
         }
@@ -71,6 +67,7 @@ const CrmCreateCategory = () => {
                     </span>
                 </Button>
             </div>
+
             <div className="mt-7">
                 <form onSubmit={handleSubmit} className="flex flex-col gap-2">
                     <label className="text-[#515B6F] font-[15px] font-[600]">
@@ -82,7 +79,7 @@ const CrmCreateCategory = () => {
                         value={categoryName}
                         onChange={handleInputChange}
                         className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-2 outline-0"
-                        disabled={categoryLoading}
+                        disabled={isSubmitting}
                     />
                     {categoryError && (
                         <span className="text-red-500 text-sm">
@@ -93,9 +90,9 @@ const CrmCreateCategory = () => {
                         type="submit"
                         variant="solid"
                         className="w-[207px] mt-4"
-                        disabled={categoryLoading || !categoryName.trim()}
+                        disabled={isSubmitting || !categoryName.trim()}
                     >
-                        {categoryLoading ? 'Creating...' : 'Create a category'}
+                        {isSubmitting ? 'Creating...' : 'Create a category'}
                     </Button>
                 </form>
             </div>

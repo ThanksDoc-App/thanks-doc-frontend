@@ -11,15 +11,16 @@ import {
     categoryStorage,
     type Category,
 } from '../../Category/store/categoryStorage'
-// import { categoryStorage, type Category } from '@/utils/categoryStorage'
 
 const CrmCreateService = ({ className }: any) => {
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
 
-    const { serviceLoading = false, serviceError = null } = useSelector(
+    const { serviceError = null } = useSelector(
         (state: RootState) => state.adminDashboard || {},
     )
+
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const [formData, setFormData] = useState({
         category: '',
@@ -76,6 +77,8 @@ const CrmCreateService = ({ className }: any) => {
             return
         }
 
+        setIsSubmitting(true)
+
         try {
             const serviceData = {
                 name: formData.name,
@@ -101,6 +104,8 @@ const CrmCreateService = ({ className }: any) => {
         } catch (error) {
             console.error('Failed to create service:', error)
             showErrorToast(error)
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -140,6 +145,7 @@ const CrmCreateService = ({ className }: any) => {
                             onChange={handleInputChange}
                             className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-1.5 outline-0"
                             required
+                            disabled={isSubmitting}
                         >
                             <option value="">Select a category</option>
                             {categories.length > 0 ? (
@@ -152,27 +158,12 @@ const CrmCreateService = ({ className }: any) => {
                                     </option>
                                 ))
                             ) : (
-                                <>
-                                    <option value="general">
-                                        General Practitioner
-                                    </option>
-                                    <option value="pediatrics">
-                                        Pediatrics
-                                    </option>
-                                    <option value="dermatology">
-                                        Dermatology
-                                    </option>
-                                    <option value="cardiology">
-                                        Cardiology
-                                    </option>
-                                    <option value="neurology">Neurology</option>
-                                </>
+                                <option>No category yet</option>
                             )}
                         </select>
                         {categories.length === 0 && (
                             <p className="text-[#8c91a0] text-xs mt-1">
-                                No categories found in storage. Using default
-                                options.
+                                No category yet
                             </p>
                         )}
                     </div>
@@ -189,6 +180,7 @@ const CrmCreateService = ({ className }: any) => {
                             placeholder="Enter service name"
                             className="border-[#D6DDEB] border placeholder:text-[#A8ADB7] text-[13px] h-[40px] pl-2 outline-0"
                             required
+                            disabled={isSubmitting}
                         />
                     </div>
 
@@ -206,6 +198,7 @@ const CrmCreateService = ({ className }: any) => {
                             required
                             min="0"
                             step="0.01"
+                            disabled={isSubmitting}
                         />
                     </div>
 
@@ -230,13 +223,13 @@ const CrmCreateService = ({ className }: any) => {
                         variant="solid"
                         className="w-[207px] mt-4"
                         disabled={
-                            serviceLoading ||
+                            isSubmitting ||
                             !formData.name.trim() ||
                             !formData.price.trim() ||
                             !formData.category.trim()
                         }
                     >
-                        {serviceLoading ? 'Creating...' : 'Create a service'}
+                        {isSubmitting ? 'Creating...' : 'Create a service'}
                     </Button>
                 </form>
             </div>

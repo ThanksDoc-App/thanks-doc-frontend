@@ -39,6 +39,7 @@ const CategoryTable = ({ className }: any) => {
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(
         null,
     )
+    const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
 
     useEffect(() => {
         dispatch(fetchCategories())
@@ -74,7 +75,23 @@ const CategoryTable = ({ className }: any) => {
         setShowDropdown(false)
     }
 
-    const handleActionClick = (category: Category, action: string) => {
+    const handleActionClick = (
+        category: Category,
+        action: string,
+        event?: React.MouseEvent,
+    ) => {
+        if (event && action === 'menu') {
+            const rect = event.currentTarget.getBoundingClientRect()
+            const x = Math.min(
+                window.innerWidth - 140,
+                Math.max(10, rect.left - 40),
+            )
+            const y = Math.min(
+                window.innerHeight - 60,
+                Math.max(10, rect.bottom + 5),
+            )
+            setDropdownPosition({ x, y })
+        }
         setSelectedCategory(category)
         setActiveModal(action)
     }
@@ -157,22 +174,6 @@ const CategoryTable = ({ className }: any) => {
         )
     }
 
-    if (categoriesArray.length === 0) {
-        return (
-            <div className="w-full mx-auto flex items-center justify-center py-20">
-                <div className="text-center">
-                    <p className="text-[#8c91a0]">No categories found</p>
-                    <button
-                        onClick={() => dispatch(fetchCategories())}
-                        className="mt-4 px-4 py-2 bg-[#0F9297] text-white rounded hover:bg-[#0d7f84] text-sm"
-                    >
-                        Refresh
-                    </button>
-                </div>
-            </div>
-        )
-    }
-
     return (
         <div className={`w-full mx-auto relative ${className}`}>
             <div className="overflow-x-auto scrollbar-hidden">
@@ -186,50 +187,84 @@ const CategoryTable = ({ className }: any) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {currentData.map((cat: Category, index: number) => (
-                            <tr
-                                key={cat._id}
-                                className={`text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
-                                    (index + 1) % 2 === 0
-                                        ? 'bg-[#F8F8FD] dark:bg-transparent'
-                                        : ''
-                                }`}
-                            >
-                                <td className="px-6 py-4">{cat.name}</td>
-                                <td className="px-6 py-4">
-                                    <div className="relative">
-                                        <button
-                                            className="p-1 hover:bg-gray-100 rounded relative"
-                                            onClick={() =>
-                                                handleActionClick(cat, 'menu')
-                                            }
-                                        >
-                                            <MoreHorizontal className="w-5 h-5" />
-                                        </button>
-
-                                        {activeModal === 'menu' &&
-                                            selectedCategory?._id ===
-                                                cat._id && (
-                                                <div className="absolute left-[-40px] top-8 bg-white border border-[#D6DDEB] rounded-lg shadow-lg z-50 min-w-[120px]">
-                                                    <div className="py-1">
-                                                        <button
-                                                            onClick={() =>
-                                                                handleActionClick(
-                                                                    cat,
-                                                                    'delete',
-                                                                )
-                                                            }
-                                                            className="flex items-center gap-3 w-full px-4 py-2 text-[13px] text-[#25324B] hover:bg-gray-50"
-                                                        >
-                                                            Delete category
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
+                        {categoriesArray.length === 0 ? (
+                            <tr>
+                                <td
+                                    colSpan={2}
+                                    className="px-6 py-12 text-center"
+                                >
+                                    <div className="text-[#8c91a0]">
+                                        <p className="mb-2">
+                                            No categories found
+                                        </p>
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            currentData.map((cat: Category, index: number) => (
+                                <tr
+                                    key={cat._id}
+                                    className={`text-[13px] whitespace-nowrap cursor-pointer transition-colors ${
+                                        (index + 1) % 2 === 0
+                                            ? 'bg-[#F8F8FD] dark:bg-transparent'
+                                            : ''
+                                    }`}
+                                >
+                                    <td className="px-6 py-4">{cat.name}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="relative">
+                                            <button
+                                                className="p-1 hover:bg-gray-100 rounded relative"
+                                                onClick={(e) =>
+                                                    handleActionClick(
+                                                        cat,
+                                                        'menu',
+                                                        e,
+                                                    )
+                                                }
+                                            >
+                                                <MoreHorizontal className="w-5 h-5" />
+                                            </button>
+
+                                            {activeModal === 'menu' &&
+                                                selectedCategory?._id ===
+                                                    cat._id && (
+                                                    <div
+                                                        className="fixed inset-0 z-40"
+                                                        onClick={closeModal}
+                                                    >
+                                                        <div
+                                                            className="absolute bg-white border border-[#D6DDEB] rounded-lg shadow-lg z-50 min-w-[120px]"
+                                                            style={{
+                                                                left: `${dropdownPosition.x}px`,
+                                                                top: `${dropdownPosition.y}px`,
+                                                            }}
+                                                            onClick={(e) =>
+                                                                e.stopPropagation()
+                                                            }
+                                                        >
+                                                            <div className="py-1">
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleActionClick(
+                                                                            cat,
+                                                                            'delete',
+                                                                        )
+                                                                    }
+                                                                    className="flex items-center gap-3 w-full px-4 py-2 text-[13px] text-[#25324B] hover:bg-gray-50"
+                                                                >
+                                                                    Delete
+                                                                    category
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -282,83 +317,85 @@ const CategoryTable = ({ className }: any) => {
                 </div>
             )}
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB]">
-                {/* View dropdown */}
-                <div className="flex items-center gap-2">
-                    <span className="text-[13px] text-[#8c91a0]">View</span>
-                    <div className="relative">
+            {/* Only show pagination if there are categories */}
+            {categoriesArray.length > 0 && (
+                <div className="flex items-center justify-between px-6 py-4 border border-[#D6DDEB]">
+                    {/* View dropdown */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[13px] text-[#8c91a0]">View</span>
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowDropdown(!showDropdown)}
+                                className="flex items-center gap-1 px-3 py-1 text-[13px] text-[#25324B] border border-[#D6DDEB] rounded bg-white hover:bg-gray-50"
+                            >
+                                {itemsPerPage}
+                                <ChevronDown className="w-4 h-4" />
+                            </button>
+                            {showDropdown && (
+                                <div className="absolute top-full left-0 mt-1 bg-white border border-[#D6DDEB] rounded shadow-lg z-10">
+                                    {[5, 10, 15, 20, 25].map((num) => (
+                                        <button
+                                            key={num}
+                                            onClick={() =>
+                                                handleItemsPerPageChange(num)
+                                            }
+                                            className="block w-full px-3 py-2 text-[13px] text-left hover:bg-gray-50 text-[#25324B]"
+                                        >
+                                            {num}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Page navigation */}
+                    <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setShowDropdown(!showDropdown)}
-                            className="flex items-center gap-1 px-3 py-1 text-[13px] text-[#25324B] border border-[#D6DDEB] rounded bg-white hover:bg-gray-50"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="p-2 text-[#8c91a0] hover:text-[#25324B] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {itemsPerPage}
-                            <ChevronDown className="w-4 h-4" />
+                            <ChevronLeft className="w-4 h-4" />
                         </button>
-                        {showDropdown && (
-                            <div className="absolute top-full left-0 mt-1 bg-white border border-[#D6DDEB] rounded shadow-lg z-10">
-                                {[5, 10, 15, 20, 25].map((num) => (
-                                    <button
-                                        key={num}
-                                        onClick={() =>
-                                            handleItemsPerPageChange(num)
-                                        }
-                                        className="block w-full px-3 py-2 text-[13px] text-left hover:bg-gray-50 text-[#25324B]"
+
+                        <div className="flex items-center gap-1">
+                            {getPageNumbers().map((page, idx) =>
+                                page === '...' ? (
+                                    <span
+                                        key={idx}
+                                        className="px-2 py-1 text-[13px] text-[#8c91a0]"
                                     >
-                                        {num}
+                                        …
+                                    </span>
+                                ) : (
+                                    <button
+                                        key={idx}
+                                        onClick={() =>
+                                            handlePageChange(page as number)
+                                        }
+                                        className={`px-3 py-1 text-[13px] rounded ${
+                                            currentPage === page
+                                                ? 'bg-[#0F9297] text-white'
+                                                : 'dark:text-[white] light:text-[#25324B] '
+                                        }`}
+                                    >
+                                        {page}
                                     </button>
-                                ))}
-                            </div>
-                        )}
+                                ),
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="p-2 text-[#8c91a0] hover:text-[#25324B] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
                 </div>
-
-                {/* Page navigation */}
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="p-2 text-[#8c91a0] hover:text-[#25324B] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                    </button>
-
-                    <div className="flex items-center gap-1">
-                        {getPageNumbers().map((page, idx) =>
-                            page === '...' ? (
-                                <span
-                                    key={idx}
-                                    className="px-2 py-1 text-[13px] text-[#8c91a0]"
-                                >
-                                    …
-                                </span>
-                            ) : (
-                                <button
-                                    key={idx}
-                                    onClick={() =>
-                                        handlePageChange(page as number)
-                                    }
-                                    className={`px-3 py-1 text-[13px] rounded ${
-                                        currentPage === page
-                                            ? 'bg-[#0F9297] text-white'
-                                            : 'dark:text-[white] light:text-[#25324B] '
-                                    }`}
-                                >
-                                    {page}
-                                </button>
-                            ),
-                        )}
-                    </div>
-
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="p-2 text-[#8c91a0] hover:text-[#25324B] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <ChevronRight className="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
+            )}
         </div>
     )
 }
